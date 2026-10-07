@@ -1,0 +1,68 @@
+name: Production smoke
+
+# Verifies the public production API end to end: health, database
+# connectivity through the gateway secret, and the account lifecycle with a
+# temporary account that is deleted at the end (no data is left behind).
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths:
+      - "server/**"
+      - "supabase/**"
+      - ".github/workflows/production-smoke.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-smoke
+  cancel-in-progress: false
+
+env:
+  API_URL: https://padel-id-gamma.vercel.app
+
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Wait for the production deployment of this commit
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          for i in $(seq 1 60); do
+            commit=$(curl -s "$API_URL/v1/health" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("commit") or "")' 2>/dev/null || true)
+            echo "deployed commit: ${commit:-unknown}"
+            if [ "$commit" = "$GITHUB_SHA" ]; then exit 0; fi
+            sleep 10
+          done
+          echo "Production did not pick up $GITHUB_SHA in time"; exit 1
+
+      - name: Public reachability
+        run: |
+          curl -sS -i "$API_URL/v1/health?deep=1" | sed -n '1,20p'
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$API_URL/v1/health?deep=1")" = "200"
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$API_URL/v1/me")" = "401"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: server/pnpm-lock.yaml
+
+      - name: Smoke tests
+        working-directory: server
+        env:
+          E2E_API_URL: ${{ env.API_URL }}
+          E2E_MODE: smoke
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run test:e2e
