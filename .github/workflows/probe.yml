@@ -11,16 +11,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-26, macos-latest]
+        os: [macos-26, macos-27, macos-26-xlarge]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
     steps:
       - run: |
           sw_vers
           ls /Applications | grep -i xcode
-          xcode-select -p
           xcodebuild -version
+          xcodebuild -showsdks
           xcrun simctl list runtimes
-          xcrun simctl list devicetypes | grep -i iphone | tail -15
-          which xcodegen || true
-          brew --version | head -1
-          sysctl -n hw.ncpu; sysctl -n hw.memsize
+          xcrun simctl list devicetypes | grep -i iphone
+          xcrun simctl list devices available | grep -i iphone | head -40
