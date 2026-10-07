@@ -1,0 +1,26 @@
+name: probe
+on:
+  push:
+    branches: ['claude/**']
+    paths: ['.github/workflows/probe.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  probe:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-26, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - run: |
+          sw_vers
+          ls /Applications | grep -i xcode
+          xcode-select -p
+          xcodebuild -version
+          xcrun simctl list runtimes
+          xcrun simctl list devicetypes | grep -i iphone | tail -15
+          which xcodegen || true
+          brew --version | head -1
+          sysctl -n hw.ncpu; sysctl -n hw.memsize
