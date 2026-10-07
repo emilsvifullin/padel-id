@@ -9,6 +9,7 @@ const config: Config = {
   gatewaySecret: "g".repeat(48),
   minClientBuild: 5,
   upstreamTimeoutMs: 1000,
+  signupsPerHour: 5,
 };
 
 interface Call {

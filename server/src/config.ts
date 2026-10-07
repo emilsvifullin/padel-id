@@ -9,6 +9,8 @@ export interface Config {
   minClientBuild: number;
   /** Upstream request timeout in milliseconds. */
   upstreamTimeoutMs: number;
+  /** Account registrations allowed per client IP per hour. */
+  signupsPerHour: number;
 }
 
 export function loadConfig(env: Record<string, string | undefined> = process.env): Config {
@@ -27,5 +29,6 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     gatewaySecret,
     minClientBuild: Number.parseInt(env.PADELID_MIN_CLIENT_BUILD ?? "1", 10) || 1,
     upstreamTimeoutMs: Number.parseInt(env.PADELID_UPSTREAM_TIMEOUT_MS ?? "12000", 10) || 12000,
+    signupsPerHour: Number.parseInt(env.PADELID_SIGNUPS_PER_HOUR ?? "5", 10) || 5,
   };
 }

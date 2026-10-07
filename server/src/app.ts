@@ -209,7 +209,7 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
 
   app.post("/v1/auth/signup", async (c) => {
     const body = await parseJson(c, schemas.signup);
-    await limit(`signup:ip:${clientIp(c)}`, 5, 3600);
+    await limit(`signup:ip:${clientIp(c)}`, resolveDeps().config.signupsPerHour, 3600);
     const created = await up().account<{ user_id: string; recovery_key: string }>("signup", {
       email: body.email,
       password: body.password,

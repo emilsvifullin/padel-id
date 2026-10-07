@@ -238,18 +238,23 @@ create table public.match_players (
 create index match_players_player_idx on public.match_players (player_id, match_id);
 
 -- Every match must have exactly four distinct players, two per team, at commit.
+-- SECURITY DEFINER: deferred triggers fire at COMMIT under the caller's role
+-- (`authenticated` via the API), which has no direct table access.
 create or replace function private.check_match_lineup()
 returns trigger
 language plpgsql
+security definer
 set search_path = ''
 as $$
 declare
-  v_match uuid := coalesce(new.match_id, old.match_id);
+  v_match uuid;
   v_total integer;
   v_team1 integer;
 begin
   if tg_table_name = 'matches' then
-    v_match := coalesce(new.id, old.id);
+    v_match := case when tg_op = 'DELETE' then old.id else new.id end;
+  else
+    v_match := case when tg_op = 'DELETE' then old.match_id else new.match_id end;
   end if;
   if not exists (select 1 from public.matches where id = v_match) then
     return null;

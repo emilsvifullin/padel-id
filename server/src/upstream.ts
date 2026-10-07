@@ -96,7 +96,7 @@ export class Upstream {
     if (res.status === 503 || res.status === 502 || res.status === 504 || code === "57014") {
       return apiError("service_unavailable");
     }
-    return apiError("internal", `${res.status} ${code}`);
+    return apiError("internal", `${res.status} ${code} ${message}`.slice(0, 300));
   }
 
   private static toSession(body: unknown): Session {

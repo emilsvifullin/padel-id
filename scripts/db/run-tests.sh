@@ -14,7 +14,9 @@ done
 mapfile -t TESTS < <("${PSQL[@]}" -At -c "select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'tests' and p.proname like 'test\_%' order by 1")
 pass=0; fail=0
 for t in "${TESTS[@]}"; do
-  out=$("${PSQL[@]}" -c "begin; select tests.$t(); rollback;" 2>&1)
+  # `set constraints all immediate` fires deferred constraint triggers that would
+  # otherwise only run at COMMIT.
+  out=$("${PSQL[@]}" -c "begin; select tests.$t(); set constraints all immediate; rollback;" 2>&1)
   if [ $? -eq 0 ]; then
     pass=$((pass+1)); echo "ok   $t"
   else

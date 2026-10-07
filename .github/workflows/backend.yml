@@ -111,6 +111,7 @@ jobs:
           export SUPABASE_URL="$SB_API_URL"
           export SUPABASE_PUBLISHABLE_KEY="${SB_PUBLISHABLE_KEY:-$SB_ANON_KEY}"
           export PADELID_GATEWAY_SECRET="$GATEWAY_SECRET"
+          export PADELID_SIGNUPS_PER_HOUR=100
           nohup node dist/dev-server.js > ../gateway.log 2>&1 &
           for i in $(seq 1 30); do
             curl -sf http://127.0.0.1:8787/v1/health && exit 0
