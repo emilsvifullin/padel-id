@@ -1,0 +1,30 @@
+{
+  "name": "padel-id-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Padel ID public API gateway (Vercel)",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run test/app.test.ts",
+    "start:local": "node dist/dev-server.js",
+    "test:e2e": "vitest run test/e2e"
+  },
+  "dependencies": {
+    "hono": "4.13.8",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@hono/node-server": "2.1.1",
+    "@types/node": "22.20.4",
+    "pg": "8.23.0",
+    "@types/pg": "8.23.0",
+    "typescript": "6.0.3",
+    "vitest": "5.0.1"
+  },
+  "packageManager": "pnpm@10.28.0"
+}
