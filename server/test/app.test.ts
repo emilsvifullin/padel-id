@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createApp, isStrongPassword } from "../src/app.js";
+import { createApp, isStrongPassword } from "../src/api.js";
 import type { Config } from "../src/config.js";
 import { Upstream, type FetchFn } from "../src/upstream.js";
 

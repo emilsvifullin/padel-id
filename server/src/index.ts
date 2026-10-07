@@ -1,4 +1,6 @@
-import { createApp, type Deps } from "./app.js";
+// Vercel entrypoint: exports the Hono application as the default export.
+import { Hono } from "hono";
+import { createApp, type Deps } from "./api.js";
 import { loadConfig } from "./config.js";
 import { Upstream } from "./upstream.js";
 
@@ -12,6 +14,8 @@ function resolveDeps(): Deps {
   return deps;
 }
 
-const app = createApp(resolveDeps);
+// The application is a Hono instance (the type annotation also lets the
+// platform detect the framework entrypoint).
+const app: Hono<{ Variables: { requestId: string } }> = createApp(resolveDeps);
 
 export default app;
