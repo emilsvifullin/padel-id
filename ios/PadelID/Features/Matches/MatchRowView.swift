@@ -10,6 +10,7 @@ struct MatchRowView: View {
     /// confirmation; VoiceOver still hears the status in the row label.
     var showsPendingStatus = true
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .body) private var setColumnWidth: CGFloat = 24
     @ScaledMetric(relativeTo: .caption) private var markWidth: CGFloat = 18
 
@@ -104,24 +105,42 @@ struct MatchRowView: View {
 
     // MARK: - Teams
 
+    /// Names and set scores of one pair; at accessibility sizes the names get
+    /// the full width and the scores go below them.
+    @ViewBuilder
     private func teamLine(_ team: Int) -> some View {
-        let isWinner = item.winnerTeam == team
-        return HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(MatchesNames.shortPair(cards(team)))
-                .font(isWinner ? Font.body.weight(.semibold) : Font.body)
-                .foregroundStyle(isWinner ? Color.primary : Color.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: 0) {
-                ForEach(Array(item.sets.enumerated()), id: \.offset) { _, set in
-                    setCell(set, team: team)
-                }
-                Image(systemName: "checkmark")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(Theme.accent)
-                    .frame(width: markWidth)
-                    .opacity(isWinner ? 1 : 0)
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(alignment: .leading, spacing: 2) {
+                pairNames(team)
+                setScores(team)
             }
+        } else {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                pairNames(team)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                setScores(team)
+            }
+        }
+    }
+
+    private func pairNames(_ team: Int) -> some View {
+        let isWinner = item.winnerTeam == team
+        return Text(MatchesNames.shortPair(cards(team)))
+            .font(isWinner ? Font.body.weight(.semibold) : Font.body)
+            .foregroundStyle(isWinner ? Color.primary : Color.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func setScores(_ team: Int) -> some View {
+        HStack(spacing: 0) {
+            ForEach(Array(item.sets.enumerated()), id: \.offset) { _, set in
+                setCell(set, team: team)
+            }
+            Image(systemName: "checkmark")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(Theme.accent)
+                .frame(width: markWidth)
+                .opacity(item.winnerTeam == team ? 1 : 0)
         }
     }
 

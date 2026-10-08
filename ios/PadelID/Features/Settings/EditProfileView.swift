@@ -200,6 +200,7 @@ struct EditProfileView: View {
                     .foregroundStyle(Theme.negative)
             } else {
                 Text("Так вас увидят партнёры и соперники.")
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }

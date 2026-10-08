@@ -496,6 +496,7 @@ private struct HomeDNAExtremeLine: View {
                 Text(caption)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(dimension.title)
                     .font(.subheadline.weight(.semibold))
                     .fixedSize(horizontal: false, vertical: true)
