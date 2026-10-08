@@ -31,7 +31,7 @@ nonisolated enum ScoreRules {
         return (hi == 10 && lo <= 8) || (hi > 10 && hi - lo == 2)
     }
 
-    enum Issue: Equatable, Sendable {
+    enum Issue: Error, Equatable, Sendable {
         case incomplete
         case invalidSet(Int)
         case invalidTiebreak(Int)

@@ -13,7 +13,7 @@ struct NarrativesTests {
         try JSONCoding.decoder.decode(Insight.self, from: Data(json.utf8))
     }
 
-    private func text(_ json: String) throws -> InsightText {
+    private func render(_ json: String) throws -> InsightText {
         let value = try insight(json)
         return try #require(Narratives.insight(value), "no text for \(value.kind)")
     }
@@ -22,7 +22,7 @@ struct NarrativesTests {
 
     @Test("reliability_path")
     func reliabilityPath() throws {
-        let text = try text(#"{"kind": "reliability_path", "sentiment": "neutral", "values": {"reliability": 42, "matches_needed": 3, "target": 70}}"#)
+        let text = try render(#"{"kind": "reliability_path", "sentiment": "neutral", "values": {"reliability": 42, "matches_needed": 3, "target": 70}}"#)
         #expect(text.title == "Надёжность рейтинга 42%")
         #expect(text.body.contains("Ещё 3 рейтинговых матча"))
         #expect(text.body.contains("70%"))
@@ -31,7 +31,7 @@ struct NarrativesTests {
 
     @Test("inactivity")
     func inactivity() throws {
-        let text = try text(#"{"kind": "inactivity", "sentiment": "attention", "values": {"days": 25, "reliability": 55}}"#)
+        let text = try render(#"{"kind": "inactivity", "sentiment": "attention", "values": {"days": 25, "reliability": 55}}"#)
         #expect(text.title == "Перерыв 25 дней")
         #expect(text.body.contains("55%"))
         #expect(text.sentiment == .attention)
@@ -39,19 +39,19 @@ struct NarrativesTests {
 
     @Test("trend: positive, negative and neutral")
     func trend() throws {
-        let up = try text(#"{"kind": "trend", "sentiment": "positive", "values": {"delta": 0.21, "matches": 6, "days": 30}}"#)
+        let up = try render(#"{"kind": "trend", "sentiment": "positive", "values": {"delta": 0.21, "matches": 6, "days": 30}}"#)
         #expect(up.title == "Рост +0.21 за 30 дней")
         #expect(up.body.contains("6 рейтинговых матчей"))
         #expect(up.symbol == "chart.line.uptrend.xyaxis")
         #expect(up.sentiment == .positive)
 
-        let down = try text(#"{"kind": "trend", "sentiment": "attention", "values": {"delta": -0.15, "matches": 4, "days": 30}}"#)
+        let down = try render(#"{"kind": "trend", "sentiment": "attention", "values": {"delta": -0.15, "matches": 4, "days": 30}}"#)
         #expect(down.title == "Спад \u{2212}0.15 за 30 дней")
         #expect(down.body.contains("4 рейтинговых матча"))
         #expect(down.symbol == "chart.line.downtrend.xyaxis")
         #expect(down.sentiment == .attention)
 
-        let flat = try text(#"{"kind": "trend", "sentiment": "neutral", "values": {"delta": 0.01, "matches": 5, "days": 30}}"#)
+        let flat = try render(#"{"kind": "trend", "sentiment": "neutral", "values": {"delta": 0.01, "matches": 5, "days": 30}}"#)
         #expect(flat.title == "Стабильный уровень")
         #expect(flat.body.contains("5 матчей"))
         #expect(flat.sentiment == .neutral)
@@ -59,12 +59,12 @@ struct NarrativesTests {
 
     @Test("vs_expectation: above and below")
     func versusExpectation() throws {
-        let above = try text(#"{"kind": "vs_expectation", "sentiment": "positive", "values": {"residual": 0.18, "matches": 10}}"#)
+        let above = try render(#"{"kind": "vs_expectation", "sentiment": "positive", "values": {"residual": 0.18, "matches": 10}}"#)
         #expect(above.title == "Играете выше ожиданий")
         #expect(above.body.contains("18 п.п."))
         #expect(above.sentiment == .positive)
 
-        let below = try text(#"{"kind": "vs_expectation", "sentiment": "attention", "values": {"residual": -0.12, "matches": 8}}"#)
+        let below = try render(#"{"kind": "vs_expectation", "sentiment": "attention", "values": {"residual": -0.12, "matches": 8}}"#)
         #expect(below.title == "Результаты ниже ожиданий")
         #expect(below.body.contains("12 п.п."))
         #expect(below.sentiment == .attention)
@@ -72,25 +72,25 @@ struct NarrativesTests {
 
     @Test("side_split")
     func sideSplit() throws {
-        let text = try text(#"{"kind": "side_split", "sentiment": "neutral", "values": {"better_side": "left", "left_win_rate": 0.80, "left_matches": 5, "right_win_rate": 0.55, "right_matches": 11}}"#)
+        let text = try render(#"{"kind": "side_split", "sentiment": "neutral", "values": {"better_side": "left", "left_win_rate": 0.80, "left_matches": 5, "right_win_rate": 0.55, "right_matches": 11}}"#)
         #expect(text.title == "Сильнее на левой стороне")
         #expect(text.body.contains("80%"))
         #expect(text.body.contains("55%"))
         #expect(text.body.contains("5 матчей"))
         #expect(text.body.contains("11 матчей"))
 
-        let right = try self.text(#"{"kind": "side_split", "sentiment": "neutral", "values": {"better_side": "right", "left_win_rate": 0.40, "left_matches": 5, "right_win_rate": 0.70, "right_matches": 10}}"#)
+        let right = try render(#"{"kind": "side_split", "sentiment": "neutral", "values": {"better_side": "right", "left_win_rate": 0.40, "left_matches": 5, "right_win_rate": 0.70, "right_matches": 10}}"#)
         #expect(right.title == "Сильнее на правой стороне")
     }
 
     @Test("close_sets: strong and weak")
     func closeSets() throws {
-        let strong = try text(#"{"kind": "close_sets", "sentiment": "positive", "values": {"won": 9, "total": 13}}"#)
+        let strong = try render(#"{"kind": "close_sets", "sentiment": "positive", "values": {"won": 9, "total": 13}}"#)
         #expect(strong.title == "Сильны в концовках")
         #expect(strong.body.contains("9 из 13"))
         #expect(strong.sentiment == .positive)
 
-        let weak = try text(#"{"kind": "close_sets", "sentiment": "attention", "values": {"won": 3, "total": 10}}"#)
+        let weak = try render(#"{"kind": "close_sets", "sentiment": "attention", "values": {"won": 3, "total": 10}}"#)
         #expect(weak.title == "Концовки — зона роста")
         #expect(weak.body.contains("3 из 10"))
         #expect(weak.sentiment == .attention)
@@ -98,7 +98,7 @@ struct NarrativesTests {
 
     @Test("best_partner")
     func bestPartner() throws {
-        let text = try text(#"{"kind": "best_partner", "sentiment": "positive", "values": {"player": {"id": "d8b58bd9-8f8c-4732-a129-148692946aed", "username": "d_sokolov", "display_name": "Дмитрий Соколов", "deleted": false, "avatar_path": null, "city": {"id": 1, "name": "Москва"}, "club": {"id": 1, "name": "Падел Арена Лужники"}, "preferred_side": "left", "is_coach": false, "level": 4.89, "reliability": 25}, "matches": 6, "residual": 0.21}}"#)
+        let text = try render(#"{"kind": "best_partner", "sentiment": "positive", "values": {"player": {"id": "d8b58bd9-8f8c-4732-a129-148692946aed", "username": "d_sokolov", "display_name": "Дмитрий Соколов", "deleted": false, "avatar_path": null, "city": {"id": 1, "name": "Москва"}, "club": {"id": 1, "name": "Падел Арена Лужники"}, "preferred_side": "left", "is_coach": false, "level": 4.89, "reliability": 25}, "matches": 6, "residual": 0.21}}"#)
         #expect(text.title == "Лучшая связка — Дмитрий Соколов")
         #expect(text.body.contains("6 матчей"))
         #expect(text.body.contains("21 п.п."))
@@ -107,7 +107,7 @@ struct NarrativesTests {
 
     @Test("focus_area")
     func focusArea() throws {
-        let text = try text(#"{"kind": "focus_area", "sentiment": "neutral", "values": {"dimension": "transition_lob", "offset": -0.56, "confidence": 0.54}}"#)
+        let text = try render(#"{"kind": "focus_area", "sentiment": "neutral", "values": {"dimension": "transition_lob", "offset": -0.56, "confidence": 0.54}}"#)
         #expect(text.title == "Фокус тренировок: переход и свечи")
         #expect(text.body.contains(DNADimension.transitionLob.trainingFocus))
         #expect(text.symbol == DNADimension.transitionLob.symbol)
@@ -139,7 +139,7 @@ struct NarrativesTests {
             #"{"kind": "best_partner", "sentiment": "positive", "values": {"matches": 6, "residual": 0.21}}"#,
         ]
         for sample in samples {
-            let symbol = try text(sample).symbol
+            let symbol = try render(sample).symbol
             #expect(UIImage(systemName: symbol) != nil, "missing SF Symbol \(symbol)")
         }
         for dimension in DNADimension.allCases {
@@ -157,9 +157,12 @@ struct NarrativesTests {
 
     @Test("Compatibility: level gap")
     func levelGap() throws {
-        #expect(try reasons(#"{"code": "level_gap", "value": 0.2}"#) == ["Почти одинаковый уровень (разница 0.20)"])
-        #expect(try reasons(#"{"code": "level_gap", "value": 0.5}"#) == ["Близкий уровень: разница 0.50"])
-        #expect(try reasons(#"{"code": "level_gap", "value": 1.2}"#) == ["Разница в уровне 1.20 — пара будет несбалансированной"])
+        let close = try reasons(#"{"code": "level_gap", "value": 0.2}"#)
+        #expect(close == ["Почти одинаковый уровень (разница 0.20)"])
+        let near = try reasons(#"{"code": "level_gap", "value": 0.5}"#)
+        #expect(near == ["Близкий уровень: разница 0.50"])
+        let far = try reasons(#"{"code": "level_gap", "value": 1.2}"#)
+        #expect(far == ["Разница в уровне 1.20 — пара будет несбалансированной"])
     }
 
     @Test("Compatibility: court sides")
@@ -181,17 +184,22 @@ struct NarrativesTests {
 
     @Test("Compatibility: style, chemistry, history and logistics")
     func otherReasons() throws {
-        #expect(try reasons(#"{"code": "covers_weakness", "dimensions": ["transition_lob", "overheads"]}"#)
-                == ["Закрывает ваши слабые места: переход и свечи, удары над головой"])
-        #expect(try reasons(#"{"code": "covers_weakness", "dimensions": []}"#).isEmpty)
-        #expect(try reasons(#"{"code": "chemistry", "matches": 6, "residual": 0.21}"#)
-                == ["Вместе 6 матчей: на 21 п.п. лучше ожидаемого"])
-        #expect(try reasons(#"{"code": "chemistry", "matches": 3, "residual": -0.1}"#)
-                == ["Вместе 3 матча: на 10 п.п. хуже ожидаемого"])
-        #expect(try reasons(#"{"code": "played_together", "matches": 1}"#) == ["Уже играли вместе: 1 матч"])
-        #expect(try reasons(#"{"code": "same_club"}"#) == ["Играете в одном клубе"])
-        #expect(try reasons(#"{"code": "same_city"}"#) == ["Из одного города"])
-        #expect(try reasons(#"{"code": "horoscope"}"#).isEmpty)
+        let covers = try reasons(#"{"code": "covers_weakness", "dimensions": ["transition_lob", "overheads"]}"#)
+        #expect(covers == ["Закрывает ваши слабые места: переход и свечи, удары над головой"])
+        let coversNothing = try reasons(#"{"code": "covers_weakness", "dimensions": []}"#)
+        #expect(coversNothing.isEmpty)
+        let chemistry = try reasons(#"{"code": "chemistry", "matches": 6, "residual": 0.21}"#)
+        #expect(chemistry == ["Вместе 6 матчей: на 21 п.п. лучше ожидаемого"])
+        let poorChemistry = try reasons(#"{"code": "chemistry", "matches": 3, "residual": -0.1}"#)
+        #expect(poorChemistry == ["Вместе 3 матча: на 10 п.п. хуже ожидаемого"])
+        let together = try reasons(#"{"code": "played_together", "matches": 1}"#)
+        #expect(together == ["Уже играли вместе: 1 матч"])
+        let club = try reasons(#"{"code": "same_club"}"#)
+        #expect(club == ["Играете в одном клубе"])
+        let city = try reasons(#"{"code": "same_city"}"#)
+        #expect(city == ["Из одного города"])
+        let unknown = try reasons(#"{"code": "horoscope"}"#)
+        #expect(unknown.isEmpty)
     }
 
     @Test("Compatibility: order of reasons is kept")

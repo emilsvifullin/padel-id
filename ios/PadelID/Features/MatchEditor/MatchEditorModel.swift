@@ -55,9 +55,16 @@ nonisolated enum EditorSubmitOutcome: Sendable {
 // MARK: - Request bodies (encoded with snake_case keys)
 
 nonisolated struct EditorPlayerBody: Encodable, Hashable, Sendable {
-    let playerId: UUID
+    /// Lowercase UUID string, as the API returns it.
+    let playerId: String
     let team: Int
     let courtSide: CourtSide
+
+    init(player: UUID, team: Int, courtSide: CourtSide) {
+        playerId = player.uuidString.lowercased()
+        self.team = team
+        self.courtSide = courtSide
+    }
 }
 
 nonisolated struct EditorMatchBody: Encodable, Hashable, Sendable {
@@ -256,10 +263,10 @@ nonisolated struct EditorDraft: Equatable, Sendable {
         let mine: CourtSide = mySide == .left ? .left : .right
         let partnerSide: CourtSide = mine == .left ? .right : .left
         return [
-            EditorPlayerBody(playerId: meId, team: 1, courtSide: mine),
-            EditorPlayerBody(playerId: partner.id, team: 1, courtSide: partnerSide),
-            EditorPlayerBody(playerId: opponentRight.id, team: 2, courtSide: .right),
-            EditorPlayerBody(playerId: opponentLeft.id, team: 2, courtSide: .left),
+            EditorPlayerBody(player: meId, team: 1, courtSide: mine),
+            EditorPlayerBody(player: partner.id, team: 1, courtSide: partnerSide),
+            EditorPlayerBody(player: opponentRight.id, team: 2, courtSide: .right),
+            EditorPlayerBody(player: opponentLeft.id, team: 2, courtSide: .left),
         ]
     }
 
