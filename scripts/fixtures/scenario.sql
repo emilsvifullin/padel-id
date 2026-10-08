@@ -165,8 +165,9 @@ declare
   v uuid := fixtures.uuid('user:' || p_username);
 begin
   perform fixtures.as_admin();
-  insert into auth.users (id, email, encrypted_password)
-  values (v, p_email, extensions.crypt('Padel-Fixture-2026', extensions.gen_salt('bf', 4)));
+  insert into auth.users (id, email, encrypted_password, raw_app_meta_data)
+  values (v, p_email, extensions.crypt('Padel-Fixture-2026', extensions.gen_salt('bf', 4)),
+          '{"provider": "email", "providers": ["email"], "padelid_origin": "account-service"}');
   insert into auth.sessions (id, user_id) values (fixtures.uuid('session:' || p_username), v);
   insert into fixtures.players (code, id, email) values (p_code, v, p_email);
   perform private.issue_recovery_key(v);

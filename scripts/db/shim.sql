@@ -23,8 +23,12 @@ create table if not exists auth.users (
   id uuid primary key default gen_random_uuid(),
   email text unique,
   encrypted_password text,
+  raw_app_meta_data jsonb,
   created_at timestamptz not null default now()
 );
+-- app_metadata: new rows must carry the account service's marker
+-- (20261008210000_security_and_search.sql).
+alter table auth.users add column if not exists raw_app_meta_data jsonb;
 
 create table if not exists auth.sessions (
   id uuid primary key default gen_random_uuid(),

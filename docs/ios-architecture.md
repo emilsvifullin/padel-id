@@ -39,8 +39,9 @@ Core/Auth       Keychain, SessionStore
 Core/Services   NotificationService
 DesignSystem    Theme, Components (LevelNumeral, LevelChip, DeltaText,
                 ReliabilityRing, AvatarView, RemoteImage, PlayerRow, StatusPill,
-                OfflineBanner, LoadingView, ErrorStateView, SectionContainer,
-                SectionHeader), DNAHexagon, RatingChart
+                OfflineBanner, StaleDataBanner, LoadingView, ErrorStateView,
+                SectionContainer, SectionHeader, FormResultDot,
+                EqualWidthHStack, Announce), DNAHexagon, RatingChart
 Features/<Area> screens of one area
 ```
 
@@ -90,7 +91,9 @@ re-creating them.
   .task(id: app.dataRevision) { await home.load(using: app) }
   .refreshable { await home.load(using: app) }
   ```
-  Render: value → content (and `OfflineBanner()` when `isStale && error?.isNetwork == true`);
+  Render: value → content (and `StaleDataBanner(error:)` when `isStale` and an
+  error is set: the offline banner for network errors, the error message plus
+  «Показаны сохранённые данные.» otherwise);
   no value + error → `ErrorStateView(error:retry:)`; otherwise `LoadingView()`.
   Use `CacheKey` constants (App/AppModel.swift) for cache keys.
 * After any successful mutation call `app.dataDidChange()` so other screens
@@ -184,10 +187,12 @@ Server rules worth mirroring in the UI (the server stays authoritative):
   hard-coded colors.
 * **Liquid Glass** is used deliberately, not decoratively: system bars and tab
   bar (automatic), toolbar buttons (automatic), floating primary action areas
-  pinned to the bottom with `.safeAreaInset(edge: .bottom)` containing
+  pinned to the bottom with `.safeAreaBar(edge: .bottom)` containing
   `GlassEffectContainer` and `.buttonStyle(.glassProminent)` /
   `.buttonStyle(.glass)`. Never apply `.glassEffect` to content cards or list
-  rows.
+  rows; buttons inside forms use `.borderedProminent`.
+* Results and failures of actions are spoken with `Announce.post(_:)` so
+  VoiceOver users hear what happened.
 * Spacing: `Theme.horizontalPadding` (20) side margins on scroll screens,
   `Theme.sectionSpacing` between sections, 12–16 inside containers.
   Touch targets ≥ 44 pt.

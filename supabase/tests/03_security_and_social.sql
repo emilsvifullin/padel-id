@@ -238,7 +238,8 @@ begin
   perform tests.assert(not public.svc_check_password(u, 'wrong'), 'wrong password');
 
   perform tests.act_as(u);
-  perform tests.expect_error('select public.regenerate_recovery_key(''wrong'')', 'invalid_password');
+  -- Reported in the result (not raised) so that the attempt counter commits.
+  perform tests.assert_eq(public.regenerate_recovery_key('wrong'), '{"error": "invalid_password"}'::jsonb, 'wrong password rejected');
   v := public.regenerate_recovery_key('Correct-Horse-7');
   perform tests.act_as_service();
   perform tests.assert(public.svc_check_recovery_key('rk_user@padel.test', k) is null, 'old key invalidated');

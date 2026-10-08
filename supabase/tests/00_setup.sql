@@ -6,6 +6,8 @@ create schema tests;
 grant usage on schema tests to anon, authenticated, service_role;
 alter default privileges in schema tests grant execute on functions to anon, authenticated, service_role;
 
+-- Creates an auth user the way the account service does: with the
+-- app_metadata marker that auth.users requires for new rows.
 create function tests.new_user(p_email text, p_password text default 'Correct-Horse-7')
 returns uuid
 language plpgsql
@@ -13,8 +15,9 @@ as $$
 declare
   v uuid := gen_random_uuid();
 begin
-  insert into auth.users (id, email, encrypted_password)
-  values (v, p_email, extensions.crypt(p_password, extensions.gen_salt('bf')));
+  insert into auth.users (id, email, encrypted_password, raw_app_meta_data)
+  values (v, p_email, extensions.crypt(p_password, extensions.gen_salt('bf')),
+          '{"provider": "email", "providers": ["email"], "padelid_origin": "account-service"}');
   return v;
 end;
 $$;
