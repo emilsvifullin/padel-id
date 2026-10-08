@@ -28,7 +28,9 @@ nonisolated struct APIError: Error, Hashable, Sendable, LocalizedError {
     var isTransient: Bool {
         switch kind {
         case .network: return true
-        case .server(let status): return status >= 500 || status == 429
+        // 429 also carries business rules (too_many_ranked_matches) that a
+        // retry cannot change; only the request rate limit is temporary.
+        case .server(let status): return status >= 500 || (status == 429 && code == "rate_limited")
         case .decoding: return false
         }
     }

@@ -47,7 +47,8 @@ const schemas = {
   dispute: z.object({
     version,
     reason: z.enum(["wrong_score", "wrong_players", "wrong_type", "not_played", "other"]),
-    comment: z.string().max(140).nullish(),
+    // The database limits the comment to 140 code points; UTF-16 needs up to twice as many units.
+    comment: z.string().max(280).nullish(),
   }),
   updateMatch: z.object({ version, match: z.record(z.string(), z.unknown()) }),
   club: z.object({ city_id: z.number().int().positive(), name: z.string().min(1).max(120) }),
@@ -116,10 +117,19 @@ function numberQuery(c: Context<Env>, name: string, min: number, max: number): n
 }
 
 function isoQuery(c: Context<Env>, name: string): string | undefined {
-  const raw = c.req.query(name);
+  let raw = c.req.query(name);
   if (raw === undefined || raw === "") return undefined;
+  // An unencoded "+" in an offset ("…+00:00") arrives as a space.
+  raw = raw.replace(/ (\d{2}(?::?\d{2})?)$/, "+$1");
   if (Number.isNaN(Date.parse(raw))) throw apiError("invalid_request");
   return raw;
+}
+
+function uuidQuery(c: Context<Env>, name: string): string | undefined {
+  const raw = c.req.query(name);
+  if (raw === undefined || raw === "") return undefined;
+  if (!UUID_RE.test(raw)) throw apiError("invalid_request");
+  return raw.toLowerCase();
 }
 
 function randomFileName(): string {
@@ -415,7 +425,13 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
     return c.json(
       await up().rpc(
         "player_matches",
-        { p_player: pathUuid(c, "id"), p_before: isoQuery(c, "before") ?? null, p_limit: intQuery(c, "limit", 1, 50) ?? 30, p_type: type || null },
+        {
+          p_player: pathUuid(c, "id"),
+          p_before: isoQuery(c, "before") ?? null,
+          p_before_id: uuidQuery(c, "before_id") ?? null,
+          p_limit: intQuery(c, "limit", 1, 50) ?? 30,
+          p_type: type || null,
+        },
         token,
       ),
     );
@@ -446,7 +462,13 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
     return c.json(
       await up().rpc(
         "my_matches",
-        { p_scope: scope, p_before: isoQuery(c, "before") ?? null, p_limit: intQuery(c, "limit", 1, 50) ?? 30, p_type: type || null },
+        {
+          p_scope: scope,
+          p_before: isoQuery(c, "before") ?? null,
+          p_before_id: uuidQuery(c, "before_id") ?? null,
+          p_limit: intQuery(c, "limit", 1, 50) ?? 30,
+          p_type: type || null,
+        },
         token,
       ),
     );

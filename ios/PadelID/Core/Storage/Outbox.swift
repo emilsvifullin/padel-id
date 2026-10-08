@@ -89,7 +89,10 @@ final class Outbox {
         guard !isProcessing else { return }
         isProcessing = true
         defer { isProcessing = false }
-        for operation in operations where operation.failure == nil {
+        var attempted = Set<UUID>()
+        // Operations queued while sending are picked up in the next pass.
+        while let operation = operations.first(where: { $0.failure == nil && !attempted.contains($0.id) }) {
+            attempted.insert(operation.id)
             do {
                 let data = try await api.data(operation.endpoint)
                 operations.removeAll { $0.id == operation.id }

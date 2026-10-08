@@ -12,7 +12,7 @@ nonisolated enum MatchActionResult: Sendable {
 }
 
 /// One player's feedback in `PUT v1/matches/{id}/feedback` (empty arrays remove it).
-nonisolated struct MatchFeedbackRating: Encodable, Hashable, Sendable {
+nonisolated struct MatchFeedbackRating: Codable, Hashable, Sendable {
     let playerId: String
     let strengths: [String]
     let improvements: [String]
@@ -28,7 +28,7 @@ private nonisolated struct MatchActionDisputeBody: Encodable, Sendable {
     let comment: String?
 }
 
-private nonisolated struct MatchActionFeedbackBody: Encodable, Sendable {
+private nonisolated struct MatchActionFeedbackBody: Codable, Sendable {
     let ratings: [MatchFeedbackRating]
 }
 
@@ -49,8 +49,26 @@ enum MatchActions {
         return result
     }
 
+    /// Length of a dispute comment as the server counts it (Unicode code points).
+    static func commentLength(_ comment: String) -> Int {
+        comment.unicodeScalars.count
+    }
+
+    /// Cuts a comment to the limit without splitting a character.
+    static func clampComment(_ comment: String) -> String {
+        var result = ""
+        var length = 0
+        for character in comment {
+            let size = character.unicodeScalars.count
+            guard length + size <= disputeCommentLimit else { break }
+            result.append(character)
+            length += size
+        }
+        return result
+    }
+
     static func dispute(_ match: MatchDetail, reason: DisputeReason, comment: String, app: AppModel) async -> MatchActionResult {
-        let trimmed = String(comment.trimmingCharacters(in: .whitespacesAndNewlines).prefix(disputeCommentLimit))
+        let trimmed = clampComment(comment.trimmingCharacters(in: .whitespacesAndNewlines))
         let body = MatchActionDisputeBody(version: match.version, reason: reason, comment: trimmed.isEmpty ? nil : trimmed)
         let endpoint = Endpoint.json(.post, path(match.id, "dispute"), body, retryable: true)
         return await perform(endpoint, match: match, app: app, offlineKind: .disputeMatch, title: "Возражение по результату")
@@ -63,7 +81,17 @@ enum MatchActions {
     }
 
     static func submitFeedback(_ match: MatchDetail, ratings: [MatchFeedbackRating], app: AppModel) async -> MatchActionResult {
-        let endpoint = Endpoint.json(.put, path(match.id, "feedback"), MatchActionFeedbackBody(ratings: ratings), retryable: true)
+        // Feedback still waiting in the outbox is merged in, so marks given
+        // offline are not lost when the sheet is used again (newer marks win).
+        var merged: [String: MatchFeedbackRating] = [:]
+        for operation in app.outbox.operations where operation.kind == .submitFeedback && operation.matchId == match.id {
+            if let body = operation.body, let queued = try? JSONCoding.decoder.decode(MatchActionFeedbackBody.self, from: body) {
+                for rating in queued.ratings { merged[rating.playerId] = rating }
+            }
+        }
+        for rating in ratings { merged[rating.playerId] = rating }
+        let all = merged.values.sorted { $0.playerId < $1.playerId }
+        let endpoint = Endpoint.json(.put, path(match.id, "feedback"), MatchActionFeedbackBody(ratings: all), retryable: true)
         return await perform(endpoint, match: match, app: app, offlineKind: .submitFeedback, title: "Отметки игрокам")
     }
 
@@ -102,6 +130,10 @@ enum MatchActions {
             if error.code == "version_conflict" {
                 return .conflict(error)
             }
+            if ["match_closed", "match_locked", "match_not_found", "forbidden", "creator_cannot_dispute"].contains(error.code) {
+                // The match is no longer what the screen shows: reload everything.
+                app.dataDidChange()
+            }
             return .failed(error)
         } catch {
             return .failed(APIError(kind: .server(status: 0), code: "interrupted",
@@ -109,8 +141,10 @@ enum MatchActions {
         }
 
         if let offlineKind {
-            // A delivered answer makes earlier rejected attempts obsolete.
-            for operation in app.outbox.failed where operation.matchId == match.id
+            // A delivered answer makes earlier rejected attempts obsolete; sent
+            // feedback already includes any queued marks.
+            let obsolete = offlineKind == .submitFeedback ? app.outbox.operations : app.outbox.failed
+            for operation in obsolete where operation.matchId == match.id
                 && group(of: offlineKind).contains(operation.kind) {
                 app.outbox.discard(operation.id)
             }

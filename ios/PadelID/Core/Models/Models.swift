@@ -238,6 +238,7 @@ nonisolated struct MatchListItem: Codable, Hashable, Sendable, Identifiable {
 nonisolated struct MatchPage: Codable, Hashable, Sendable {
     let items: [MatchListItem]
     let nextBefore: String?
+    let nextBeforeId: UUID?
 }
 
 nonisolated struct RatingRef: Codable, Hashable, Sendable {

@@ -84,7 +84,13 @@ final class APIClient {
 
     private func execute(_ endpoint: Endpoint, token: String?) async throws -> Data {
         var components = URLComponents(url: baseURL.appending(path: endpoint.path), resolvingAgainstBaseURL: false)!
-        if !endpoint.query.isEmpty { components.queryItems = endpoint.query }
+        if !endpoint.query.isEmpty {
+            components.queryItems = endpoint.query
+            // URLComponents leaves "+" as is, and servers decode it as a space
+            // (e.g. the "+00:00" offset of a timestamp cursor).
+            components.percentEncodedQuery = components.percentEncodedQuery?
+                .replacingOccurrences(of: "+", with: "%2B")
+        }
         var request = URLRequest(url: components.url!)
         request.httpMethod = endpoint.method.rawValue
         request.httpBody = endpoint.body

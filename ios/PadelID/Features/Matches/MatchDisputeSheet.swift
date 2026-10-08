@@ -43,9 +43,9 @@ struct MatchDisputeSheet: View {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
                             Spacer()
-                            Text("\(comment.count) из \(limit)")
+                            Text("\(MatchActions.commentLength(comment)) из \(limit)")
                                 .monospacedDigit()
-                                .foregroundStyle(comment.count >= limit ? Theme.attention : Color.secondary)
+                                .foregroundStyle(MatchActions.commentLength(comment) >= limit ? Theme.attention : Color.secondary)
                         }
                         if !app.isOnline {
                             Text("Нет подключения: ответ сохранится и отправится автоматически.")
@@ -79,8 +79,8 @@ struct MatchDisputeSheet: View {
                 }
             }
             .onChange(of: comment) { _, newValue in
-                if newValue.count > limit {
-                    comment = String(newValue.prefix(limit))
+                if MatchActions.commentLength(newValue) > limit {
+                    comment = MatchActions.clampComment(newValue)
                 }
             }
             .sensoryFeedback(.selection, trigger: reason)

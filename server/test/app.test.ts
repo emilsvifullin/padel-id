@@ -278,6 +278,25 @@ describe("data API", () => {
     expect(h.calls).toHaveLength(0);
   });
 
+  it("passes the history cursor, tolerating an unencoded plus sign", async () => {
+    const h = harness(routeTo({ "/rpc/my_matches": (call) => ({ status: 200, body: call.body }) }));
+    const id = "6F1C1A5E-6A4B-4C43-9E0B-1C3B9F0F9A11";
+    let res = await h.request(`/v1/matches?scope=history&before=2026-10-01T18:30:00.123456Z&before_id=${id}`, { headers: auth });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      p_scope: "history",
+      p_before: "2026-10-01T18:30:00.123456Z",
+      p_before_id: id.toLowerCase(),
+      p_limit: 30,
+      p_type: null,
+    });
+    res = await h.request("/v1/matches?scope=history&before=2026-10-01T18:30:00+00:00", { headers: auth });
+    expect(res.status).toBe(200);
+    expect((await res.json()).p_before).toBe("2026-10-01T18:30:00+00:00");
+    res = await h.request("/v1/matches?scope=history&before_id=nope", { headers: auth });
+    expect(res.status).toBe(400);
+  });
+
   it("passes search filters as typed values", async () => {
     const h = harness(routeTo({ "/rpc/search_players": (call) => ({ status: 200, body: call.body }) }));
     const res = await h.request("/v1/players/search?query=%D0%B0%D0%BD%D0%BD%D0%B0&city_id=1&min_level=2.5&max_level=4&side=left&reliable_only=true&sort=level_desc&limit=10&offset=20", {

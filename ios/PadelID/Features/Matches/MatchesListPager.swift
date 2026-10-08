@@ -13,6 +13,7 @@ final class MatchesListPager {
 
     private var extraItems: [MatchListItem] = []
     private var extraNextBefore: String?
+    private var extraNextBeforeId: UUID?
     private var hasExtraPages = false
     private var generation = 0
 
@@ -59,6 +60,11 @@ final class MatchesListPager {
         hasExtraPages ? extraNextBefore : firstPage.value?.nextBefore
     }
 
+    /// Tie-breaker of the cursor: matches with the same `played_at` are ordered by id.
+    private var nextBeforeId: UUID? {
+        hasExtraPages ? extraNextBeforeId : firstPage.value?.nextBeforeId
+    }
+
     var canLoadMore: Bool { nextBefore != nil }
 
     /// Reloads the first page; appended pages are dropped once fresh data arrives.
@@ -68,6 +74,7 @@ final class MatchesListPager {
         generation += 1
         extraItems = []
         extraNextBefore = nil
+        extraNextBeforeId = nil
         hasExtraPages = false
         loadMoreError = nil
     }
@@ -79,12 +86,17 @@ final class MatchesListPager {
         loadMoreError = nil
         defer { isLoadingMore = false }
         do {
-            let endpoint = Endpoint.get(path, query: query + [URLQueryItem(name: "before", value: before)])
+            var cursor = [URLQueryItem(name: "before", value: before)]
+            if let id = nextBeforeId {
+                cursor.append(URLQueryItem(name: "before_id", value: id.uuidString.lowercased()))
+            }
+            let endpoint = Endpoint.get(path, query: query + cursor)
             let page = try await app.api.send(endpoint, as: MatchPage.self)
             guard started == generation else { return }
             let known = Set(items.map(\.id))
             extraItems.append(contentsOf: page.items.filter { !known.contains($0.id) })
             extraNextBefore = page.nextBefore
+            extraNextBeforeId = page.nextBeforeId
             hasExtraPages = true
         } catch is CancellationError {
             return

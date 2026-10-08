@@ -374,3 +374,53 @@ begin
   v := public.match_detail(m);
   perform tests.assert((v -> 'players' -> 0 -> 'rating_change' -> 'details' ->> 'expected_win') is not null, 'explanation stored');
 end $$;
+
+-- History pages are keyed by (played_at, id): matches that share played_at
+-- across a page boundary are neither skipped nor repeated.
+create function tests.test_history_pagination_ties()
+returns void
+language plpgsql
+as $$
+declare
+  u uuid := tests.player('pager_main');
+  p uuid[] := array[tests.player('pager_a'), tests.player('pager_b'), tests.player('pager_c'),
+                    tests.player('pager_d'), tests.player('pager_e'), tests.player('pager_f')];
+  t timestamptz := date_trunc('minute', now() - interval '3 hours');
+  m uuid;
+  page jsonb;
+  seen uuid[] := '{}';
+  ids uuid[] := '{}';
+  cursor_at timestamptz := null;
+  cursor_id uuid := null;
+  pages integer := 0;
+begin
+  foreach m in array array[
+    tests.match(array[u, p[1], p[2], p[3]], 'friendly', null, 'best_of_3', t),
+    tests.match(array[u, p[4], p[5], p[6]], 'friendly', null, 'best_of_3', t),
+    tests.match(array[u, p[1], p[5], p[6]], 'friendly', null, 'best_of_3', t),
+    tests.match(array[u, p[2], p[4], p[6]], 'friendly', null, 'best_of_3', t - interval '1 day')
+  ] loop
+    perform tests.confirm_all(m);
+    ids := ids || m;
+  end loop;
+
+  perform tests.act_as(u);
+  loop
+    page := public.my_matches('history', cursor_at, 2, null, cursor_id);
+    pages := pages + 1;
+    select seen || coalesce(array_agg((e ->> 'id')::uuid), '{}') into seen
+      from jsonb_array_elements(page -> 'items') e;
+    exit when page ->> 'next_before' is null or pages > 5;
+    perform tests.assert(page ->> 'next_before' like '%Z', 'cursor is in UTC Z form');
+    cursor_at := (page ->> 'next_before')::timestamptz;
+    cursor_id := (page ->> 'next_before_id')::uuid;
+  end loop;
+
+  perform tests.assert_eq(cardinality(seen), 4, 'every match is returned once');
+  perform tests.assert((select count(distinct x) from unnest(seen) x) = 4, 'no match is repeated');
+  perform tests.assert(seen @> ids and ids @> seen, 'all created matches are listed');
+
+  page := public.player_matches(p[1], null, 1, null, null);
+  perform tests.assert(page ? 'next_before_id', 'player history returns the cursor id');
+end;
+$$;

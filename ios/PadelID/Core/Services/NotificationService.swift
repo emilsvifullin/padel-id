@@ -47,7 +47,8 @@ final class NotificationService {
         }
         guard isEnabled else { return }
         var notified = Set(UserDefaults.standard.stringArray(forKey: notifiedKey) ?? [])
-        for item in actionItems where !notified.contains(item.id.uuidString) {
+        // Keyed by version and status: an edited (or again disputed) match is news.
+        for item in actionItems where !notified.contains(Self.notificationKey(item)) {
             let content = UNMutableNotificationContent()
             let opponents = item.players.filter { $0.team != item.myTeam }.map { $0.player.displayName }.joined(separator: " и ")
             let score = Format.score(item.sets, perspective: item.myTeam ?? 1)
@@ -63,9 +64,13 @@ final class NotificationService {
             content.userInfo = ["matchId": item.id.uuidString]
             let request = UNNotificationRequest(identifier: "match-\(item.id.uuidString)", content: content, trigger: nil)
             try? await center.add(request)
-            notified.insert(item.id.uuidString)
+            notified.insert(Self.notificationKey(item))
         }
         UserDefaults.standard.set(Array(notified.sorted().suffix(300)), forKey: notifiedKey)
+    }
+
+    private static func notificationKey(_ item: MatchListItem) -> String {
+        "\(item.id.uuidString).\(item.version).\(item.status.rawValue)"
     }
 
     func clearBadge() async {
