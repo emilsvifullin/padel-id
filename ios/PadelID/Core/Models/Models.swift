@@ -1,7 +1,8 @@
 import Foundation
 
-// API models. Keys arrive in snake_case and are converted by `JSONCoding`
-// (note: dictionary keys are converted too, e.g. "serve_return" → "serveReturn").
+// API models. Struct keys arrive in snake_case and are converted by
+// `JSONCoding`; keys of `[String: …]` dictionaries are left as sent
+// (e.g. "serve_return"), so look them up in snake_case.
 
 nonisolated struct NamedRef: Codable, Hashable, Sendable, Identifiable {
     let id: Int

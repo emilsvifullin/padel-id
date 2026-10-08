@@ -11,11 +11,13 @@ nonisolated struct InsightText: Sendable, Hashable {
 
 nonisolated enum Narratives {
     static func insight(_ insight: Insight) -> InsightText? {
+        // Dictionary keys are not converted by the decoder: values keep the
+        // server's snake_case names.
         let v = insight.values
         switch insight.kind {
         case "reliability_path":
             let rel = v["reliability"]?.int ?? 0
-            let n = v["matchesNeeded"]?.int ?? 0
+            let n = v["matches_needed"]?.int ?? 0
             let target = v["target"]?.int ?? 70
             return InsightText(
                 title: "Надёжность рейтинга \(rel)%",
@@ -60,14 +62,14 @@ nonisolated enum Narratives {
                 body: "В последних \(matches) рейтинговых матчах вы побеждаете на \(pct) п.п. реже, чем предсказывает модель. Обратите внимание на партнёров и выбор соперников.",
                 symbol: "arrow.down.right.circle", sentiment: .attention)
         case "side_split":
-            let better = v["betterSide"]?.string == "left" ? "левой" : "правой"
-            let left = Int(((v["leftWinRate"]?.double ?? 0) * 100).rounded())
-            let right = Int(((v["rightWinRate"]?.double ?? 0) * 100).rounded())
-            let ln = v["leftMatches"]?.int ?? 0
-            let rn = v["rightMatches"]?.int ?? 0
+            let better = v["better_side"]?.string == "left" ? "левой" : "правой"
+            let left = Int(((v["left_win_rate"]?.double ?? 0) * 100).rounded())
+            let right = Int(((v["right_win_rate"]?.double ?? 0) * 100).rounded())
+            let ln = v["left_matches"]?.int ?? 0
+            let rn = v["right_matches"]?.int ?? 0
             return InsightText(
                 title: "Сильнее на \(better) стороне",
-                body: "Слева — \(left)% побед в \(Format.matches(ln)), справа — \(right)% в \(Format.matches(rn)). Учитывайте это при выборе партнёра.",
+                body: "Слева — \(left)% побед (\(Format.matches(ln))), справа — \(right)% (\(Format.matches(rn))). Учитывайте это при выборе партнёра.",
                 symbol: "rectangle.split.2x1", sentiment: .neutral)
         case "close_sets":
             let won = v["won"]?.int ?? 0
