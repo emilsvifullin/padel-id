@@ -301,7 +301,7 @@ final class EditorPlayerDirectory {
             guard current == generation else { return }
             items = []
             nextOffset = nil
-            error = APIError(kind: .decoding, code: "decoding", serverMessage: nil)
+            self.error = APIError(kind: .decoding, code: "decoding", serverMessage: nil)
         }
         loadedQuery = query
         loadMoreFailed = false
