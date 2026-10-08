@@ -47,6 +47,7 @@ struct WelcomeView: View {
                 .frame(maxWidth: .infinity)
             }
             .scrollBounceBehavior(.basedOnSize)
+            .scrollEdgeEffectStyle(.hard, for: .bottom)
             .background(Color(.systemGroupedBackground))
             .safeAreaBar(edge: .bottom) {
                 GlassEffectContainer {
