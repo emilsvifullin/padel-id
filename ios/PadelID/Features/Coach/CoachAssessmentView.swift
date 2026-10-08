@@ -8,7 +8,8 @@ struct CoachAssessmentView: View {
 
     @Environment(AppModel.self) private var app
     @Environment(\.dismiss) private var dismiss
-    @State private var scores: [DNADimension: Double]
+    /// Scores in `DNADimension.allCases` order.
+    @State private var scores: [Double]
     @State private var note = ""
     @State private var isSubmitting = false
     @State private var error: APIError?
@@ -35,14 +36,14 @@ struct CoachAssessmentView: View {
                 }
 
                 Section {
-                    ForEach(DNADimension.allCases) { dimension in
-                        Stepper(value: binding(for: dimension), in: 0...7, step: 0.5) {
+                    ForEach(Array(DNADimension.allCases.enumerated()), id: \.element) { index, dimension in
+                        Stepper(value: $scores[index], in: 0...7, step: 0.5) {
                             CoachAssessmentScoreLabel(
                                 dimension: dimension,
-                                score: scores[dimension] ?? 0,
+                                score: scores[index],
                                 reference: referenceLevel(for: dimension))
                         }
-                        .accessibilityValue(Format.level(scores[dimension] ?? 0))
+                        .accessibilityValue(Format.level(scores[index]))
                     }
                 } header: {
                     Text("Навыки")
@@ -116,25 +117,16 @@ struct CoachAssessmentView: View {
         !isSubmitting && app.isOnline && trimmedNote.unicodeScalars.count <= Self.noteLimit
     }
 
-    private func binding(for dimension: DNADimension) -> Binding<Double> {
-        Binding(
-            get: { scores[dimension] ?? 0 },
-            set: { scores[dimension] = min(7, max(0, $0)) }
-        )
-    }
-
     private func referenceLevel(for dimension: DNADimension) -> Double? {
         dna?.dimensions.first(where: { $0.dimension == dimension })?.level
     }
 
-    private static func initialScores(player: PlayerCard, dna: PadelDNA?) -> [DNADimension: Double] {
+    private static func initialScores(player: PlayerCard, dna: PadelDNA?) -> [Double] {
         let fallback = player.level ?? dna?.rating?.mu ?? 0
-        var result: [DNADimension: Double] = [:]
-        for dimension in DNADimension.allCases {
+        return DNADimension.allCases.map { dimension in
             let level = dna?.dimensions.first(where: { $0.dimension == dimension })?.level ?? fallback
-            result[dimension] = min(7, max(0, (level * 2).rounded() / 2))
+            return min(7, max(0, (level * 2).rounded() / 2))
         }
-        return result
     }
 
     // MARK: - Submit
@@ -144,8 +136,8 @@ struct CoachAssessmentView: View {
         isSubmitting = true
         error = nil
         var payload: [String: Double] = [:]
-        for dimension in DNADimension.allCases {
-            payload[dimension.rawValue] = scores[dimension] ?? 0
+        for (index, dimension) in DNADimension.allCases.enumerated() where index < scores.count {
+            payload[dimension.rawValue] = scores[index]
         }
         let body = CoachAssessmentRequestBody(scores: payload, note: trimmedNote.isEmpty ? nil : trimmedNote)
         let path = "v1/players/\(player.id.uuidString.lowercased())/coach-assessments"

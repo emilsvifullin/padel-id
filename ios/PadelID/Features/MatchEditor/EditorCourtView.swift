@@ -10,6 +10,14 @@ struct EditorCourtView: View {
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
+    init(draft: EditorDraft, me: PlayerCard?, onSelect: @escaping (EditorSlot) -> Void,
+         onSwap: @escaping (Int) -> Void) {
+        self.draft = draft
+        self.me = me
+        self.onSelect = onSelect
+        self.onSwap = onSwap
+    }
+
     var body: some View {
         VStack(spacing: 14) {
             team(1)

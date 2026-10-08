@@ -246,7 +246,7 @@ struct MatchesView: View {
                         .font(.footnote)
                         .foregroundStyle(Theme.negative)
                 } else {
-                    Text(app.isOnline ? "Отправляется" : "Отправится при подключении")
+                    Text(pendingStateText)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -267,6 +267,11 @@ struct MatchesView: View {
         }
         .padding(.vertical, 2)
         .accessibilityElement(children: .combine)
+    }
+
+    private var pendingStateText: String {
+        if app.outbox.isProcessing { return "Отправляется" }
+        return app.isOnline ? "Ожидает отправки" : "Отправится при подключении"
     }
 
     private func symbol(for kind: PendingOperation.Kind) -> String {
@@ -405,8 +410,7 @@ struct MatchesView: View {
 
     private func actionNote(_ item: MatchListItem) -> MatchesRowNote? {
         if item.status == .disputed && item.isCreator {
-            let names = playerNames(in: item, response: .disputed)
-            let who = names.isEmpty ? "" : "Оспаривает: \(names). "
+            let who = disputeText(item).map { "\($0). " } ?? ""
             return MatchesRowNote(text: who + "Исправьте счёт или отмените матч.", symbol: "exclamationmark.bubble",
                                   color: Theme.negative)
         }
@@ -423,8 +427,7 @@ struct MatchesView: View {
                                   color: Color.secondary)
         }
         if item.status == .disputed {
-            let names = playerNames(in: item, response: .disputed)
-            return MatchesRowNote(text: names.isEmpty ? "Результат оспорен" : "Оспаривает: \(names)",
+            return MatchesRowNote(text: disputeText(item) ?? "Результат оспорен",
                                   symbol: "exclamationmark.bubble", color: Theme.negative)
         }
         let waiting = item.players.filter { $0.response == .pending }
@@ -435,8 +438,12 @@ struct MatchesView: View {
         return MatchesRowNote(text: text, symbol: "clock", color: Color.secondary)
     }
 
-    private func playerNames(in item: MatchListItem, response: ResponseState) -> String {
-        item.players.filter { $0.response == response }.map { MatchesNames.short($0.player) }.joined(separator: ", ")
+    /// "Оспаривает: Иван П." / "Оспаривают: Иван П., Мария С."
+    private func disputeText(_ item: MatchListItem) -> String? {
+        let names = item.players.filter { $0.response == .disputed }.map { MatchesNames.short($0.player) }
+        guard !names.isEmpty else { return nil }
+        let verb = names.count == 1 ? "Оспаривает" : "Оспаривают"
+        return "\(verb): \(names.joined(separator: ", "))"
     }
 }
 

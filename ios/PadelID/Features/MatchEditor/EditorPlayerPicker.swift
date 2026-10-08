@@ -16,6 +16,13 @@ struct EditorPlayerPicker: View {
     }
     @State private var directory = EditorPlayerDirectory()
 
+    init(title: String, current: PlayerCard?, excluded: Set<UUID>, onSelect: @escaping (PlayerCard?) -> Void) {
+        self.title = title
+        self.current = current
+        self.excluded = excluded
+        self.onSelect = onSelect
+    }
+
     private var searchText: String {
         query.trimmingCharacters(in: .whitespacesAndNewlines)
     }

@@ -4,8 +4,6 @@ import SwiftUI
 nonisolated struct MatchFeedbackSelection: Hashable, Sendable {
     var strengths: [DNADimension] = []
     var improvement: DNADimension?
-
-    var isEmpty: Bool { strengths.isEmpty && improvement == nil }
 }
 
 /// Feedback on the partner and the opponents after a confirmed match. The

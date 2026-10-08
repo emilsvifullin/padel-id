@@ -163,15 +163,17 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
     await next();
   });
 
-  app.use(
-    "/v1/*",
-    bodyLimit({
-      maxSize: 64 * 1024,
-      onError: () => {
-        throw apiError("payload_too_large");
-      },
-    }),
-  );
+  // JSON bodies are small; the avatar upload has its own 1 MB limit below.
+  const jsonBodyLimit = bodyLimit({
+    maxSize: 64 * 1024,
+    onError: () => {
+      throw apiError("payload_too_large");
+    },
+  });
+  app.use("/v1/*", async (c, next) => {
+    if (c.req.method === "PUT" && c.req.path === "/v1/me/avatar") return next();
+    return jsonBodyLimit(c, next);
+  });
 
   app.onError((err, c) => {
     if (err instanceof ApiError) {

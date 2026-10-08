@@ -332,6 +332,37 @@ describe("avatars", () => {
     expect(del.body).toEqual({ prefixes: [`${userId}/oldfile123.jpg`] });
   });
 
+  it("accepts photos larger than the JSON body limit and rejects ones over 1 MB", async () => {
+    const userId = "11111111-1111-1111-1111-111111111111";
+    const h = harness(
+      routeTo({
+        "/rpc/me": () => ({ status: 200, body: { user_id: userId, profile: { avatar_path: null } } }),
+        "/storage/v1/object/avatars/": () => ({ status: 200, body: { Key: "x" } }),
+        "/rpc/set_avatar": () => ({ status: 200, body: { ok: true } }),
+      }),
+    );
+    const photo = new Uint8Array(600 * 1024);
+    photo.set([0xff, 0xd8, 0xff, 0xe0]);
+    let res = await h.request("/v1/me/avatar", { method: "PUT", headers: { ...auth, "content-type": "image/jpeg" }, body: photo });
+    expect(res.status).toBe(200);
+
+    const tooLarge = new Uint8Array(1024 * 1024 + 1);
+    tooLarge.set([0xff, 0xd8, 0xff, 0xe0]);
+    res = await h.request("/v1/me/avatar", { method: "PUT", headers: { ...auth, "content-type": "image/jpeg" }, body: tooLarge });
+    expect(res.status).toBe(413);
+    expect((await res.json()).error.code).toBe("payload_too_large");
+  });
+
+  it("keeps the 64 KB limit for JSON bodies", async () => {
+    const h = harness(() => ({ status: 200, body: {} }));
+    const res = await h.request("/v1/me", {
+      method: "PATCH",
+      headers: { ...auth, "content-type": "application/json" },
+      body: JSON.stringify({ bio: "x".repeat(70 * 1024) }),
+    });
+    expect(res.status).toBe(413);
+  });
+
   it("serves avatars with immutable caching and validates paths", async () => {
     const h = harness(() => ({ status: 200, body: "jpeg-bytes" }));
     let res = await h.request("/v1/avatars/11111111-1111-1111-1111-111111111111/abcdefgh12.jpg");

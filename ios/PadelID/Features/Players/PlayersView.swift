@@ -190,19 +190,24 @@ struct PlayersView: View {
         }
     }
 
+    /// Error of a default-state request that has nothing to show.
+    private var browseError: APIError? {
+        if model.suggested.value == nil, let error = model.suggested.error { return error }
+        if model.recent.value == nil, let error = model.recent.error { return error }
+        return nil
+    }
+
     @ViewBuilder
     private var browseOverlay: some View {
-        let suggested = model.suggested.value
-        let recent = model.recent.value
         if hasBrowseContent {
             EmptyView()
-        } else if suggested != nil && recent != nil {
+        } else if model.suggested.value != nil && model.recent.value != nil {
             ContentUnavailableView {
                 Label("Найдите партнёров", systemImage: "person.2")
             } description: {
                 Text("Ищите игроков по имени или @username. Фильтры помогут подобрать уровень и сторону корта.")
             }
-        } else if let error = (suggested == nil ? model.suggested.error : nil) ?? (recent == nil ? model.recent.error : nil) {
+        } else if let error = browseError {
             ErrorStateView(error: error) {
                 Task {
                     await model.loadBrowse(cityId: myCity?.id, revision: app.dataRevision, using: app, force: true)

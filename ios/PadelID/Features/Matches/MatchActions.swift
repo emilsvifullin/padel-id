@@ -18,17 +18,17 @@ nonisolated struct MatchFeedbackRating: Encodable, Hashable, Sendable {
     let improvements: [String]
 }
 
-private nonisolated struct MatchVersionBody: Encodable, Sendable {
+private nonisolated struct MatchActionVersionBody: Encodable, Sendable {
     let version: Int
 }
 
-private nonisolated struct MatchDisputeBody: Encodable, Sendable {
+private nonisolated struct MatchActionDisputeBody: Encodable, Sendable {
     let version: Int
     let reason: DisputeReason
     let comment: String?
 }
 
-private nonisolated struct MatchFeedbackBody: Encodable, Sendable {
+private nonisolated struct MatchActionFeedbackBody: Encodable, Sendable {
     let ratings: [MatchFeedbackRating]
 }
 
@@ -40,25 +40,30 @@ enum MatchActions {
     static let disputeCommentLimit = 140
 
     static func confirm(_ match: MatchDetail, app: AppModel) async -> MatchActionResult {
-        let endpoint = Endpoint.json(.post, path(match.id, "confirm"), MatchVersionBody(version: match.version), retryable: true)
-        return await perform(endpoint, match: match, app: app, offlineKind: .confirmMatch, title: "Подтверждение результата")
+        let endpoint = Endpoint.json(.post, path(match.id, "confirm"), MatchActionVersionBody(version: match.version), retryable: true)
+        let result = await perform(endpoint, match: match, app: app, offlineKind: .confirmMatch, title: "Подтверждение результата")
+        if case .updated(let updated, _) = result, updated.ratingApplied, !match.ratingApplied {
+            // The last confirmation applied the ranked result: the profile rating changed.
+            await app.refreshMe()
+        }
+        return result
     }
 
     static func dispute(_ match: MatchDetail, reason: DisputeReason, comment: String, app: AppModel) async -> MatchActionResult {
         let trimmed = String(comment.trimmingCharacters(in: .whitespacesAndNewlines).prefix(disputeCommentLimit))
-        let body = MatchDisputeBody(version: match.version, reason: reason, comment: trimmed.isEmpty ? nil : trimmed)
+        let body = MatchActionDisputeBody(version: match.version, reason: reason, comment: trimmed.isEmpty ? nil : trimmed)
         let endpoint = Endpoint.json(.post, path(match.id, "dispute"), body, retryable: true)
         return await perform(endpoint, match: match, app: app, offlineKind: .disputeMatch, title: "Возражение по результату")
     }
 
     static func cancel(_ match: MatchDetail, app: AppModel) async -> MatchActionResult {
         guard app.isOnline else { return .failed(.offline) }
-        let endpoint = Endpoint.json(.post, path(match.id, "cancel"), MatchVersionBody(version: match.version), retryable: true)
+        let endpoint = Endpoint.json(.post, path(match.id, "cancel"), MatchActionVersionBody(version: match.version), retryable: true)
         return await perform(endpoint, match: match, app: app, offlineKind: nil, title: "")
     }
 
     static func submitFeedback(_ match: MatchDetail, ratings: [MatchFeedbackRating], app: AppModel) async -> MatchActionResult {
-        let endpoint = Endpoint.json(.put, path(match.id, "feedback"), MatchFeedbackBody(ratings: ratings), retryable: true)
+        let endpoint = Endpoint.json(.put, path(match.id, "feedback"), MatchActionFeedbackBody(ratings: ratings), retryable: true)
         return await perform(endpoint, match: match, app: app, offlineKind: .submitFeedback, title: "Отметки игрокам")
     }
 

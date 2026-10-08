@@ -22,7 +22,7 @@ struct PlayerProfileView: View {
         content
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(.systemGroupedBackground))
-            .navigationTitle(navigationTitle)
+            .navigationTitle(titleText)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
             .safeAreaInset(edge: .bottom) { actionArea }
@@ -472,7 +472,7 @@ struct PlayerProfileView: View {
 
     // MARK: - Helpers
 
-    private var navigationTitle: String {
+    private var titleText: String {
         guard showsTitle, let value = profile.value, !value.deleted else { return "" }
         return value.profile.displayName
     }

@@ -39,8 +39,11 @@ struct CoachApplicationView: View {
             ErrorStateView(error: error) {
                 Task { await resource.load(using: app) }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(.systemGroupedBackground))
         } else {
             LoadingView()
+                .background(Color(.systemGroupedBackground))
         }
     }
 
@@ -180,17 +183,17 @@ struct CoachApplicationView: View {
 
     private var isValid: Bool {
         let about = SettingsText.length(form.about)
-        return (0...60).contains(form.years)
-            && about >= CoachApplicationLimits.aboutMinimum
-            && about <= CoachApplicationLimits.aboutMaximum
-            && SettingsText.length(form.certification) <= CoachApplicationLimits.certification
+        let aboutIsValid = about >= CoachApplicationLimits.aboutMinimum && about <= CoachApplicationLimits.aboutMaximum
+        let certificationIsValid = SettingsText.length(form.certification) <= CoachApplicationLimits.certification
+        return aboutIsValid && certificationIsValid && (0...60).contains(form.years)
     }
 
     private func hasChanges(comparedTo application: CoachApplication) -> Bool {
-        form.years != application.experienceYears
-            || SettingsText.trimmed(form.certification) != SettingsText.trimmed(application.certification ?? "")
-            || SettingsText.trimmed(form.about) != SettingsText.trimmed(application.about)
-            || form.club?.id != application.club?.id
+        if form.years != application.experienceYears { return true }
+        if form.club?.id != application.club?.id { return true }
+        let certification = SettingsText.trimmed(application.certification ?? "")
+        if SettingsText.trimmed(form.certification) != certification { return true }
+        return SettingsText.trimmed(form.about) != SettingsText.trimmed(application.about)
     }
 
     private func canSubmit(_ application: CoachApplication?) -> Bool {
@@ -293,10 +296,12 @@ private struct CoachApplicationStatusView: View {
     private var summary: String {
         switch application.status {
         case .pending:
-            return "Заявка отправлена \(Format.date(application.submittedAt)). Мы проверяем её вручную — решение появится здесь."
+            return "Заявка отправлена \(Format.date(application.submittedAt)) и проверяется вручную — решение появится здесь."
         case .approved:
-            let since = application.reviewedAt.map { " с \(Format.date($0))" } ?? ""
-            return "Вы подтверждённый тренер\(since). Оценивать навыки игрока можно в его профиле."
+            guard let reviewedAt = application.reviewedAt else {
+                return "Вы подтверждённый тренер: оценивать навыки игрока можно в его профиле."
+            }
+            return "С \(Format.date(reviewedAt)) вы подтверждённый тренер: оценивать навыки игрока можно в его профиле."
         case .rejected:
             return "Заявка отклонена. Дополните анкету и отправьте её снова."
         case .revoked:

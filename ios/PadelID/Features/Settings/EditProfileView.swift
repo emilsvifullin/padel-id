@@ -386,10 +386,9 @@ struct EditProfileView: View {
     private var hasChanges: Bool { !patch.isEmpty }
 
     private var isValid: Bool {
-        (normalizedName == original.displayName || EditProfileValidation.nameProblem(normalizedName) == nil)
-            && usernameState.allowsSave
-            && city != nil
-            && SettingsText.length(bio) <= EditProfileOptions.bioLimit
+        let nameIsValid = normalizedName == original.displayName || EditProfileValidation.nameProblem(normalizedName) == nil
+        let bioIsValid = SettingsText.length(bio) <= EditProfileOptions.bioLimit
+        return nameIsValid && bioIsValid && usernameState.allowsSave && city != nil
     }
 
     private var canSave: Bool {
@@ -512,14 +511,7 @@ struct EditProfileView: View {
                 return
             }
             avatarPreview = image
-            let data: Data
-            do {
-                data = try await app.api.data(avatarEndpoint(jpeg))
-            } catch let error as APIError where error.code == "payload_too_large" {
-                // Retry once with a much smaller file.
-                guard let compact = EditProfileAvatarEncoder.jpeg(image, maxBytes: 60_000) else { throw error }
-                data = try await app.api.data(avatarEndpoint(compact))
-            }
+            let data = try await app.api.data(avatarEndpoint(jpeg))
             let me = try JSONCoding.decoder.decode(Me.self, from: data)
             applyMe(me, data: data)
             avatarCount += 1
@@ -629,8 +621,10 @@ private nonisolated struct EditProfilePatch: Encodable, Sendable {
     var discoverable: Bool?
 
     var isEmpty: Bool {
-        displayName == nil && username == nil && cityId == nil && clubId == nil && preferredSide == nil
-            && dominantHand == nil && playingSince == nil && bio == nil && discoverable == nil
+        if displayName != nil || username != nil || cityId != nil { return false }
+        if clubId != nil || preferredSide != nil || dominantHand != nil { return false }
+        if playingSince != nil || bio != nil || discoverable != nil { return false }
+        return true
     }
 
     func encode(to encoder: Encoder) throws {

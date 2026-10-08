@@ -175,6 +175,8 @@ final class AppModel {
         me = nil
         actionCount = 0
         selectedTab = .padelID
+        isAccountPresented = false
+        matchEditor = nil
         signOutNotice = notice
         withAnimation(.smooth) { phase = .signedOut }
         Task { await NotificationService.shared.clearBadge() }
