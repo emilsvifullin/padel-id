@@ -42,7 +42,7 @@ struct MatchDetailView: View {
         .navigationTitle("Матч")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent }
-        .safeAreaInset(edge: .bottom) {
+        .safeAreaBar(edge: .bottom) {
             if let match = detail.value {
                 actionBar(match)
             }

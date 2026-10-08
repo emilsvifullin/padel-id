@@ -33,6 +33,13 @@ else:
 udid=$(xcrun simctl create "PadelID ${device_name}" "$device_type" "$runtime")
 xcrun simctl boot "$udid" >&2
 xcrun simctl bootstatus "$udid" -b >&2
+# Russian system language, as on the users' phones (system sheets and
+# keyboards then match the app); it applies after a restart.
+xcrun simctl spawn "$udid" defaults write -g AppleLanguages -array ru-RU >&2
+xcrun simctl spawn "$udid" defaults write -g AppleLocale -string ru_RU >&2
+xcrun simctl shutdown "$udid" >&2
+xcrun simctl boot "$udid" >&2
+xcrun simctl bootstatus "$udid" -b >&2
 xcrun simctl ui "$udid" appearance "$appearance" >&2
 xcrun simctl ui "$udid" content_size "$content_size" >&2
 xcrun simctl status_bar "$udid" override --time "9:41" --dataNetwork wifi --wifiMode active --wifiBars 3 \

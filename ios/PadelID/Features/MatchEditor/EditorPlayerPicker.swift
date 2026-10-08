@@ -47,7 +47,7 @@ struct EditorPlayerPicker: View {
             }
             .listStyle(.insetGrouped)
             .scrollDismissesKeyboard(.immediately)
-            .safeAreaInset(edge: .top, spacing: 0) {
+            .safeAreaBar(edge: .top, spacing: 0) {
                 searchField
             }
             .navigationTitle(title)

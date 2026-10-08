@@ -25,7 +25,7 @@ struct PlayerProfileView: View {
             .navigationTitle(titleText)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
-            .safeAreaInset(edge: .bottom) { actionArea }
+            .safeAreaBar(edge: .bottom) { actionArea }
             .task(id: app.dataRevision) {
                 loadMyDNA()
                 await profile.load(using: app)

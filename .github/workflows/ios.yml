@@ -108,11 +108,15 @@ jobs:
       - name: Test summary
         if: always()
         run: |
+          mkdir -p "$RUNNER_TEMP/screenshots"
+          summary="$RUNNER_TEMP/screenshots/${{ matrix.slug }}-summary.txt"
+          : > "$summary"
           for r in unit ui; do
             if [ -d "$RUNNER_TEMP/$r.xcresult" ]; then
-              echo "== $r"
+              echo "== $r" | tee -a "$summary"
               xcrun xcresulttool get test-results summary --path "$RUNNER_TEMP/$r.xcresult" --compact \
-                | python3 -c 'import json,sys; s=json.load(sys.stdin); print({k: s.get(k) for k in ("result","totalTestCount","passedTests","failedTests","skippedTests")}); [print("FAILED:", f.get("testName"), "-", f.get("failureText")) for f in s.get("testFailures", [])]'
+                | python3 -c 'import json,sys; s=json.load(sys.stdin); print({k: s.get(k) for k in ("result","totalTestCount","passedTests","failedTests","skippedTests")}); [print("FAILED:", f.get("testName"), "-", f.get("failureText")) for f in s.get("testFailures", [])]' \
+                | tee -a "$summary"
             fi
           done
 
@@ -161,7 +165,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          count=$(find screenshots -name '*.png' 2>/dev/null | wc -l | tr -d ' ')
+          count=$(find screenshots -type f 2>/dev/null | wc -l | tr -d ' ')
           echo "Screenshots: $count"
           [ "$count" -gt 0 ] || exit 0
           (cd screenshots && zip -q -r ../screenshots.zip .)

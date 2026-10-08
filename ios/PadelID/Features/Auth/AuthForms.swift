@@ -30,9 +30,40 @@ struct PasswordRequirements: View {
     }
 
     private func requirement(_ text: String, met: Bool) -> some View {
-        Label(text, systemImage: met ? "checkmark.circle.fill" : "circle")
-            .foregroundStyle(met ? Theme.positive : .secondary)
-            .accessibilityLabel(text + (met ? ", выполнено" : ", не выполнено"))
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Image(systemName: met ? "checkmark.circle.fill" : "circle")
+            Text(text)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .foregroundStyle(met ? Theme.positive : .secondary)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(text + (met ? ", выполнено" : ", не выполнено"))
+    }
+}
+
+/// Full-width primary action of the authentication forms.
+struct AuthPrimaryButton: View {
+    let title: String
+    let isBusy: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                Text(title)
+                    .opacity(isBusy ? 0 : 1)
+                if isBusy {
+                    ProgressView()
+                }
+            }
+            .font(.headline)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
+        }
+        .buttonStyle(.glassProminent)
+        .controlSize(.large)
+        .listRowInsets(EdgeInsets())
+        .listRowBackground(Color.clear)
     }
 }
 
@@ -73,16 +104,16 @@ struct SignInView: View {
             }
 
             Section {
-                Button(action: submit) {
-                    HStack {
-                        Text("Войти")
-                        Spacer()
-                        if isSubmitting { ProgressView() }
-                    }
-                }
-                .disabled(!canSubmit)
-                .accessibilityIdentifier("signIn.submit")
+                AuthPrimaryButton(title: "Войти", isBusy: isSubmitting, action: submit)
+                    .disabled(!canSubmit)
+                    .accessibilityIdentifier("signIn.submit")
+            }
+
+            Section {
                 Button("Забыли пароль?", action: onForgotPassword)
+                    .frame(maxWidth: .infinity)
+                    .listRowBackground(Color.clear)
+                    .accessibilityIdentifier("signIn.forgot")
             }
         }
         .navigationTitle("Вход")
@@ -150,15 +181,9 @@ struct SignUpView: View {
             }
 
             Section {
-                Button(action: submit) {
-                    HStack {
-                        Text("Создать аккаунт")
-                        Spacer()
-                        if isSubmitting { ProgressView() }
-                    }
-                }
-                .disabled(!canSubmit)
-                .accessibilityIdentifier("signUp.submit")
+                AuthPrimaryButton(title: "Создать аккаунт", isBusy: isSubmitting, action: submit)
+                    .disabled(!canSubmit)
+                    .accessibilityIdentifier("signUp.submit")
             }
         }
         .navigationTitle("Регистрация")
@@ -230,15 +255,9 @@ struct RecoverView: View {
                 }
             }
             Section {
-                Button(action: submit) {
-                    HStack {
-                        Text("Восстановить доступ")
-                        Spacer()
-                        if isSubmitting { ProgressView() }
-                    }
-                }
-                .disabled(!canSubmit)
-                .accessibilityIdentifier("recover.submit")
+                AuthPrimaryButton(title: "Восстановить доступ", isBusy: isSubmitting, action: submit)
+                    .disabled(!canSubmit)
+                    .accessibilityIdentifier("recover.submit")
             } footer: {
                 Text("После восстановления все другие устройства выйдут из аккаунта, а вы получите новый ключ.")
             }

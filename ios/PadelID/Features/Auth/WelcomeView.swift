@@ -48,7 +48,7 @@ struct WelcomeView: View {
             }
             .scrollBounceBehavior(.basedOnSize)
             .background(Color(.systemGroupedBackground))
-            .safeAreaInset(edge: .bottom) {
+            .safeAreaBar(edge: .bottom) {
                 GlassEffectContainer {
                     VStack(spacing: 12) {
                         Button {

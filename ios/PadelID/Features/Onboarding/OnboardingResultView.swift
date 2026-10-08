@@ -28,7 +28,7 @@ struct OnboardingResultView: View {
         }
         .scrollBounceBehavior(.basedOnSize)
         .background(Color(.systemGroupedBackground))
-        .safeAreaInset(edge: .bottom) {
+        .safeAreaBar(edge: .bottom) {
             OnboardingActionBar(title: "Открыть Padel ID", identifier: "onboarding.open") {
                 app.apply(me: me)
             }

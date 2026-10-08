@@ -19,6 +19,7 @@ final class OnboardingUITests: PadelIDUITestCase {
         enter(Self.password, into: password)
         snap("sign-up")
         submit(element("signUp.submit"), orReturnIn: password)
+        dismissSavePasswordPrompt()
         waitForRequest("POST", "v1/auth/signup")
 
         // Recovery key (shown once, has to be confirmed)

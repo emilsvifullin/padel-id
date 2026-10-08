@@ -66,7 +66,7 @@ struct RecoveryKeyView: View {
                 .padding(Theme.horizontalPadding)
             }
             .background(Color(.systemGroupedBackground))
-            .safeAreaInset(edge: .bottom) {
+            .safeAreaBar(edge: .bottom) {
                 Button {
                     onDone()
                 } label: {

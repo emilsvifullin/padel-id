@@ -418,7 +418,7 @@ private struct OnboardingStepScreen<Content: View>: View {
                     proxy.scrollTo(OnboardingScrollAnchor.bottom, anchor: .bottom)
                 }
             }
-            .safeAreaInset(edge: .bottom) {
+            .safeAreaBar(edge: .bottom) {
                 OnboardingActionBar(title: primaryTitle, identifier: primaryIdentifier,
                                     isEnabled: canContinue, isWorking: isWorking, action: action)
             }

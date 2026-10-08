@@ -108,9 +108,10 @@ class PadelIDUITestCase: XCTestCase {
         return app
     }
 
-    /// Allows the notification permission (or confirms any other system alert).
+    /// Allows the notification permission, declines saving the password and
+    /// confirms any other system alert.
     static func acceptSystemAlert(_ alert: XCUIElement) -> Bool {
-        let titles = ["Allow", "Разрешить", "Allow While Using App", "При использовании", "OK", "ОК"]
+        let titles = ["Not Now", "Не сейчас", "Allow", "Разрешить", "Allow While Using App", "При использовании", "OK", "ОК"]
         for title in titles {
             let button = alert.buttons[title]
             if button.exists {
@@ -134,6 +135,24 @@ class PadelIDUITestCase: XCTestCase {
             snap("sign-in")
         }
         submit(element("signIn.submit"), orReturnIn: password)
+        dismissSavePasswordPrompt()
+    }
+
+    /// iOS offers to save the password after a successful sign-in or sign-up;
+    /// the sheet belongs to the system, so look for it in both processes.
+    func dismissSavePasswordPrompt(timeout: TimeInterval = 6) {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let candidates = ["Not Now", "Не сейчас"].flatMap { title in
+            [app.buttons[title], springboard.buttons[title]]
+        }
+        let deadline = Date().addingTimeInterval(timeout)
+        repeat {
+            if let button = candidates.first(where: { $0.exists && $0.isHittable }) {
+                button.tap()
+                return
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+        } while Date() < deadline
     }
 
     /// Waits for the Padel ID tab with the level hero.
