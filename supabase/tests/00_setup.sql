@@ -23,9 +23,17 @@ create function tests.act_as(p_uid uuid)
 returns void
 language plpgsql
 as $$
+declare
+  v_session uuid;
 begin
   execute 'reset role';
-  perform set_config('request.jwt.claims', json_build_object('sub', p_uid, 'role', 'authenticated')::text, true);
+  select id into v_session from auth.sessions where user_id = p_uid order by created_at limit 1;
+  if v_session is null then
+    v_session := gen_random_uuid();
+    insert into auth.sessions (id, user_id) values (v_session, p_uid);
+  end if;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', p_uid, 'role', 'authenticated', 'session_id', v_session)::text, true);
   perform set_config('request.jwt.claim.sub', p_uid::text, true);
   execute 'set local role authenticated';
 end;

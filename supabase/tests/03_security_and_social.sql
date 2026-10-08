@@ -293,3 +293,26 @@ begin
   perform tests.assert(public.bff_rate_limit(secret, 'login:other', 2, 60), 'buckets are independent');
   perform tests.expect_error(format('select public.bff_rate_limit(%L, %L, 2, 60)', repeat('t', 48), 'login:test'), 'forbidden', 'wrong secret');
 end $$;
+
+create function tests.test_revoked_session_is_rejected()
+returns void language plpgsql as $$
+declare
+  u uuid := tests.player('sess_user');
+  v_session uuid;
+begin
+  perform tests.act_as(u);
+  perform public.me();
+  perform tests.as_admin();
+  select id into v_session from auth.sessions where user_id = u limit 1;
+  delete from auth.sessions where user_id = u;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', u, 'role', 'authenticated', 'session_id', v_session)::text, true);
+  perform set_config('request.jwt.claim.sub', u::text, true);
+  execute 'set local role authenticated';
+  perform tests.expect_error('select public.me()', 'session_expired', 'token of a revoked session');
+  perform tests.as_admin();
+  perform set_config('request.jwt.claims', json_build_object('sub', u, 'role', 'authenticated')::text, true);
+  perform set_config('request.jwt.claim.sub', u::text, true);
+  execute 'set local role authenticated';
+  perform tests.expect_error('select public.me()', 'session_expired', 'token without session id');
+end $$;
