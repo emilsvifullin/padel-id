@@ -5,9 +5,11 @@ import SwiftUI
 enum Theme {
     static let accent = Color.accentColor
     static let ball = Color("Ball")
-    static let positive = Color.green
-    static let negative = Color.red
-    static let attention = Color.orange
+    /// Semantic colours (asset catalog): darker in Light mode so that text
+    /// in them keeps a 4.5:1 contrast, the vivid system hues in Dark mode.
+    static let positive = Color("Positive")
+    static let negative = Color("Negative")
+    static let attention = Color("Attention")
 
     static let cornerRadius: CGFloat = 22
     static let smallCornerRadius: CGFloat = 14
