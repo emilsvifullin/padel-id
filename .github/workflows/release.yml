@@ -35,7 +35,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       build: ${{ steps.version.outputs.build }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Read the version
         id: version
@@ -86,9 +86,18 @@ jobs:
       - name: Verify PadelID.ipa
         run: scripts/ios/verify-ipa.sh dist/PadelID.ipa "${{ steps.version.outputs.version }}"
 
-      - uses: actions/upload-artifact@v4
+      # The IPA itself, downloadable as-is (not zipped) from the run page.
+      - uses: actions/upload-artifact@v7
         with:
-          name: PadelID-${{ steps.version.outputs.version }}
+          path: dist/PadelID.ipa
+          archive: false
+          if-no-files-found: error
+          retention-days: 90
+
+      # IPA plus checksum for the publish job.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ steps.version.outputs.version }}
           path: |
             dist/PadelID.ipa
             dist/PadelID.ipa.sha256
@@ -104,11 +113,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
-          name: PadelID-${{ needs.build.outputs.version }}
+          name: release-${{ needs.build.outputs.version }}
           path: dist
 
       - name: Create the release

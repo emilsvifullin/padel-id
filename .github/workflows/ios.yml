@@ -58,7 +58,7 @@ jobs:
             content_size: extra-extra-extra-large
             unit: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: ./.github/actions/setup-ios
 
@@ -120,7 +120,7 @@ jobs:
         if: always()
         run: python3 scripts/ios/export-screenshots.py "$RUNNER_TEMP/ui.xcresult" "$RUNNER_TEMP/screenshots" "${{ matrix.slug }}-"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: screenshots-${{ matrix.slug }}
@@ -128,7 +128,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: xcresult-${{ matrix.slug }}
