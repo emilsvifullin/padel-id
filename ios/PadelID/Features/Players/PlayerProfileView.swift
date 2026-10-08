@@ -64,8 +64,8 @@ struct PlayerProfileView: View {
     private func loaded(_ value: PlayerProfileResponse) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
-                if profile.isStale, profile.error?.isNetwork == true {
-                    OfflineBanner()
+                if profile.isStale, let error = profile.error {
+                    StaleDataBanner(error: error)
                 }
                 PlayerProfileHeader(profile: value.profile)
                 levelBlock(value)
@@ -162,6 +162,7 @@ struct PlayerProfileView: View {
         if let reliability {
             HStack(spacing: 10) {
                 ReliabilityRing(reliability: reliability, size: 44)
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Надёжность " + String(reliability) + "%")
                         .font(.subheadline.weight(.medium))
@@ -635,8 +636,8 @@ private struct PlayerProfileCompatibilityBars: View {
     }
 }
 
-/// Results of the last confirmed matches as green/red dots, oldest on the
-/// left (`form` arrives newest first as "W" / "L").
+/// Results of the last confirmed matches, oldest on the left: filled dots
+/// for wins, hollow rings for losses (`form` arrives newest first as "W" / "L").
 private struct PlayerProfileFormRow: View {
     let form: [String]
     @ScaledMetric(relativeTo: .body) private var dotSize: CGFloat = 10
@@ -649,13 +650,11 @@ private struct PlayerProfileFormRow: View {
         let recent = Array(form.prefix(10))
         HStack(spacing: 4) {
             ForEach(Array(recent.reversed().enumerated()), id: \.offset) { _, result in
-                Circle()
-                    .fill(result == "W" ? Theme.positive : Theme.negative)
-                    .frame(width: dotSize, height: dotSize)
+                FormResultDot(won: result == "W", size: dotSize)
             }
         }
+        // The visible «Форма» title above already names the row.
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Форма")
         .accessibilityValue(accessibilitySummary(recent))
     }
 

@@ -94,9 +94,12 @@ struct SettingsDNASelfView: View {
             } catch let apiError as APIError {
                 error = apiError
                 failureCount += 1
+                Announce.post(apiError.message)
             } catch {
-                self.error = APIError(kind: .decoding, code: "decoding", serverMessage: nil)
+                let failure = APIError(kind: .decoding, code: "decoding", serverMessage: nil)
+                self.error = failure
                 failureCount += 1
+                Announce.post(failure.message)
             }
         }
     }

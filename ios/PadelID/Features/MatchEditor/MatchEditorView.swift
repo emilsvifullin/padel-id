@@ -48,6 +48,9 @@ struct MatchEditorView: View {
                     withAnimation(.smooth) {
                         proxy.scrollTo(Self.topAnchor, anchor: .top)
                     }
+                    if let error = model.visibleError {
+                        Announce.post(error.message)
+                    }
                 }
             }
             .navigationTitle(model.isEditing ? "Изменить матч" : "Новый матч")

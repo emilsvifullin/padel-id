@@ -43,14 +43,14 @@ struct StatsDetailView: View {
             }
         } else if let stats = value.stats, stats.matches > 0 {
             List {
-                if player.isStale, player.error?.isNetwork == true {
+                if player.isStale, let error = player.error {
                     Section {
-                        OfflineBanner()
+                        StaleDataBanner(error: error)
                             .listRowInsets(EdgeInsets())
                             .listRowBackground(Color.clear)
                     }
                 }
-                StatsDetailSections(stats: stats)
+                StatsDetailSections(stats: stats, isMe: isMe)
             }
             .listStyle(.insetGrouped)
             .refreshable { [player = self.player, app = self.app] in
@@ -79,6 +79,8 @@ struct StatsDetailView: View {
 
 private struct StatsDetailSections: View {
     let stats: PlayerStats
+    /// The statistics are the current user's own (the copy says «ваша пара»).
+    let isMe: Bool
 
     var body: some View {
         Section("Итоги") {
@@ -165,7 +167,9 @@ private struct StatsDetailSections: View {
             } header: {
                 Text("Соперники")
             } footer: {
-                Text("Победы — матчи, которые выиграла ваша пара против этого игрока.")
+                Text(isMe
+                     ? "Победы — матчи, которые выиграла ваша пара против этого игрока."
+                     : "Победы — матчи, в которых пара игрока обыграла этого соперника.")
             }
         }
     }

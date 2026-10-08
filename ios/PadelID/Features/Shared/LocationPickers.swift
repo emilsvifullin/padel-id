@@ -77,9 +77,9 @@ struct CityPickerView: View {
 
     var body: some View {
         List {
-            if cities.isStale, cities.error?.isNetwork == true {
+            if cities.isStale, let error = cities.error {
                 Section {
-                    OfflineBanner()
+                    StaleDataBanner(error: error)
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
                 }
@@ -206,9 +206,9 @@ struct ClubPickerView: View {
 
     var body: some View {
         List {
-            if clubs.isStale, clubs.error?.isNetwork == true {
+            if clubs.isStale, let error = clubs.error {
                 Section {
-                    OfflineBanner()
+                    StaleDataBanner(error: error)
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
                 }

@@ -465,14 +465,18 @@ final class StubServer {
         }
 
         if parts.count >= 2, parts[0] == "players", method == "GET" {
+            // The current user's own profile and history have fixtures of
+            // their own when the bundle contains them.
+            let isCurrentUser = parts[1].lowercased() == Self.currentUserID
             if parts.count == 2 {
-                return fixture("player_profile")
+                return fixture(isCurrentUser ? preferredFixture("player_profile_me", fallback: "player_profile") : "player_profile")
             }
             if parts.count == 3 {
                 switch parts[2] {
                 case "rating-history": return fixture("rating_history")
                 case "dna": return fixture("dna")
-                case "matches": return fixture("player_matches")
+                case "matches":
+                    return fixture(isCurrentUser ? preferredFixture("player_matches_me", fallback: "player_matches") : "player_matches")
                 default: break
                 }
             }
@@ -483,14 +487,22 @@ final class StubServer {
 
     // MARK: - Fixtures
 
+    /// `name` if the test bundle contains that fixture, otherwise `fallback`.
+    private func preferredFixture(_ name: String, fallback: String) -> String {
+        fixtureURL(name) == nil ? fallback : name
+    }
+
+    private func fixtureURL(_ name: String) -> URL? {
+        let bundle = Bundle(for: StubServer.self)
+        return bundle.url(forResource: name, withExtension: "json", subdirectory: "Fixtures")
+            ?? bundle.url(forResource: name, withExtension: "json")
+    }
+
     private func fixture(_ name: String, status: Int = 200) -> StubResponse {
         if let cached = fixtureCache[name] {
             return .json(cached, status: status)
         }
-        let bundle = Bundle(for: StubServer.self)
-        guard let url = bundle.url(forResource: name, withExtension: "json", subdirectory: "Fixtures")
-                ?? bundle.url(forResource: name, withExtension: "json"),
-              let data = try? Data(contentsOf: url) else {
+        guard let url = fixtureURL(name), let data = try? Data(contentsOf: url) else {
             if !missingFixtures.contains(name) {
                 missingFixtures.append(name)
             }

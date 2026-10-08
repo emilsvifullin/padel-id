@@ -48,14 +48,15 @@ struct RatingDetailView: View {
     @ViewBuilder
     private func content(_ resource: Resource<RatingHistory>) -> some View {
         if let history = resource.value {
-            if resource.isStale, resource.error?.isNetwork == true {
+            if resource.isStale, let error = resource.error {
                 Section {
-                    OfflineBanner()
+                    StaleDataBanner(error: error)
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
                 }
             }
-            RatingDetailSections(history: history, range: range, rating: player.value?.rating)
+            RatingDetailSections(history: history, range: range, rating: player.value?.rating,
+                                 isMe: app.me?.userId == playerId)
         } else if let error = resource.error {
             Section {
                 ErrorStateView(error: error) {
@@ -152,6 +153,8 @@ private struct RatingDetailSections: View {
     let history: RatingHistory
     let range: RatingDetailRange
     let rating: RatingSummary?
+    /// The screen shows the current user's own rating (the copy says «ваша пара»).
+    let isMe: Bool
 
     var body: some View {
         Section {
@@ -168,7 +171,7 @@ private struct RatingDetailSections: View {
             }
         } footer: {
             if history.points.count >= 2 {
-                Text("Линия — уровень, полоса вокруг — погрешность. Точки — рейтинговые матчи: зелёные — победы, красные — поражения.")
+                Text("Линия — уровень, полоса вокруг — погрешность. Значки — рейтинговые матчи: зелёные кружки — победы, красные крестики — поражения.")
             }
         }
 
@@ -213,7 +216,9 @@ private struct RatingDetailSections: View {
             } header: {
                 Text("Изменения")
             } footer: {
-                Text("«Шансы» — вероятность победы вашей пары по оценке модели до матча. Чем ниже шансы, тем сильнее победа поднимает рейтинг.")
+                Text(isMe
+                     ? "«Шансы» — вероятность победы вашей пары по оценке модели до матча. Чем ниже шансы, тем сильнее победа поднимает рейтинг."
+                     : "«Шансы» — вероятность победы пары игрока по оценке модели до матча. Чем ниже шансы, тем сильнее победа поднимает рейтинг.")
             }
         }
     }

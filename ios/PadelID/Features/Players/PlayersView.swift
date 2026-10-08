@@ -28,7 +28,7 @@ struct PlayersView: View {
                 }
             }
             .navigationTitle("Игроки")
-            .searchable(text: $searchText, prompt: "Имя или @username")
+            .searchable(text: $searchText, prompt: "Имя или @имя_пользователя")
             .autocorrectionDisabled()
             .toolbar { toolbarContent }
             .task(id: taskID) { await run(taskID) }
@@ -152,17 +152,19 @@ struct PlayersView: View {
         !suggestedCards.isEmpty || !(model.recent.value ?? []).isEmpty
     }
 
-    private var showsBrowseOfflineBanner: Bool {
-        hasBrowseContent
-            && ((model.suggested.isStale && model.suggested.error?.isNetwork == true)
-                || (model.recent.isStale && model.recent.error?.isNetwork == true))
+    /// Why the suggestions or recent players are cached ones (offline, or a server error).
+    private var browseStaleError: APIError? {
+        guard hasBrowseContent else { return nil }
+        if model.suggested.isStale, let error = model.suggested.error { return error }
+        if model.recent.isStale, let error = model.recent.error { return error }
+        return nil
     }
 
     @ViewBuilder
     private var browseSections: some View {
-        if showsBrowseOfflineBanner {
+        if let error = browseStaleError {
             Section {
-                OfflineBanner()
+                StaleDataBanner(error: error)
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
             }
@@ -205,7 +207,7 @@ struct PlayersView: View {
             ContentUnavailableView {
                 Label("Найдите партнёров", systemImage: "person.2")
             } description: {
-                Text("Ищите игроков по имени или @username. Фильтры помогут подобрать уровень и сторону корта.")
+                Text("Ищите игроков по имени или имени пользователя. Фильтры помогут подобрать уровень и сторону корта.")
             }
         } else if let error = browseError {
             ErrorStateView(error: error) {

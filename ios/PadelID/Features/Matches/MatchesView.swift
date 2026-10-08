@@ -75,8 +75,8 @@ struct MatchesView: View {
 
     private var list: some View {
         List {
-            if showsOfflineBanner {
-                OfflineBanner()
+            if let error = staleError {
+                StaleDataBanner(error: error)
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
             }
@@ -86,7 +86,7 @@ struct MatchesView: View {
             if !actionItems.isEmpty {
                 Section {
                     ForEach(actionItems) { item in
-                        matchLink(item, note: actionNote(item))
+                        matchLink(item, note: actionNote(item), showsPendingStatus: false)
                     }
                 } header: {
                     Text("Нужен ваш ответ")
@@ -95,7 +95,7 @@ struct MatchesView: View {
             if !waitingItems.isEmpty {
                 Section {
                     ForEach(waitingItems) { item in
-                        matchLink(item, note: waitingNote(item))
+                        matchLink(item, note: waitingNote(item), showsPendingStatus: false)
                     }
                 } header: {
                     Text("Ждут подтверждения")
@@ -161,10 +161,12 @@ struct MatchesView: View {
 
     // MARK: - Rows
 
-    private func matchLink(_ item: MatchListItem, note: MatchesRowNote?) -> some View {
+    /// `showsPendingStatus: false` in the open sections, whose header already
+    /// says that the matches wait for confirmation.
+    private func matchLink(_ item: MatchListItem, note: MatchesRowNote?, showsPendingStatus: Bool = true) -> some View {
         NavigationLink(value: Route.match(item.id)) {
             VStack(alignment: .leading, spacing: 8) {
-                MatchRowView(item: item, perspectiveTeam: item.myTeam)
+                MatchRowView(item: item, perspectiveTeam: item.myTeam, showsPendingStatus: showsPendingStatus)
                 if let note {
                     Label(note.text, systemImage: note.symbol)
                         .font(.footnote)
@@ -194,16 +196,21 @@ struct MatchesView: View {
     private var outboxSection: some View {
         Section {
             ForEach(app.outbox.operations) { operation in
-                outboxRow(operation)
+                // The operation being sent cannot be withdrawn any more.
+                let isSending = operation.id == app.outbox.inFlightId
+                outboxRow(operation, isSending: isSending)
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button("Удалить", systemImage: "trash", role: .destructive) {
-                            app.outbox.discard(operation.id)
+                        if !isSending {
+                            Button("Удалить", systemImage: "trash", role: .destructive) {
+                                app.outbox.discard(operation.id)
+                            }
                         }
                     }
                     .contextMenu {
                         Button("Удалить", systemImage: "trash", role: .destructive) {
                             app.outbox.discard(operation.id)
                         }
+                        .disabled(isSending)
                     }
             }
             if !app.outbox.pending.isEmpty {
@@ -228,7 +235,7 @@ struct MatchesView: View {
         }
     }
 
-    private func outboxRow(_ operation: PendingOperation) -> some View {
+    private func outboxRow(_ operation: PendingOperation, isSending: Bool) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: symbol(for: operation.kind))
                 .font(.body)
@@ -246,7 +253,7 @@ struct MatchesView: View {
                         .font(.footnote)
                         .foregroundStyle(Theme.negative)
                 } else {
-                    Text(pendingStateText)
+                    Text(isSending ? "Отправляется" : pendingStateText)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -257,7 +264,7 @@ struct MatchesView: View {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(Theme.attention)
                     .accessibilityHidden(true)
-            } else if app.outbox.isProcessing {
+            } else if isSending {
                 ProgressView()
             } else {
                 Image(systemName: "clock")
@@ -270,8 +277,7 @@ struct MatchesView: View {
     }
 
     private var pendingStateText: String {
-        if app.outbox.isProcessing { return "Отправляется" }
-        return app.isOnline ? "Ожидает отправки" : "Отправится при подключении"
+        app.isOnline ? "Ожидает отправки" : "Отправится при подключении"
     }
 
     private func symbol(for kind: PendingOperation.Kind) -> String {
@@ -385,9 +391,11 @@ struct MatchesView: View {
             && app.outbox.operations.isEmpty
     }
 
-    private var showsOfflineBanner: Bool {
-        (open.isStale && open.error?.isNetwork == true)
-            || (history.firstPage.isStale && history.firstPage.error?.isNetwork == true)
+    /// Why cached matches are shown (offline, or a server error).
+    private var staleError: APIError? {
+        if open.isStale, let error = open.error { return error }
+        if history.firstPage.isStale, let error = history.firstPage.error { return error }
+        return nil
     }
 
     private func loadOpen() async {
@@ -395,10 +403,11 @@ struct MatchesView: View {
         updateActionCount()
     }
 
+    /// Pull to refresh and retry: everything from the first page.
     private func reload() async {
         await app.flushOutbox()
         await loadOpen()
-        await history.load(using: app)
+        await history.load(using: app, reset: true)
     }
 
     private func updateActionCount() {

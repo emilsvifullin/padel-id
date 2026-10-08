@@ -72,6 +72,7 @@ struct OnboardingResultView: View {
         SectionContainer(padding: 20) {
             HStack(alignment: .top, spacing: 16) {
                 ReliabilityRing(reliability: rating.reliability, size: 48)
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 6) {
                     Text(rating.provisional ? "Предварительный рейтинг" : "Надёжность рейтинга")
                         .font(.headline)

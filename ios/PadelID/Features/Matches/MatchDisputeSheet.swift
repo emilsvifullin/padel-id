@@ -119,6 +119,7 @@ struct MatchDisputeSheet: View {
             isSubmitting = false
             if case .failed(let failure) = result {
                 error = failure
+                Announce.post(failure.message)
             } else {
                 onFinish(result)
                 dismiss()

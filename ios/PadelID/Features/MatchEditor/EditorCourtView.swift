@@ -48,8 +48,7 @@ struct EditorCourtView: View {
                 }
                 .buttonStyle(.borderless)
                 .disabled(number == 2 && draft.opponentLeft == nil && draft.opponentRight == nil)
-                .accessibilityLabel("Поменять стороны")
-                .accessibilityHint(number == 1 ? "Ваша пара" : "Соперники")
+                .accessibilityLabel(number == 1 ? "Поменять стороны в вашей паре" : "Поменять стороны у соперников")
                 .accessibilityIdentifier("editor.swap.\(number)")
             }
             slots(number)

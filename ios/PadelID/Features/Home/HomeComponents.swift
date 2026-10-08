@@ -34,8 +34,9 @@ struct HomeInsightRow: View {
     }
 }
 
-/// Results of the most recent confirmed matches as green/red dots, oldest on
-/// the left. `form` arrives newest first ("W" / "L").
+/// Results of the most recent confirmed matches, oldest on the left: filled
+/// green dots for wins, hollow red rings for losses. `form` arrives newest
+/// first ("W" / "L"). The containing tile or row supplies the title.
 struct HomeFormDots: View {
     let form: [String]
     @ScaledMetric(relativeTo: .body) private var dotSize: CGFloat = 10
@@ -47,13 +48,10 @@ struct HomeFormDots: View {
     var body: some View {
         HStack(spacing: 4) {
             ForEach(Array(recent.reversed().enumerated()), id: \.offset) { _, result in
-                Circle()
-                    .fill(result == "W" ? Theme.positive : Theme.negative)
-                    .frame(width: dotSize, height: dotSize)
+                FormResultDot(won: result == "W", size: dotSize)
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Форма")
         .accessibilityValue(HomeFormDots.spokenSummary(form))
     }
 

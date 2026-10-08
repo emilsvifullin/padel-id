@@ -137,8 +137,8 @@ nonisolated enum Narratives {
                 case (.left, .right): return "Вы играете слева, \(otherName) — справа"
                 case (.both, .both): return "Оба готовы играть на любой стороне"
                 case (.both, _), (_, .both): return "Стороны легко распределить: один из вас играет на обеих"
-                case (.left, .left): return "Оба предпочитаете левую сторону"
-                case (.right, .right): return "Оба предпочитаете правую сторону"
+                case (.left, .left): return "Вы оба предпочитаете левую сторону"
+                case (.right, .right): return "Вы оба предпочитаете правую сторону"
                 default: return nil
                 }
             case "covers_weakness":
@@ -201,7 +201,7 @@ nonisolated enum Narratives {
         case .wrongScore: "Неверный счёт"
         case .wrongPlayers: "Неверный состав"
         case .wrongType: "Неверный тип матча"
-        case .notPlayed: "Я не участвовал в этом матче"
+        case .notPlayed: "Меня не было в этом матче"
         case .other: "Другая причина"
         }
     }

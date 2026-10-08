@@ -83,7 +83,8 @@ struct ReliabilityRing: View {
         }
         .frame(width: size, height: size)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Надёжность рейтинга \(reliability) процентов")
+        // VoiceOver declines «%» itself (a hard-coded «процентов» did not).
+        .accessibilityLabel("Надёжность рейтинга " + String(reliability) + "%")
     }
 }
 
@@ -162,6 +163,8 @@ struct RemoteImage<Placeholder: View>: View {
     let url: URL
     @ViewBuilder var placeholder: Placeholder
     @State private var image: UIImage?
+    /// The URL `image` was loaded from: a changed URL (a new photo) reloads.
+    @State private var loadedURL: URL?
 
     var body: some View {
         Group {
@@ -172,9 +175,14 @@ struct RemoteImage<Placeholder: View>: View {
             }
         }
         .task(id: url) {
-            guard image == nil else { return }
+            guard loadedURL != url else { return }
             if let result = try? await AvatarLoader.session.data(from: url), let loaded = UIImage(data: result.0) {
                 image = loaded
+                loadedURL = url
+            } else if !Task.isCancelled {
+                // Never keep showing the photo of a previous URL.
+                image = nil
+                loadedURL = nil
             }
         }
     }
@@ -186,6 +194,7 @@ struct PlayerRow<Trailing: View>: View {
     let card: PlayerCard
     var subtitle: String?
     @ViewBuilder var trailing: Trailing
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     init(card: PlayerCard, subtitle: String? = nil, @ViewBuilder trailing: () -> Trailing = { EmptyView() }) {
         self.card = card
@@ -194,30 +203,56 @@ struct PlayerRow<Trailing: View>: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
-            AvatarView(card: card, size: 44)
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(card.displayName)
-                        .font(.body.weight(.medium))
-                        .lineLimit(1)
-                    if card.isCoach {
-                        Image(systemName: "checkmark.seal.fill")
-                            .font(.caption)
-                            .foregroundStyle(Theme.accent)
-                            .accessibilityLabel("Тренер")
-                    }
+        // At accessibility sizes names wrap and the trailing content moves
+        // under them instead of squeezing the name to a few letters.
+        if dynamicTypeSize.isAccessibilitySize {
+            HStack(alignment: .top, spacing: 12) {
+                AvatarView(card: card, size: 44)
+                VStack(alignment: .leading, spacing: 6) {
+                    details
+                    trailing
                 }
-                Text(subtitle ?? defaultSubtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            Spacer(minLength: 8)
-            trailing
+            .padding(.vertical, 2)
+            .accessibilityElement(children: .combine)
+        } else {
+            HStack(spacing: 12) {
+                AvatarView(card: card, size: 44)
+                details
+                Spacer(minLength: 8)
+                trailing
+            }
+            .padding(.vertical, 2)
+            .accessibilityElement(children: .combine)
         }
-        .padding(.vertical, 2)
-        .accessibilityElement(children: .combine)
+    }
+
+    private var details: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 6) {
+                Text(card.displayName)
+                    .font(.body.weight(.medium))
+                    .lineLimit(textLineLimit)
+                    .fixedSize(horizontal: false, vertical: textLineLimit == nil)
+                if card.isCoach {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.caption)
+                        .foregroundStyle(Theme.accent)
+                        .accessibilityLabel("Тренер")
+                }
+            }
+            Text(subtitle ?? defaultSubtitle)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineLimit(textLineLimit)
+                .fixedSize(horizontal: false, vertical: textLineLimit == nil)
+        }
+    }
+
+    /// One line normally; wrapping at accessibility sizes.
+    private var textLineLimit: Int? {
+        dynamicTypeSize.isAccessibilitySize ? nil : 1
     }
 
     private var defaultSubtitle: String {
@@ -251,15 +286,32 @@ struct StatusPill: View {
 /// Thin banner shown while the device is offline or data is stale.
 struct OfflineBanner: View {
     var message = "Нет подключения. Показаны сохранённые данные."
+    var systemImage = "wifi.slash"
 
     var body: some View {
-        Label(message, systemImage: "wifi.slash")
+        Label(message, systemImage: systemImage)
             .font(.footnote.weight(.medium))
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
             .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: Theme.smallCornerRadius, style: .continuous))
+    }
+}
+
+/// Banner above cached data that could not be refreshed: the offline banner
+/// for network failures, the server's explanation otherwise (for example
+/// «Сервис временно недоступен»), so stale data is never shown silently.
+struct StaleDataBanner: View {
+    let error: APIError
+
+    var body: some View {
+        if error.isNetwork {
+            OfflineBanner()
+        } else {
+            OfflineBanner(message: error.message + " Показаны сохранённые данные.",
+                          systemImage: "exclamationmark.triangle")
+        }
     }
 }
 
@@ -287,6 +339,85 @@ struct ErrorStateView: View {
         } actions: {
             Button("Повторить", action: retry)
                 .buttonStyle(.borderedProminent)
+        }
+    }
+}
+
+// MARK: - Results
+
+/// One match result of a form row: a filled dot for a win, a hollow ring for
+/// a loss, so the two differ by shape and not only by colour.
+struct FormResultDot: View {
+    let won: Bool
+    let size: CGFloat
+
+    var body: some View {
+        if won {
+            Circle()
+                .fill(Theme.positive)
+                .frame(width: size, height: size)
+        } else {
+            Circle()
+                .strokeBorder(Theme.negative, lineWidth: max(1.5, size * 0.2))
+                .frame(width: size, height: size)
+        }
+    }
+}
+
+// MARK: - Layout
+
+/// Places its subviews side by side in equal widths. Its ideal width is the
+/// widest subview's ideal width times the count, so inside
+/// `ViewThatFits(in: .horizontal)` it gives way to a vertical stack before
+/// any label would have to wrap in its half.
+struct EqualWidthHStack: Layout {
+    /// Distance between neighbouring subviews.
+    private let gap: CGFloat
+
+    init(spacing: CGFloat = 12) {
+        gap = spacing
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        guard !subviews.isEmpty else { return .zero }
+        let count = CGFloat(subviews.count)
+        let gaps = gap * (count - 1)
+        let width: CGFloat
+        if let proposed = proposal.width, proposed.isFinite {
+            width = proposed
+        } else {
+            let widest = subviews.map { $0.sizeThatFits(.unspecified).width }.max() ?? 0
+            width = widest * count + gaps
+        }
+        let column = max(0, (width - gaps) / count)
+        let height = subviews.map { $0.sizeThatFits(ProposedViewSize(width: column, height: nil)).height }.max() ?? 0
+        return CGSize(width: width, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        guard !subviews.isEmpty else { return }
+        let count = CGFloat(subviews.count)
+        let column = max(0, (bounds.width - gap * (count - 1)) / count)
+        var x = bounds.minX
+        for subview in subviews {
+            subview.place(at: CGPoint(x: x, y: bounds.midY), anchor: .leading,
+                          proposal: ProposedViewSize(width: column, height: nil))
+            x += column + gap
+        }
+    }
+}
+
+// MARK: - VoiceOver
+
+/// Speaks the result of an action (an error, a saved change) that appears
+/// away from the control VoiceOver is focused on.
+enum Announce {
+    static func post(_ text: String) {
+        Task {
+            // VoiceOver drops announcements posted while the screen is still
+            // changing (a sheet closing, a button disappearing).
+            try? await Task.sleep(for: .milliseconds(350))
+            UIAccessibility.post(notification: .announcement, argument: text)
         }
     }
 }

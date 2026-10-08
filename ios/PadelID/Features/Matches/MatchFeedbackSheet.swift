@@ -157,6 +157,8 @@ struct MatchFeedbackSheet: View {
             guard selection.strengths.count < Self.strengthLimit else {
                 withAnimation(.snappy) { limitNotice = playerId }
                 limitFeedback += 1
+                // The notice appears in the section footer, far from the chip.
+                Announce.post("Можно отметить не больше двух сильных сторон")
                 return
             }
             selection.strengths.append(dimension)
@@ -206,6 +208,7 @@ struct MatchFeedbackSheet: View {
             isSubmitting = false
             if case .failed(let failure) = result {
                 error = failure
+                Announce.post(failure.message)
             } else {
                 onFinish(result)
                 dismiss()
@@ -256,7 +259,9 @@ private struct MatchFeedbackChipGroup: View {
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity, minHeight: 44)
                 .padding(.horizontal, 8)
-                .foregroundStyle(isSelected ? tint : (isBlocked ? Color.secondary : Color.primary))
+                // The tint marks the selection (border, background); the
+                // label stays primary to keep its contrast.
+                .foregroundStyle(isBlocked ? Color.secondary : Color.primary)
                 .background(isSelected ? tint.opacity(0.16) : Color(.tertiarySystemFill),
                             in: .rect(cornerRadius: 12, style: .continuous))
                 .overlay {

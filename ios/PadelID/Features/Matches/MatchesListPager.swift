@@ -67,10 +67,18 @@ final class MatchesListPager {
 
     var canLoadMore: Bool { nextBefore != nil }
 
-    /// Reloads the first page; appended pages are dropped once fresh data arrives.
-    func load(using app: AppModel) async {
+    /// Reloads the first page. Pages appended below it stay while the fresh
+    /// first page still ends where they begin (a background refresh after a
+    /// change elsewhere); they are dropped when it does not, or on `reset`
+    /// (pull to refresh).
+    func load(using app: AppModel, reset: Bool = false) async {
+        let previous = firstPage.value
         await firstPage.load(using: app)
         guard firstPage.error == nil, !firstPage.isStale else { return }
+        if !reset, hasExtraPages, let previous, let fresh = firstPage.value,
+           fresh.nextBefore == previous.nextBefore, fresh.nextBeforeId == previous.nextBeforeId {
+            return
+        }
         generation += 1
         extraItems = []
         extraNextBefore = nil

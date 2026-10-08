@@ -35,9 +35,9 @@ struct InsightsView: View {
             }
         } else {
             List {
-                if home.isStale, home.error?.isNetwork == true {
+                if home.isStale, let error = home.error {
                     Section {
-                        OfflineBanner()
+                        StaleDataBanner(error: error)
                             .listRowInsets(EdgeInsets())
                             .listRowBackground(Color.clear)
                     }

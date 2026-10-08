@@ -35,9 +35,9 @@ struct CoachReviewView: View {
     @ViewBuilder
     private var content: some View {
         if let items = lists[status] {
-            if let error = errors[status], error.isNetwork {
+            if let error = errors[status] {
                 Section {
-                    OfflineBanner()
+                    StaleDataBanner(error: error)
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
                 }

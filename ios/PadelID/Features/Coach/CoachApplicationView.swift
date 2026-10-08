@@ -51,9 +51,9 @@ struct CoachApplicationView: View {
 
     private func formView(_ application: CoachApplication?) -> some View {
         Form {
-            if resource.isStale, resource.error?.isNetwork == true {
+            if resource.isStale, let error = resource.error {
                 Section {
-                    OfflineBanner()
+                    StaleDataBanner(error: error)
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
                 }

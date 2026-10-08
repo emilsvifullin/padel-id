@@ -7,12 +7,23 @@ struct DNAHexagon: View {
     var comparison: [DNADimensionState]? = nil
     var showLabels = true
 
+    /// Room for the axis labels; grows with the text size up to the size at
+    /// which the labels themselves stop growing (`labelSizeLimit`).
+    @ScaledMetric(relativeTo: .caption2) private var labelSpace: CGFloat = 34
+
     private static let reference: CGFloat = 0.6
+    private static let labelSizeLimit = DynamicTypeSize.xxLarge
+
+    init(dimensions: [DNADimensionState], comparison: [DNADimensionState]? = nil, showLabels: Bool = true) {
+        self.dimensions = dimensions
+        self.comparison = comparison
+        self.showLabels = showLabels
+    }
 
     var body: some View {
         GeometryReader { proxy in
             let size = min(proxy.size.width, proxy.size.height)
-            let labelInset: CGFloat = showLabels ? 34 : 4
+            let labelInset: CGFloat = showLabels ? min(labelSpace, 46) : 4
             let radius = max(10, size / 2 - labelInset)
             let center = CGPoint(x: proxy.size.width / 2, y: proxy.size.height / 2)
             ZStack {
@@ -44,7 +55,7 @@ struct DNAHexagon: View {
                 }
                 if showLabels {
                     ForEach(Array(DNADimension.allCases.enumerated()), id: \.offset) { index, dimension in
-                        let point = vertex(index: index, fraction: 1, center: center, radius: radius + 20)
+                        let point = vertex(index: index, fraction: 1, center: center, radius: radius + labelInset * 0.6)
                         HStack(spacing: 2) {
                             Text(dimension.shortTitle)
                             if isVerified(dimension) {
@@ -53,6 +64,9 @@ struct DNAHexagon: View {
                         }
                         .font(.caption2.weight(.medium))
                         .foregroundStyle(.secondary)
+                        // Larger labels would cover the shape and leave the
+                        // card; every value is also listed as text.
+                        .dynamicTypeSize(...Self.labelSizeLimit)
                         .fixedSize()
                         .position(point)
                     }
@@ -118,10 +132,17 @@ struct DNAHexagon: View {
         context.stroke(reference, with: .color(.secondary.opacity(0.45)), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
     }
 
+    /// Each axis with the profile owner's level and, when the viewer's shape
+    /// is drawn for comparison, the viewer's level too.
     private var accessibilitySummary: String {
-        ordered(dimensions).compactMap { state in
+        let mine = comparison ?? []
+        return ordered(dimensions).compactMap { state in
             guard let dimension = state.dimension else { return nil }
-            return "\(dimension.title): \(Format.level(state.level))"
-        }.joined(separator: ", ")
+            var text = "\(dimension.title): \(Format.level(state.level))"
+            if let own = mine.first(where: { $0.dimension == dimension }) {
+                text += ", у вас \(Format.level(own.level))"
+            }
+            return text
+        }.joined(separator: mine.isEmpty ? ", " : "; ")
     }
 }

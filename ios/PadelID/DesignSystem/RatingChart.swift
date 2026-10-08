@@ -24,10 +24,18 @@ struct RatingChart: View {
                     .interpolationMethod(.monotone)
             }
             if !compact {
-                ForEach(points.filter { $0.kind == "match" }) { point in
+                // Wins and losses differ by shape as well as colour.
+                ForEach(points.filter { $0.kind == "match" && $0.won == true }) { point in
                     PointMark(x: .value("Дата", point.at), y: .value("Уровень", point.mu))
-                        .foregroundStyle((point.won ?? false) ? Theme.positive : Theme.negative)
+                        .foregroundStyle(Theme.positive)
+                        .symbol(.circle)
                         .symbolSize(28)
+                }
+                ForEach(points.filter { $0.kind == "match" && $0.won != true }) { point in
+                    PointMark(x: .value("Дата", point.at), y: .value("Уровень", point.mu))
+                        .foregroundStyle(Theme.negative)
+                        .symbol(.cross)
+                        .symbolSize(36)
                 }
             }
             if let last = points.last {

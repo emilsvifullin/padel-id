@@ -34,8 +34,8 @@ struct PlayerMatchesView: View {
 
     private var list: some View {
         List {
-            if pager.firstPage.isStale && pager.firstPage.error?.isNetwork == true {
-                OfflineBanner()
+            if pager.firstPage.isStale, let error = pager.firstPage.error {
+                StaleDataBanner(error: error)
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
             }
@@ -58,7 +58,7 @@ struct PlayerMatchesView: View {
         }
         .listStyle(.insetGrouped)
         .refreshable {
-            await pager.load(using: app)
+            await pager.load(using: app, reset: true)
         }
         .overlay {
             if pager.items.isEmpty {

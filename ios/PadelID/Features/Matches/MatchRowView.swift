@@ -6,13 +6,17 @@ struct MatchRowView: View {
     let item: MatchListItem
     /// The team whose result and rating change are shown ("Победа", "+0.05").
     let perspectiveTeam: Int?
+    /// False where the list section already says that the match waits for
+    /// confirmation; VoiceOver still hears the status in the row label.
+    var showsPendingStatus = true
 
     @ScaledMetric(relativeTo: .body) private var setColumnWidth: CGFloat = 24
     @ScaledMetric(relativeTo: .caption) private var markWidth: CGFloat = 18
 
-    init(item: MatchListItem, perspectiveTeam: Int?) {
+    init(item: MatchListItem, perspectiveTeam: Int?, showsPendingStatus: Bool = true) {
         self.item = item
         self.perspectiveTeam = perspectiveTeam
+        self.showsPendingStatus = showsPendingStatus
     }
 
     var body: some View {
@@ -77,7 +81,7 @@ struct MatchRowView: View {
 
     private var statusColor: Color? {
         switch item.status {
-        case .pending: return Theme.attention
+        case .pending: return showsPendingStatus ? Theme.attention : nil
         case .disputed: return Theme.negative
         case .cancelled, .expired: return Color.secondary
         case .confirmed: return nil

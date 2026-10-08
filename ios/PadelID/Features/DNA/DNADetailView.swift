@@ -90,8 +90,8 @@ struct DNADetailView: View {
         } else {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    if dna.isStale, dna.error?.isNetwork == true {
-                        OfflineBanner()
+                    if dna.isStale, let error = dna.error {
+                        StaleDataBanner(error: error)
                     }
                     DNADetailHero(dna: value)
                     ForEach(DNADimension.allCases) { dimension in

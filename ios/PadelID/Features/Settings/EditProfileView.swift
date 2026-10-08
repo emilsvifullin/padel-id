@@ -1,3 +1,4 @@
+import ImageIO
 import PhotosUI
 import SwiftUI
 import UIKit
@@ -505,9 +506,11 @@ struct EditProfileView: View {
         avatarError = nil
         defer { isAvatarBusy = false }
         do {
+            // Decoding and encoding run off the main actor (a 48 MP photo
+            // would otherwise freeze the sheet).
             guard let source = try await item.loadTransferable(type: Data.self),
-                  let image = EditProfileAvatarEncoder.prepare(source, maxSide: 512),
-                  let jpeg = EditProfileAvatarEncoder.jpeg(image, maxBytes: 900_000) else {
+                  let jpeg = await EditProfileAvatarEncoder.encode(source, maxSide: 512, maxBytes: 900_000),
+                  let image = UIImage(data: jpeg) else {
                 avatarError = "Не удалось открыть это фото. Выберите другое."
                 return
             }
@@ -688,51 +691,61 @@ private nonisolated enum EditProfileValidation {
     }
 }
 
-/// Prepares a picked photo for upload: decodes a reduced-size thumbnail,
-/// scales it to at most `maxSide` pixels and encodes JPEG within a byte budget.
-private enum EditProfileAvatarEncoder {
-    static func prepare(_ data: Data, maxSide: CGFloat) -> UIImage? {
-        guard let decoded = UIImage(data: data) else { return nil }
-        let longest = max(decoded.size.width, decoded.size.height)
-        guard longest > 0 else { return nil }
-        // Decode at twice the target size at most instead of the full photo.
-        let factor = min(1, maxSide * 2 / longest)
-        let thumbnailSize = CGSize(width: decoded.size.width * factor, height: decoded.size.height * factor)
-        let source = decoded.preparingThumbnail(of: thumbnailSize) ?? decoded
-        return render(source, maxSide: maxSide)
-    }
-
-    static func render(_ image: UIImage, maxSide: CGFloat) -> UIImage {
-        let size = image.size
-        let longest = max(size.width, size.height)
-        let factor = longest > 0 ? min(1, maxSide / longest) : 1
-        let target = CGSize(width: max(1, (size.width * factor).rounded()),
-                            height: max(1, (size.height * factor).rounded()))
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 1
-        format.opaque = true
-        let renderer = UIGraphicsImageRenderer(size: target, format: format)
-        return renderer.image { context in
-            UIColor.white.setFill()
-            context.fill(CGRect(origin: .zero, size: target))
-            image.draw(in: CGRect(origin: .zero, size: target))
-        }
-    }
-
-    /// Lowers the JPEG quality (and then the size) until the file fits.
-    static func jpeg(_ image: UIImage, maxBytes: Int) -> Data? {
+/// Prepares a picked photo for upload away from the main actor. ImageIO
+/// decodes only a thumbnail of at most `maxSide` pixels with the EXIF
+/// orientation applied (the full photo is never decoded); the JPEG quality,
+/// and then the size, are lowered until the file fits `maxBytes`.
+private nonisolated enum EditProfileAvatarEncoder {
+    @concurrent
+    static func encode(_ data: Data, maxSide: Int, maxBytes: Int) async -> Data? {
+        let sourceOptions: [CFString: Any] = [kCGImageSourceShouldCache: false]
+        guard let source = CGImageSourceCreateWithData(data as CFData, sourceOptions as CFDictionary) else { return nil }
         let qualities: [CGFloat] = [0.85, 0.75, 0.65, 0.55, 0.45, 0.35]
-        var candidate = image
+        var side = maxSide
         for _ in 0..<4 {
+            guard side >= 64, let image = thumbnail(of: source, maxSide: side) else { return nil }
             for quality in qualities {
-                if let data = candidate.jpegData(compressionQuality: quality), data.count <= maxBytes {
-                    return data
+                if let encoded = jpeg(image, quality: quality), encoded.count <= maxBytes {
+                    return encoded
                 }
             }
-            let longest = max(candidate.size.width, candidate.size.height)
-            guard longest > 64 else { return nil }
-            candidate = render(candidate, maxSide: (longest * 0.75).rounded())
+            side = Int((Double(side) * 0.75).rounded())
         }
         return nil
+    }
+
+    /// A thumbnail of at most `maxSide` pixels, flattened onto white (JPEG
+    /// has no transparency).
+    private static func thumbnail(of source: CGImageSource, maxSide: Int) -> CGImage? {
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxSide,
+        ]
+        guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
+        let width = image.width
+        let height = image.height
+        guard width > 0, height > 0,
+              let space = CGColorSpace(name: CGColorSpace.sRGB),
+              let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8,
+                                      bytesPerRow: 0, space: space,
+                                      bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return nil }
+        let rect = CGRect(x: 0, y: 0, width: width, height: height)
+        context.setFillColor(CGColor(red: 1, green: 1, blue: 1, alpha: 1))
+        context.fill(rect)
+        context.draw(image, in: rect)
+        return context.makeImage()
+    }
+
+    private static func jpeg(_ image: CGImage, quality: CGFloat) -> Data? {
+        let buffer = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(buffer as CFMutableData, "public.jpeg" as CFString, 1, nil) else {
+            return nil
+        }
+        let properties: [CFString: Any] = [kCGImageDestinationLossyCompressionQuality: quality]
+        CGImageDestinationAddImage(destination, image, properties as CFDictionary)
+        guard CGImageDestinationFinalize(destination) else { return nil }
+        return Data(referencing: buffer)
     }
 }

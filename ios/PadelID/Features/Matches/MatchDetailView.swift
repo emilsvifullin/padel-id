@@ -50,14 +50,20 @@ struct MatchDetailView: View {
         .task(id: app.dataRevision) {
             await detail.load(using: app)
         }
-        .sheet(isPresented: $isDisputePresented, onDismiss: { finishSheet(haptic: .warning) }) {
+        .sheet(isPresented: $isDisputePresented, onDismiss: {
+            finishSheet(haptic: .warning, done: "Возражение отправлено",
+                        queued: "Ответ отправится при подключении")
+        }) {
             if let match = detail.value {
                 MatchDisputeSheet(match: match) { result in
                     sheetResult = result
                 }
             }
         }
-        .sheet(isPresented: $isFeedbackPresented, onDismiss: { finishSheet(haptic: .success) }) {
+        .sheet(isPresented: $isFeedbackPresented, onDismiss: {
+            finishSheet(haptic: .success, done: "Отметки сохранены",
+                        queued: "Отметки отправятся при подключении")
+        }) {
             if let match = detail.value {
                 MatchFeedbackSheet(match: match, viewerId: app.me?.userId) { result in
                     sheetResult = result
@@ -86,8 +92,8 @@ struct MatchDetailView: View {
     private func content(_ match: MatchDetail) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
-                if detail.isStale && detail.error?.isNetwork == true {
-                    OfflineBanner()
+                if detail.isStale, let error = detail.error {
+                    StaleDataBanner(error: error)
                 }
                 MatchDetailScoreboard(match: match, viewerId: viewerId)
                 if match.status != .confirmed {
@@ -181,8 +187,10 @@ struct MatchDetailView: View {
             .padding(.bottom, 8)
         } else if match.viewer.canConfirm || match.viewer.canDispute {
             GlassEffectContainer {
+                // Equal halves side by side only while both titles fit on
+                // one line in a half; otherwise (large text) one above the other.
                 ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 12) {
+                    EqualWidthHStack(spacing: 12) {
                         answerButtons(match)
                     }
                     VStack(spacing: 10) {
@@ -298,7 +306,8 @@ struct MatchDetailView: View {
         isWorking = true
         defer { isWorking = false }
         let result = await MatchActions.confirm(match, app: app)
-        await apply(result, haptic: .success)
+        await apply(result, haptic: .success, done: "Результат подтверждён",
+                    queued: "Ответ отправится при подключении")
     }
 
     private func cancelMatch() async {
@@ -309,19 +318,22 @@ struct MatchDetailView: View {
         if case .updated(let updated, _) = result {
             detail.replace(with: updated)
             successFeedback += 1
+            Announce.post("Матч отменён")
             dismiss()
         } else {
-            await apply(result, haptic: .success)
+            await apply(result, haptic: .success, done: "Матч отменён", queued: "")
         }
     }
 
-    private func finishSheet(haptic: MatchDetailHaptic) {
+    private func finishSheet(haptic: MatchDetailHaptic, done: String, queued: String) {
         guard let result = sheetResult else { return }
         sheetResult = nil
-        Task { await apply(result, haptic: haptic) }
+        Task { await apply(result, haptic: haptic, done: done, queued: queued) }
     }
 
-    private func apply(_ result: MatchActionResult, haptic: MatchDetailHaptic) async {
+    /// Shows the outcome of an action; `done` and `queued` are spoken to
+    /// VoiceOver, whose focus was on a control that is gone now.
+    private func apply(_ result: MatchActionResult, haptic: MatchDetailHaptic, done: String, queued: String) async {
         switch result {
         case .updated(let updated, _):
             detail.replace(with: updated)
@@ -329,8 +341,11 @@ struct MatchDetailView: View {
             case .success: successFeedback += 1
             case .warning: warningFeedback += 1
             }
+            Announce.post(done)
         case .queued:
-            break
+            if !queued.isEmpty {
+                Announce.post(queued)
+            }
         case .conflict(let error):
             await detail.load(using: app)
             actionAlert = MatchDetailAlert(title: "Матч изменился", message: error.message)

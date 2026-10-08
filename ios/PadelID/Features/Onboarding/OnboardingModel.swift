@@ -418,6 +418,7 @@ final class OnboardingModel {
         guard app.isOnline else {
             submitError = .offline
             failureCount += 1
+            Announce.post(APIError.offline.message)
             return
         }
         isSubmitting = true
@@ -434,9 +435,14 @@ final class OnboardingModel {
         } catch let error as APIError {
             failureCount += 1
             handle(error)
+            // Field errors move back to step 1, others show at the bottom:
+            // neither is where VoiceOver focus is.
+            Announce.post(error.message)
         } catch {
             failureCount += 1
-            submitError = APIError(kind: .decoding, code: "decoding", serverMessage: nil)
+            let failure = APIError(kind: .decoding, code: "decoding", serverMessage: nil)
+            submitError = failure
+            Announce.post(failure.message)
         }
     }
 

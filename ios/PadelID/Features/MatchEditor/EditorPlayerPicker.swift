@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Chooses a player for a line-up position: recent partners and opponents,
-/// all players alphabetically, or a search by name and @username.
+/// all players alphabetically, or a search by name and username.
 struct EditorPlayerPicker: View {
     let title: String
     let current: PlayerCard?
@@ -78,7 +78,7 @@ struct EditorPlayerPicker: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
                 .accessibilityHidden(true)
-            TextField("Имя или @username", text: $query)
+            TextField("Имя или @имя_пользователя", text: $query)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .submitLabel(.search)
@@ -160,7 +160,7 @@ struct EditorPlayerPicker: View {
                 .listRowBackground(Color.clear)
         } else {
             ContentUnavailableView("Пока некого выбрать", systemImage: "person.2",
-                                   description: Text("Найдите игрока по имени или @username."))
+                                   description: Text("Найдите игрока по имени или имени пользователя."))
                 .listRowBackground(Color.clear)
         }
     }
@@ -192,7 +192,7 @@ struct EditorPlayerPicker: View {
                 .listRowBackground(Color.clear)
         } else {
             ContentUnavailableView("Никого не нашли", systemImage: "magnifyingglass",
-                                   description: Text("Проверьте имя или @username. Скрытые профили видны только тем, с кем игрок уже играл."))
+                                   description: Text("Проверьте имя или имя пользователя. Скрытые профили видны только тем, с кем игрок уже играл."))
                 .listRowBackground(Color.clear)
         }
     }
@@ -207,7 +207,9 @@ struct EditorPlayerPicker: View {
             PlayerRow(card: card, subtitle: subtitle) {
                 LevelChip(level: card.level, reliability: card.reliability)
             }
-            .foregroundStyle(.primary)
+            // A concrete colour: `.primary` would resolve to the button's
+            // tint and paint the names in the accent colour.
+            .foregroundStyle(Color.primary)
             .contentShape(.rect)
         }
         .accessibilityIdentifier("picker.player")

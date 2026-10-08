@@ -257,7 +257,7 @@ struct ChangePasswordView: View {
             }
             Section {
                 SecureField("Новый пароль", text: $newPassword)
-                    .textContentType(.newPassword)
+                    .newPasswordContentType()
                     .focused($focus, equals: .replacement)
                     .submitLabel(.done)
                     .onSubmit(submit)

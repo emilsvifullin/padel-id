@@ -150,6 +150,7 @@ struct CoachAssessmentView: View {
             } catch let apiError as APIError {
                 error = apiError
                 failureCount += 1
+                Announce.post(apiError.message)
             } catch {}
         }
     }

@@ -117,8 +117,8 @@ private struct HomeDashboard: View {
         let insights = home.insights.compactMap { Narratives.insight($0) }
         return VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
             VStack(alignment: .leading, spacing: 14) {
-                if model.home.isStale, model.home.error?.isNetwork == true {
-                    OfflineBanner()
+                if model.home.isStale, let error = model.home.error {
+                    StaleDataBanner(error: error)
                 }
                 HomeIdentityHeader(profile: home.profile)
                 HomeLevelHero(meId: meId, profile: home.profile, rating: home.rating, matches: matches)

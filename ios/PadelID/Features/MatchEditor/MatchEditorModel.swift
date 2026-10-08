@@ -585,7 +585,8 @@ final class MatchEditorModel {
             body: data,
             idempotencyKey: idempotencyKey,
             matchId: nil,
-            title: "Матч против " + names.joined(separator: " и "),
+            // «против» would need the genitive case, which names cannot take.
+            title: names.isEmpty ? "Новый матч" : "Новый матч: соперники — " + names.joined(separator: " и "),
             subtitle: Format.score(body.sets),
             createdAt: .now)
         app.outbox.enqueue(operation)

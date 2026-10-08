@@ -62,6 +62,7 @@ class PadelIDUITestCase: XCTestCase {
     var app: XCUIApplication!
     var server: StubServer!
     private var interruptionMonitor: (any NSObjectProtocol)?
+    private var lastSavePasswordCheck = Date.distantPast
 
     override func setUp() async throws {
         continueAfterFailure = false
@@ -155,6 +156,24 @@ class PadelIDUITestCase: XCTestCase {
         } while Date() < deadline
     }
 
+    /// The save-password sheet can also appear several seconds after signing
+    /// in, above whatever screen the test is on, and then blocks every
+    /// interaction. Declines it if it is shown right now; never waits. Called
+    /// at the start of the interaction helpers (at most every half second).
+    func declineSavePasswordIfShown() {
+        guard let app, Date().timeIntervalSince(lastSavePasswordCheck) >= 0.5 else { return }
+        lastSavePasswordCheck = Date()
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let predicate = NSPredicate(format: "label == %@ OR label == %@", "Не сейчас", "Not Now")
+        for process in [app, springboard] {
+            let button = process.buttons.matching(predicate).firstMatch
+            if button.exists && button.isHittable {
+                button.tap()
+                return
+            }
+        }
+    }
+
     /// Waits for the Padel ID tab with the level hero.
     @discardableResult
     func waitForHome(timeout: TimeInterval = 20, file: StaticString = #filePath, line: UInt = #line) -> XCUIElement {
@@ -182,6 +201,7 @@ class PadelIDUITestCase: XCTestCase {
     /// Does not fail: rows of lazy lists (Form, List) below the visible area
     /// only exist once they are scrolled near, which `scrollIntoView` does.
     func find(_ identifier: String, timeout: TimeInterval = 5) -> XCUIElement {
+        declineSavePasswordIfShown()
         let target = element(identifier)
         _ = target.waitForExistence(timeout: timeout)
         return target
@@ -236,6 +256,7 @@ class PadelIDUITestCase: XCTestCase {
     @discardableResult
     func require(_ element: XCUIElement, timeout: TimeInterval = 10, _ description: String = "element",
                  file: StaticString = #filePath, line: UInt = #line) -> XCUIElement {
+        declineSavePasswordIfShown()
         if !element.waitForExistence(timeout: timeout) {
             XCTFail("Not found within \(Int(timeout)) s: \(description)", file: file, line: line)
         }
@@ -294,6 +315,7 @@ class PadelIDUITestCase: XCTestCase {
 
     /// Scrolls the element into view and taps it.
     func tap(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
+        declineSavePasswordIfShown()
         scrollIntoView(element, file: file, line: line)
         element.tap()
     }
@@ -313,6 +335,7 @@ class PadelIDUITestCase: XCTestCase {
 
     /// Focuses a text field and types into it.
     func enter(_ text: String, into field: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
+        declineSavePasswordIfShown()
         scrollIntoView(field, file: file, line: line)
         field.tap()
         dismissKeyboardIntroduction()
@@ -371,6 +394,7 @@ class PadelIDUITestCase: XCTestCase {
 
     /// Selects a tab of the tab bar by its title.
     func selectTab(_ title: String, alternatives: [String] = [], file: StaticString = #filePath, line: UInt = #line) {
+        declineSavePasswordIfShown()
         let inTabBar = app.tabBars.buttons[title]
         if inTabBar.waitForExistence(timeout: 5) && inTabBar.isHittable {
             inTabBar.tap()
@@ -396,6 +420,7 @@ class PadelIDUITestCase: XCTestCase {
 
     /// Returns to the previous screen of a navigation stack.
     func goBack(previousTitle: String? = nil, file: StaticString = #filePath, line: UInt = #line) {
+        declineSavePasswordIfShown()
         if let back = firstHittable(app.navigationBars.buttons.matching(identifier: "BackButton")) {
             back.tap()
             return
@@ -454,10 +479,13 @@ class PadelIDUITestCase: XCTestCase {
     @discardableResult
     func scrollIntoView(_ element: XCUIElement, hittable: Bool = true, maxDrags: Int = 15,
                         file: StaticString = #filePath, line: UInt = #line) -> XCUIElement {
+        declineSavePasswordIfShown()
         if isOnScreen(element, hittable: hittable) {
             return element
         }
         for _ in 0..<maxDrags {
+            // The sheet may appear while scrolling and cover the content.
+            declineSavePasswordIfShown()
             if element.exists {
                 let frame = element.frame
                 let band = visibleBand()

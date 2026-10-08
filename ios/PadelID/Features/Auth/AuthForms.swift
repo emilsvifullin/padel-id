@@ -41,7 +41,18 @@ struct PasswordRequirements: View {
     }
 }
 
-/// Full-width primary action of the authentication forms.
+extension View {
+    /// Content type of a field for a new password: `.newPassword` lets iOS
+    /// suggest a strong password. UI tests get `.password`, because the
+    /// automatic strong-password sheet swallows synthesized typing.
+    func newPasswordContentType() -> some View {
+        let contentType: UITextContentType = AppEnvironment.isUITesting ? .password : .newPassword
+        return textContentType(contentType)
+    }
+}
+
+/// Full-width primary action of the authentication forms (a form row, so a
+/// regular prominent button: Liquid Glass is for floating action bars).
 struct AuthPrimaryButton: View {
     let title: String
     let isBusy: Bool
@@ -60,7 +71,7 @@ struct AuthPrimaryButton: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 6)
         }
-        .buttonStyle(.glassProminent)
+        .buttonStyle(.borderedProminent)
         .controlSize(.large)
         .listRowInsets(EdgeInsets())
         .listRowBackground(Color.clear)
@@ -137,6 +148,7 @@ struct SignInView: View {
                 try await app.signIn(email: email.trimmingCharacters(in: .whitespaces), password: password)
             } catch let apiError as APIError {
                 error = apiError
+                Announce.post(apiError.message)
             } catch {}
         }
     }
@@ -165,7 +177,7 @@ struct SignUpView: View {
                     .onSubmit { focus = .password }
                     .accessibilityIdentifier("signUp.email")
                 SecureField("Пароль", text: $password)
-                    .textContentType(.newPassword)
+                    .newPasswordContentType()
                     .focused($focus, equals: .password)
                     .submitLabel(.done)
                     .onSubmit(submit)
@@ -207,6 +219,7 @@ struct SignUpView: View {
                 try await app.signUp(email: email.trimmingCharacters(in: .whitespaces), password: password)
             } catch let apiError as APIError {
                 error = apiError
+                Announce.post(apiError.message)
             } catch {}
         }
     }
@@ -244,7 +257,7 @@ struct RecoverView: View {
             }
             Section {
                 SecureField("Новый пароль", text: $password)
-                    .textContentType(.newPassword)
+                    .newPasswordContentType()
                     .accessibilityIdentifier("recover.password")
             } footer: {
                 VStack(alignment: .leading, spacing: 8) {
@@ -286,6 +299,7 @@ struct RecoverView: View {
                 try await app.recover(email: email.trimmingCharacters(in: .whitespaces), recoveryKey: normalizedKey, newPassword: password)
             } catch let apiError as APIError {
                 error = apiError
+                Announce.post(apiError.message)
             } catch {}
         }
     }
