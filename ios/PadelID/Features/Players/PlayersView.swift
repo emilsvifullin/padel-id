@@ -340,7 +340,7 @@ struct PlayersView: View {
             parts.append("уровень \(Format.level(filter.minLevel))–\(Format.level(filter.maxLevel))")
         }
         switch filter.side {
-        case .any: break
+        case .anySide: break
         case .right: parts.append("справа")
         case .left: parts.append("слева")
         }

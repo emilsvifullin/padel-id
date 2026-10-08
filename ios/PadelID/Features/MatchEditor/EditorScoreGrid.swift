@@ -20,7 +20,6 @@ struct EditorScoreGrid: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @ScaledMetric(relativeTo: .title3) private var minimumButtonWidth: CGFloat = 76
 
     @State private var selection: EditorScoreOption?
     @State private var tiebreakEnabled: Bool
@@ -105,14 +104,28 @@ struct EditorScoreGrid: View {
 
     // MARK: Options
 
+    /// Four results per row; fewer at large text sizes.
+    private var columnCount: Int {
+        if dynamicTypeSize.isAccessibilitySize { return 2 }
+        return dynamicTypeSize >= .xxLarge ? 3 : 4
+    }
+
     private func optionGroup(_ title: String, options: [EditorScoreOption]) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        let columns = columnCount
+        let rows = stride(from: 0, to: options.count, by: columns).map { start in
+            Array(options[start..<min(start + columns, options.count)])
+        }
+        return VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .font(.headline)
                 .accessibilityAddTraits(.isHeader)
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: minimumButtonWidth), spacing: 10)], spacing: 10) {
-                ForEach(options) { option in
-                    optionButton(option)
+            Grid(horizontalSpacing: 10, verticalSpacing: 10) {
+                ForEach(0..<rows.count, id: \.self) { rowIndex in
+                    GridRow {
+                        ForEach(rows[rowIndex]) { option in
+                            optionButton(option)
+                        }
+                    }
                 }
             }
         }

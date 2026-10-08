@@ -286,7 +286,7 @@ struct MatchesView: View {
     private var outboxFooter: String {
         var lines: [String] = []
         if !app.outbox.failed.isEmpty {
-            lines.append("Сервер не принял отмеченные изменения. Удалите их и при необходимости повторите действие заново.")
+            lines.append("Сервер не принял отмеченные изменения. Удалите их и при необходимости выполните действие ещё раз.")
         }
         if !app.outbox.pending.isEmpty {
             lines.append(app.isOnline

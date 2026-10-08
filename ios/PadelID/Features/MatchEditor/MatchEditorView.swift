@@ -328,6 +328,10 @@ struct MatchEditorView: View {
 
     private var scoreSummary: (text: String, isError: Bool) {
         let draft = model.draft
+        if draft.expectedSetCount == 3, draft.isSuperTiebreakRow(2), let decider = draft.superTiebreakScore,
+           !ScoreRules.isValidSuperTiebreak(decider.t1, decider.t2) {
+            return ("Супертай-брейк играется до 10 очков, а после 9:9 — до разницы в 2 очка.", true)
+        }
         if let issue = draft.scoreIssue {
             return (issue.message, true)
         }

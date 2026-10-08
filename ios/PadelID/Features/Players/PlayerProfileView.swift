@@ -581,6 +581,10 @@ private struct PlayerProfileCompatibilityBars: View {
     let components: [CompatibilityComponent]
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
+    init(components: [CompatibilityComponent]) {
+        self.components = components
+    }
+
     var body: some View {
         if dynamicTypeSize.isAccessibilitySize {
             VStack(alignment: .leading, spacing: 12) {
@@ -636,6 +640,10 @@ private struct PlayerProfileCompatibilityBars: View {
 private struct PlayerProfileFormRow: View {
     let form: [String]
     @ScaledMetric(relativeTo: .body) private var dotSize: CGFloat = 10
+
+    init(form: [String]) {
+        self.form = form
+    }
 
     var body: some View {
         let recent = Array(form.prefix(10))

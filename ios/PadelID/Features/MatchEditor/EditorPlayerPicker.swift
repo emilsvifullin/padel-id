@@ -90,14 +90,15 @@ struct EditorPlayerPicker: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(.secondary)
-                        .frame(width: 32, height: 44)
+                        .frame(width: 44, height: 44)
                         .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Очистить поиск")
             }
         }
-        .padding(.horizontal, 12)
+        .padding(.leading, 12)
+        .padding(.trailing, 4)
         .frame(minHeight: 44)
         .background(Color(.tertiarySystemFill), in: .capsule)
         .padding(.horizontal, Theme.horizontalPadding)

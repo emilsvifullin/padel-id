@@ -37,13 +37,13 @@ nonisolated enum PlayersSort: String, CaseIterable, Identifiable, Hashable, Send
 /// Court side filter. "Любая" means no filter; a concrete side also matches
 /// players who play on both sides (server rule).
 nonisolated enum PlayersSideFilter: String, CaseIterable, Identifiable, Hashable, Sendable {
-    case any, right, left
+    case anySide, right, left
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .any: "Любая"
+        case .anySide: "Любая"
         case .right: "Справа"
         case .left: "Слева"
         }
@@ -51,7 +51,7 @@ nonisolated enum PlayersSideFilter: String, CaseIterable, Identifiable, Hashable
 
     var apiValue: String? {
         switch self {
-        case .any: nil
+        case .anySide: nil
         case .right: CourtSide.right.rawValue
         case .left: CourtSide.left.rawValue
         }
@@ -87,7 +87,7 @@ nonisolated struct PlayersFilter: Hashable, Sendable {
     var cityScope: PlayersCityScope = .mine
     var minLevel: Double = 0
     var maxLevel: Double = 7
-    var side: PlayersSideFilter = .any
+    var side: PlayersSideFilter = .anySide
     var reliableOnly = false
     var coachesOnly = false
 
@@ -100,7 +100,7 @@ nonisolated struct PlayersFilter: Hashable, Sendable {
         var count = 0
         if cityScope.resolve(myCity: myCity)?.id != myCity?.id { count += 1 }
         if hasLevelRange { count += 1 }
-        if side != .any { count += 1 }
+        if side != .anySide { count += 1 }
         if reliableOnly { count += 1 }
         if coachesOnly { count += 1 }
         return count

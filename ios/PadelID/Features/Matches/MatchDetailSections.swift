@@ -453,8 +453,8 @@ struct MatchDetailRatingSection: View {
                 VStack(alignment: .leading, spacing: 8) {
                     ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
-                            Image(systemName: "circle.fill")
-                                .font(.system(size: 5))
+                            Text("•")
+                                .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 .accessibilityHidden(true)
                             Text(line)

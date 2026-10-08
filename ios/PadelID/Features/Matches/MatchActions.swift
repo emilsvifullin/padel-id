@@ -108,6 +108,13 @@ enum MatchActions {
                                     serverMessage: "Действие прервано. Попробуйте ещё раз."))
         }
 
+        if let offlineKind {
+            // A delivered answer makes earlier rejected attempts obsolete.
+            for operation in app.outbox.failed where operation.matchId == match.id
+                && group(of: offlineKind).contains(operation.kind) {
+                app.outbox.discard(operation.id)
+            }
+        }
         app.dataDidChange()
         guard let updated = try? JSONCoding.decoder.decode(MatchDetail.self, from: data) else {
             return .failed(APIError(kind: .decoding, code: "decoding", serverMessage: nil))
@@ -120,8 +127,7 @@ enum MatchActions {
                                 title: String, app: AppModel) {
         // A newer answer supersedes rejected ones and the opposite answer;
         // newer feedback replaces feedback that has not been sent yet.
-        let group: [PendingOperation.Kind] = kind == .submitFeedback ? [.submitFeedback] : [.confirmMatch, .disputeMatch]
-        for operation in app.outbox.operations where operation.matchId == match.id && group.contains(operation.kind) {
+        for operation in app.outbox.operations where operation.matchId == match.id && group(of: kind).contains(operation.kind) {
             let isSamePendingAnswer = operation.kind == kind && operation.failure == nil && kind != .submitFeedback
             if !isSamePendingAnswer {
                 app.outbox.discard(operation.id)
@@ -143,6 +149,15 @@ enum MatchActions {
         }
         if app.isOnline {
             Task { await app.flushOutbox() }
+        }
+    }
+
+    /// Operations that answer the same question: confirm and dispute exclude each other.
+    private static func group(of kind: PendingOperation.Kind) -> [PendingOperation.Kind] {
+        switch kind {
+        case .confirmMatch, .disputeMatch: [.confirmMatch, .disputeMatch]
+        case .submitFeedback: [.submitFeedback]
+        case .createMatch: [.createMatch]
         }
     }
 
