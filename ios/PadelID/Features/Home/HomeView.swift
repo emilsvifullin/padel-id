@@ -530,6 +530,7 @@ private struct HomeInsightsBlock: View {
                                 .contentShape(.rect)
                         }
                         .accessibilityLabel("Весь анализ")
+                        .accessibilityIdentifier("home.insights")
                     }
                 }
                 ForEach(Array(insights.prefix(3).enumerated()), id: \.offset) { index, insight in
@@ -562,6 +563,7 @@ private struct HomeStatsBlock: View {
         }
         .buttonStyle(.plain)
         .accessibilityHint("Открывает подробную статистику")
+        .accessibilityIdentifier("home.stats")
     }
 
     @ViewBuilder

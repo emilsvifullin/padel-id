@@ -127,6 +127,7 @@ struct AccountView: View {
             } label: {
                 Label("Как устроены рейтинг и Padel DNA", systemImage: "book")
             }
+            .accessibilityIdentifier("account.aboutRating")
             LabeledContent("Версия", value: AppEnvironment.version)
             LabeledContent("Сборка", value: AppEnvironment.buildNumber)
         } header: {
