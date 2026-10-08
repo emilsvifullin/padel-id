@@ -221,6 +221,7 @@ private struct AccountNotificationsSection: View {
     @State private var isEnabled = NotificationService.shared.isEnabled
     @State private var isRequesting = false
     @State private var showsDeniedHint = false
+    @State private var toggleCount = 0
 
     var body: some View {
         Section {
@@ -228,7 +229,7 @@ private struct AccountNotificationsSection: View {
                 Label("Напоминать о подтверждении матчей", systemImage: "bell.badge")
             }
             .disabled(isRequesting)
-            .sensoryFeedback(.selection, trigger: isEnabled)
+            .sensoryFeedback(.selection, trigger: toggleCount)
             .task { await refreshAuthorization() }
             .onChange(of: scenePhase) { _, phase in
                 guard phase == .active else { return }
@@ -251,6 +252,7 @@ private struct AccountNotificationsSection: View {
         Binding(
             get: { isEnabled },
             set: { newValue in
+                toggleCount += 1
                 if newValue {
                     enable()
                 } else {

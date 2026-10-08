@@ -350,7 +350,11 @@ struct EditProfileView: View {
             patch.cityId = city.id
         }
         if club?.id != original.club?.id {
-            patch.clubId = club.map { .set($0.id) } ?? .clear
+            if let club {
+                patch.clubId = EditProfileChange.set(club.id)
+            } else {
+                patch.clubId = EditProfileChange.clear
+            }
         }
         if side != (original.preferredSide ?? .both) {
             patch.preferredSide = side
@@ -359,11 +363,19 @@ struct EditProfileView: View {
             patch.dominantHand = hand
         }
         if playingSince != original.playingSince {
-            patch.playingSince = playingSince.map { .set($0) } ?? .clear
+            if let playingSince {
+                patch.playingSince = EditProfileChange.set(playingSince)
+            } else {
+                patch.playingSince = EditProfileChange.clear
+            }
         }
         let newBio = SettingsText.trimmed(bio)
         if newBio != SettingsText.trimmed(original.bio ?? "") {
-            patch.bio = newBio.isEmpty ? .clear : .set(newBio)
+            if newBio.isEmpty {
+                patch.bio = EditProfileChange.clear
+            } else {
+                patch.bio = EditProfileChange.set(newBio)
+            }
         }
         if discoverable != (original.discoverable ?? true) {
             patch.discoverable = discoverable

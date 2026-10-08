@@ -39,6 +39,11 @@ struct MatchDetailScoreboard: View {
     @ScaledMetric(relativeTo: .title2) private var setColumnWidth: CGFloat = 36
     @ScaledMetric(relativeTo: .body) private var markWidth: CGFloat = 24
 
+    init(match: MatchDetail, viewerId: UUID?) {
+        self.match = match
+        self.viewerId = viewerId
+    }
+
     var body: some View {
         SectionContainer {
             VStack(alignment: .leading, spacing: 16) {
@@ -320,7 +325,7 @@ struct MatchDetailStatusSection: View {
 struct MatchDetailProjectionSection: View {
     let projection: ProjectedChange
 
-    private let numeralFont = Font.system(.title2, design: .rounded, weight: .semibold)
+    private var numeralFont: Font { Font.system(.title2, design: .rounded, weight: .semibold) }
 
     var body: some View {
         MatchDetailSection("Рейтинг") {
@@ -362,6 +367,11 @@ struct MatchDetailRatingSection: View {
     let viewerId: UUID?
 
     @State private var isExplanationExpanded = false
+
+    init(match: MatchDetail, viewerId: UUID?) {
+        self.match = match
+        self.viewerId = viewerId
+    }
 
     var body: some View {
         MatchDetailSection("Изменение рейтинга", footer: weightNote) {

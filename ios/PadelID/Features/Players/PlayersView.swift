@@ -303,7 +303,7 @@ struct PlayersView: View {
             ContentUnavailableView {
                 Label("Никого не нашли", systemImage: "person.2.slash")
             } description: {
-                Text(activeFilterCount > 0 ? "Попробуйте ослабить фильтры." : "Здесь пока никого нет.")
+                Text(activeFilterCount > 0 ? "Попробуйте изменить фильтры." : "Здесь пока никого нет.")
             } actions: {
                 if activeFilterCount > 0 {
                     Button("Сбросить фильтры") {
@@ -365,7 +365,7 @@ struct PlayersView: View {
             }
             .font(.footnote)
             .foregroundStyle(.secondary)
-            .frame(minHeight: 32)
+            .frame(minHeight: 44)
             .contentShape(.rect)
         }
         .buttonStyle(.plain)

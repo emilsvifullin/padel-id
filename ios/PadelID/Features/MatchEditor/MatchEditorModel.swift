@@ -154,13 +154,13 @@ nonisolated struct EditorDraft: Equatable, Sendable {
         draft.matchType = detail.matchType
         draft.format = detail.format
 
-        let mine = detail.players.first { $0.player.id == detail.createdBy }
+        let mine = detail.players.first(where: { $0.player.id == detail.createdBy })
         let myTeam = mine?.team ?? 1
         draft.mySide = mine?.courtSide == .left ? .left : .right
-        draft.partner = detail.players.first { $0.team == myTeam && $0.player.id != detail.createdBy }?.player
+        draft.partner = detail.players.first(where: { $0.team == myTeam && $0.player.id != detail.createdBy })?.player
         let opponents = detail.players.filter { $0.team != myTeam }
-        let right = opponents.first { $0.courtSide == .right } ?? opponents.first
-        let left = opponents.first { $0.player.id != right?.player.id }
+        let right = opponents.first(where: { $0.courtSide == .right }) ?? opponents.first
+        let left = opponents.first(where: { $0.player.id != right?.player.id })
         draft.opponentRight = right?.player
         draft.opponentLeft = left?.player
 
@@ -308,10 +308,18 @@ nonisolated struct EditorDraft: Equatable, Sendable {
         return result
     }
 
-    /// Validation of a fully entered score (nil while incomplete).
-    var scoreResult: Result<Int, ScoreRules.Issue>? {
-        guard let entered = completeSets else { return nil }
-        return ScoreRules.validate(format: format, sets: entered)
+    /// The winning team of a fully entered, valid score.
+    var scoreWinner: Int? {
+        guard let entered = completeSets,
+              case .success(let winner) = ScoreRules.validate(format: format, sets: entered) else { return nil }
+        return winner
+    }
+
+    /// The rule a fully entered score breaks (nil while incomplete or valid).
+    var scoreIssue: ScoreRules.Issue? {
+        guard let entered = completeSets,
+              case .failure(let issue) = ScoreRules.validate(format: format, sets: entered) else { return nil }
+        return issue
     }
 
     var validSets: [SetScore]? {
@@ -409,7 +417,7 @@ final class MatchEditorModel {
             isEditing = true
             matchId = detail.id
             editorId = detail.createdBy
-            editorCard = detail.players.first { $0.player.id == detail.createdBy }?.player
+            editorCard = detail.players.first(where: { $0.player.id == detail.createdBy })?.player
             version = detail.version
             start = EditorDraft.edit(detail)
         }
@@ -631,6 +639,6 @@ final class MatchEditorModel {
 
     func myPreview(meId: UUID?) -> PreviewPlayer? {
         guard let meId else { return nil }
-        return preview?.players.first { $0.playerId == meId }
+        return preview?.players.first(where: { $0.playerId == meId })
     }
 }

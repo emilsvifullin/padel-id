@@ -10,6 +10,11 @@ struct MatchRowView: View {
     @ScaledMetric(relativeTo: .body) private var setColumnWidth: CGFloat = 24
     @ScaledMetric(relativeTo: .caption) private var markWidth: CGFloat = 18
 
+    init(item: MatchListItem, perspectiveTeam: Int?) {
+        self.item = item
+        self.perspectiveTeam = perspectiveTeam
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             header

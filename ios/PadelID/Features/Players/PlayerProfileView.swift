@@ -631,39 +631,34 @@ private struct PlayerProfileCompatibilityBars: View {
     }
 }
 
-/// Recent results as "В"/"П" markers, oldest first.
+/// Results of the last confirmed matches as green/red dots, oldest on the
+/// left (`form` arrives newest first as "W" / "L").
 private struct PlayerProfileFormRow: View {
     let form: [String]
+    @ScaledMetric(relativeTo: .body) private var dotSize: CGFloat = 10
 
     var body: some View {
-        let results = Array(form.reversed().map { $0 == "W" })
-        ViewThatFits(in: .horizontal) {
-            markers(results)
-            VStack(alignment: .leading, spacing: 4) {
-                markers(Array(results.prefix(5)))
-                markers(Array(results.dropFirst(5)))
+        let recent = Array(form.prefix(10))
+        HStack(spacing: 4) {
+            ForEach(Array(recent.reversed().enumerated()), id: \.offset) { _, result in
+                Circle()
+                    .fill(result == "W" ? Theme.positive : Theme.negative)
+                    .frame(width: dotSize, height: dotSize)
             }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Форма")
-        .accessibilityValue(accessibilitySummary(results))
+        .accessibilityValue(accessibilitySummary(recent))
     }
 
-    private func markers(_ results: [Bool]) -> some View {
-        HStack(spacing: 4) {
-            ForEach(Array(results.enumerated()), id: \.offset) { _, won in
-                Text(won ? "В" : "П")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(won ? Theme.positive : Theme.negative)
-                    .frame(minWidth: 22, minHeight: 22)
-                    .background((won ? Theme.positive : Theme.negative).opacity(0.15), in: .circle)
-            }
-        }
-    }
-
-    private func accessibilitySummary(_ results: [Bool]) -> String {
-        let words = results.map { $0 ? "победа" : "поражение" }
-        return "от ранних матчей к последнему: " + words.joined(separator: ", ")
+    /// "6 побед, 4 поражения. Последний матч — победа".
+    private func accessibilitySummary(_ recent: [String]) -> String {
+        guard let last = recent.first else { return "Нет матчей" }
+        let wins = recent.filter { $0 == "W" }.count
+        let losses = recent.count - wins
+        let totals = Format.count(wins, "победа", "победы", "побед") + ", "
+            + Format.count(losses, "поражение", "поражения", "поражений")
+        return totals + (last == "W" ? ". Последний матч — победа" : ". Последний матч — поражение")
     }
 }
 

@@ -4,7 +4,6 @@ import SwiftUI
 /// calibration questions and the Padel DNA self-assessment, followed by the
 /// starting level.
 struct OnboardingFlow: View {
-    @Environment(AppModel.self) private var app
     @State private var model = OnboardingModel()
 
     init() {}

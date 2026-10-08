@@ -100,7 +100,7 @@ struct CoachApplicationView: View {
         }
 
         Section {
-            TextField("Например, FIP Level 1", text: $form.certification)
+            TextField("Например, сертификат федерации падела", text: $form.certification)
                 .textInputAutocapitalization(.sentences)
         } header: {
             Text("Сертификация")
