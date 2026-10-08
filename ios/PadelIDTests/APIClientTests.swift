@@ -43,7 +43,7 @@ struct APIClientTests {
         let session = makeSession(access: "access-token-headers-0123456789", refresh: "refresh-token-headers", expiresIn: 3600)
         let (client, store) = makeClient(baseURL, session: session)
         defer { finish(baseURL, store) }
-        StubURLProtocol.register(baseURL) { _ in .json(201, #"{"ok": true}"#) }
+        StubURLProtocol.register(baseURL) { _ in StubResponse.json(201, #"{"ok": true}"#) }
 
         let key = UUID()
         let endpoint = Endpoint.json(.post, "v1/matches", ["match_type": "ranked"], idempotencyKey: key)
@@ -67,7 +67,7 @@ struct APIClientTests {
         let baseURL = StubURLProtocol.makeBaseURL()
         let (client, store) = makeClient(baseURL, session: nil)
         defer { finish(baseURL, store) }
-        StubURLProtocol.register(baseURL) { _ in .json(200, "{}") }
+        StubURLProtocol.register(baseURL) { _ in StubResponse.json(200, "{}") }
 
         _ = try await client.data(.json(.post, "v1/auth/login", ["email": "m.orlov@padelid.app", "password": "padel2026"], auth: false))
         let request = try #require(StubURLProtocol.requests(baseURL).first)
@@ -88,11 +88,11 @@ struct APIClientTests {
         StubURLProtocol.register(baseURL) { request in
             switch request.path {
             case "/v1/matches/conflict/confirm":
-                .error(409, code: "version_conflict", message: "Матч изменён.")
+                return StubResponse.error(409, code: "version_conflict", message: "Матч изменён.")
             case "/v1/clubs":
-                .error(400, code: "club_name_invalid", message: "Название клуба: от 2 до 60 символов.")
+                return StubResponse.error(400, code: "club_name_invalid", message: "Название клуба: от 2 до 60 символов.")
             default:
-                .json(500, "upstream exploded")
+                return StubResponse.json(500, "upstream exploded")
             }
         }
 
@@ -137,7 +137,7 @@ struct APIClientTests {
         let session = makeSession(access: "access-token-network-0123456789", refresh: "refresh-token-network", expiresIn: 3600)
         let (client, store) = makeClient(baseURL, session: session)
         defer { finish(baseURL, store) }
-        StubURLProtocol.register(baseURL) { _ in .transportFailure(.notConnectedToInternet) }
+        StubURLProtocol.register(baseURL) { _ in StubResponse.transportFailure(.notConnectedToInternet) }
 
         do {
             _ = try await client.data(.json(.post, "v1/matches/preview", ["format": "best_of_3"]))
@@ -163,9 +163,10 @@ struct APIClientTests {
         let meData = try FixtureLoader.data("me")
         let attempts = StubCounter()
         StubURLProtocol.register(baseURL) { _ in
-            attempts.next() == 1
-                ? .error(503, code: "service_unavailable", message: "Сервис временно недоступен.")
-                : .data(200, meData)
+            if attempts.next() == 1 {
+                return StubResponse.error(503, code: "service_unavailable", message: "Сервис временно недоступен.")
+            }
+            return StubResponse.data(200, meData)
         }
 
         let started = Date()
@@ -190,11 +191,12 @@ struct APIClientTests {
         StubURLProtocol.register(baseURL) { request in
             if request.path == "/v1/auth/refresh" {
                 refreshes.increment()
-                return .data(200, freshData)
+                return StubResponse.data(200, freshData)
             }
-            return request.header("Authorization") == "Bearer access-token-fresh-0123456789"
-                ? .json(200, "{}")
-                : .error(401, code: "session_expired", message: "Сессия истекла. Войдите снова.")
+            if request.header("Authorization") == "Bearer access-token-fresh-0123456789" {
+                return StubResponse.json(200, "{}")
+            }
+            return StubResponse.error(401, code: "session_expired", message: "Сессия истекла. Войдите снова.")
         }
 
         let first = Task { try await client.data(.get("v1/me")) }
@@ -228,11 +230,12 @@ struct APIClientTests {
         StubURLProtocol.register(baseURL) { request in
             if request.path == "/v1/auth/refresh" {
                 refreshes.increment()
-                return .data(200, freshData)
+                return StubResponse.data(200, freshData)
             }
-            return request.header("Authorization") == "Bearer access-token-renewed-0123456789"
-                ? .data(200, meData)
-                : .error(401, code: "session_expired", message: "Сессия истекла. Войдите снова.")
+            if request.header("Authorization") == "Bearer access-token-renewed-0123456789" {
+                return StubResponse.data(200, meData)
+            }
+            return StubResponse.error(401, code: "session_expired", message: "Сессия истекла. Войдите снова.")
         }
 
         let me = try await client.send(.get("v1/me"), as: Me.self)
@@ -251,9 +254,10 @@ struct APIClientTests {
         let invalidations = StubCounter()
         client.onSessionInvalidated = { invalidations.increment() }
         StubURLProtocol.register(baseURL) { request in
-            request.path == "/v1/auth/refresh"
-                ? .error(401, code: "session_expired", message: "Сессия истекла. Войдите снова.")
-                : .json(200, "{}")
+            if request.path == "/v1/auth/refresh" {
+                return StubResponse.error(401, code: "session_expired", message: "Сессия истекла. Войдите снова.")
+            }
+            return StubResponse.json(200, "{}")
         }
 
         do {
