@@ -100,10 +100,9 @@ final class APIClient {
             request.setValue(key.uuidString.lowercased(), forHTTPHeaderField: "Idempotency-Key")
         }
 
-        let data: Data
-        let response: URLResponse
+        let result: (Data, URLResponse)
         do {
-            (data, response) = try await urlSession.data(for: request)
+            result = try await urlSession.data(for: request)
         } catch is CancellationError {
             throw CancellationError()
         } catch let error as URLError where error.code == .cancelled {
@@ -111,6 +110,7 @@ final class APIClient {
         } catch {
             throw APIError.offline
         }
+        let (data, response) = result
         guard let http = response as? HTTPURLResponse else {
             throw APIError(kind: .decoding, code: "decoding", serverMessage: nil)
         }
