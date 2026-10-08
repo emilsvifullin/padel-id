@@ -355,9 +355,10 @@ begin
 end;
 $$;
 
--- A confirmed match: created, confirmed by everybody, then settled.
-create function fixtures.played(p_key text, p_days integer, p_time text, p_type text, p_format text,
-                                p_players text[], p_sets jsonb, p_creator text, p_club text default null)
+-- A confirmed match: created and confirmed by everybody (settle() follows
+-- once the players have left their feedback).
+create function fixtures.played(p_key text, p_type text, p_format text, p_players text[], p_sets jsonb,
+                                p_creator text, p_club text default null)
 returns uuid
 language plpgsql
 as $$
@@ -526,108 +527,108 @@ begin
   -- team 2 right, team 2 left. Feedback is given right after confirmation.
   -- ---------------------------------------------------------------------
 
-  v := fixtures.played('1', 70, '16:00', 'ranked', 'best_of_3', array['OR', 'SO', 'VO', 'MO'],
+  v := fixtures.played('1', 'ranked', 'best_of_3', array['OR', 'SO', 'VO', 'MO'],
     jsonb_build_array(fixtures.set(6, 4), fixtures.set(6, 3)), 'OR', luzhniki);
   perform fixtures.feedback(v, 'SO', 'OR', array['net_game', 'serve_return'], array['transition_lob']);
   perform fixtures.feedback(v, 'OR', 'SO', array['defense']);
   perform fixtures.feedback(v, 'VO', 'OR', array['net_game']);
   perform fixtures.settle('1', v, fixtures.at(70, '16:00'));
 
-  v := fixtures.played('2', 67, '05:30', 'ranked', 'best_of_3', array['OR', 'KU', 'LE', 'EG'],
+  v := fixtures.played('2', 'ranked', 'best_of_3', array['OR', 'KU', 'LE', 'EG'],
     jsonb_build_array(fixtures.set(4, 6), fixtures.set(6, 3), fixtures.set(4, 6)), 'LE', corner);
   perform fixtures.settle('2', v, fixtures.at(67, '05:30'));
 
-  v := fixtures.played('3', 64, '15:30', 'friendly', 'best_of_3', array['OR', 'PA', 'FE', 'VA'],
+  v := fixtures.played('3', 'friendly', 'best_of_3', array['OR', 'PA', 'FE', 'VA'],
     jsonb_build_array(fixtures.set(6, 2), fixtures.set(6, 4)), 'PA', luzhniki);
   perform fixtures.settle('3', v, fixtures.at(64, '15:30'));
 
-  v := fixtures.played('4', 61, '08:00', 'ranked', 'best_of_3_super_tiebreak', array['OR', 'SO', 'PA', 'ZA'],
+  v := fixtures.played('4', 'ranked', 'best_of_3_super_tiebreak', array['OR', 'SO', 'PA', 'ZA'],
     jsonb_build_array(fixtures.set(6, 7, 5, 7), fixtures.set(6, 4), fixtures.stb(10, 7)), 'SO', luzhniki);
   perform fixtures.feedback(v, 'SO', 'OR', array['consistency_decisions']);
   perform fixtures.settle('4', v, fixtures.at(61, '08:00'));
 
-  v := fixtures.played('5', 58, '17:00', 'ranked', 'best_of_3', array['VO', 'MO', 'FE', 'EG'],
+  v := fixtures.played('5', 'ranked', 'best_of_3', array['VO', 'MO', 'FE', 'EG'],
     jsonb_build_array(fixtures.set(6, 3), fixtures.set(6, 4)), 'VO', corner);
   perform fixtures.feedback(v, 'VO', 'MO', array['overheads']);
   perform fixtures.settle('5', v, fixtures.at(58, '17:00'));
 
-  v := fixtures.played('6', 55, '16:30', 'ranked', 'best_of_3', array['LE', 'OR', 'VO', 'KU'],
+  v := fixtures.played('6', 'ranked', 'best_of_3', array['LE', 'OR', 'VO', 'KU'],
     jsonb_build_array(fixtures.set(7, 5), fixtures.set(6, 4)), 'OR', corner);
   perform fixtures.feedback(v, 'LE', 'OR', array['defense', 'net_game'], array['transition_lob']);
   perform fixtures.settle('6', v, fixtures.at(55, '16:30'));
 
-  v := fixtures.played('7', 52, '16:00', 'ranked', 'best_of_3', array['OR', 'SO', 'NO', 'MO'],
+  v := fixtures.played('7', 'ranked', 'best_of_3', array['OR', 'SO', 'NO', 'MO'],
     jsonb_build_array(fixtures.set(3, 6), fixtures.set(6, 7, 4, 7)), 'NO', luzhniki);
   perform fixtures.settle('7', v, fixtures.at(52, '16:00'));
 
-  v := fixtures.played('8', 49, '06:00', 'ranked', 'single_set', array['OR', 'VA', 'PA', 'EG'],
+  v := fixtures.played('8', 'ranked', 'single_set', array['OR', 'VA', 'PA', 'EG'],
     jsonb_build_array(fixtures.set(7, 6, 7, 5)), 'OR', luzhniki);
   perform fixtures.settle('8', v, fixtures.at(49, '06:00'));
 
-  v := fixtures.played('9', 46, '09:00', 'friendly', 'best_of_3', array['FE', 'OR', 'LE', 'ZA'],
+  v := fixtures.played('9', 'friendly', 'best_of_3', array['FE', 'OR', 'LE', 'ZA'],
     jsonb_build_array(fixtures.set(6, 4), fixtures.set(3, 6), fixtures.set(6, 3)), 'FE', corner);
   perform fixtures.settle('9', v, fixtures.at(46, '09:00'));
 
-  v := fixtures.played('10', 43, '16:00', 'ranked', 'best_of_3', array['OR', 'SO', 'VO', 'MO'],
+  v := fixtures.played('10', 'ranked', 'best_of_3', array['OR', 'SO', 'VO', 'MO'],
     jsonb_build_array(fixtures.set(7, 5), fixtures.set(6, 4)), 'MO', corner);
   perform fixtures.feedback(v, 'MO', 'OR', array['net_game'], array['overheads']);
   perform fixtures.settle('10', v, fixtures.at(43, '16:00'));
 
-  v := fixtures.played('11', 40, '17:30', 'ranked', 'best_of_3', array['PA', 'OR', 'NO', 'KU'],
+  v := fixtures.played('11', 'ranked', 'best_of_3', array['PA', 'OR', 'NO', 'KU'],
     jsonb_build_array(fixtures.set(6, 4), fixtures.set(4, 6), fixtures.set(7, 5)), 'KU', luzhniki);
   perform fixtures.settle('11', v, fixtures.at(40, '17:30'));
 
-  v := fixtures.played('12', 37, '16:00', 'ranked', 'best_of_3', array['OR', 'EG', 'VO', 'SO'],
+  v := fixtures.played('12', 'ranked', 'best_of_3', array['OR', 'EG', 'VO', 'SO'],
     jsonb_build_array(fixtures.set(4, 6), fixtures.set(6, 3), fixtures.set(3, 6)), 'EG', corner);
   perform fixtures.settle('12', v, fixtures.at(37, '16:00'));
 
-  v := fixtures.played('13', 34, '08:30', 'ranked', 'best_of_3_super_tiebreak', array['OR', 'SO', 'ZA', 'PA'],
+  v := fixtures.played('13', 'ranked', 'best_of_3_super_tiebreak', array['OR', 'SO', 'ZA', 'PA'],
     jsonb_build_array(fixtures.set(6, 4), fixtures.set(3, 6), fixtures.stb(11, 9)), 'OR', luzhniki);
   perform fixtures.feedback(v, 'SO', 'OR', array['net_game', 'consistency_decisions']);
   perform fixtures.feedback(v, 'OR', 'SO', array['defense', 'transition_lob'], array['overheads']);
   perform fixtures.feedback(v, 'ZA', 'OR', array['serve_return']);
   perform fixtures.settle('13', v, fixtures.at(34, '08:30'));
 
-  v := fixtures.played('14', 31, '17:00', 'ranked', 'best_of_3', array['LE', 'KU', 'NO', 'VA'],
+  v := fixtures.played('14', 'ranked', 'best_of_3', array['LE', 'KU', 'NO', 'VA'],
     jsonb_build_array(fixtures.set(6, 4), fixtures.set(6, 4)), 'NO', luzhniki);
   perform fixtures.feedback(v, 'NO', 'KU', array['defense'], array['overheads']);
   perform fixtures.settle('14', v, fixtures.at(31, '17:00'));
 
-  v := fixtures.played('15', 28, '15:00', 'friendly', 'single_set', array['OR', 'FE', 'EG', 'VA'],
+  v := fixtures.played('15', 'friendly', 'single_set', array['OR', 'FE', 'EG', 'VA'],
     jsonb_build_array(fixtures.set(6, 3)), 'OR', corner);
   perform fixtures.settle('15', v, fixtures.at(28, '15:00'));
 
-  v := fixtures.played('16', 25, '16:30', 'ranked', 'best_of_3', array['OR', 'MO', 'VO', 'LE'],
+  v := fixtures.played('16', 'ranked', 'best_of_3', array['OR', 'MO', 'VO', 'LE'],
     jsonb_build_array(fixtures.set(4, 6), fixtures.set(3, 6)), 'VO', corner);
   perform fixtures.settle('16', v, fixtures.at(25, '16:30'));
 
-  v := fixtures.played('17', 22, '07:00', 'ranked', 'best_of_3', array['FE', 'OR', 'PA', 'KU'],
+  v := fixtures.played('17', 'ranked', 'best_of_3', array['FE', 'OR', 'PA', 'KU'],
     jsonb_build_array(fixtures.set(4, 6), fixtures.set(6, 4), fixtures.set(6, 2)), 'OR', corner);
   perform fixtures.feedback(v, 'FE', 'OR', array['overheads'], array['transition_lob']);
   perform fixtures.settle('17', v, fixtures.at(22, '07:00'));
 
-  v := fixtures.played('18', 19, '16:00', 'ranked', 'best_of_3', array['OR', 'SO', 'NO', 'MO'],
+  v := fixtures.played('18', 'ranked', 'best_of_3', array['OR', 'SO', 'NO', 'MO'],
     jsonb_build_array(fixtures.set(6, 4), fixtures.set(7, 5)), 'SO', luzhniki);
   perform fixtures.feedback(v, 'NO', 'OR', array['net_game'], array['transition_lob']);
   perform fixtures.feedback(v, 'OR', 'NO', array['overheads', 'net_game']);
   perform fixtures.settle('18', v, fixtures.at(19, '16:00'));
 
-  v := fixtures.played('19', 15, '17:00', 'ranked', 'best_of_3', array['OR', 'ZA', 'VO', 'EG'],
+  v := fixtures.played('19', 'ranked', 'best_of_3', array['OR', 'ZA', 'VO', 'EG'],
     jsonb_build_array(fixtures.set(6, 7, 6, 8), fixtures.set(7, 5), fixtures.set(4, 6)), 'ZA', corner);
   perform fixtures.settle('19', v, fixtures.at(15, '17:00'));
 
-  v := fixtures.played('20', 11, '16:00', 'ranked', 'best_of_3', array['VO', 'MO', 'PA', 'ZA'],
+  v := fixtures.played('20', 'ranked', 'best_of_3', array['VO', 'MO', 'PA', 'ZA'],
     jsonb_build_array(fixtures.set(6, 1), fixtures.set(6, 4)), 'PA', corner);
   perform fixtures.feedback(v, 'PA', 'ZA', array['net_game']);
   perform fixtures.settle('20', v, fixtures.at(11, '16:00'));
 
-  v := fixtures.played('21', 7, '08:00', 'ranked', 'best_of_3_super_tiebreak', array['OR', 'SO', 'LE', 'VO'],
+  v := fixtures.played('21', 'ranked', 'best_of_3_super_tiebreak', array['OR', 'SO', 'LE', 'VO'],
     jsonb_build_array(fixtures.set(6, 3), fixtures.set(4, 6), fixtures.stb(10, 8)), 'OR', luzhniki);
   perform fixtures.feedback(v, 'SO', 'OR', array['serve_return']);
   perform fixtures.feedback(v, 'LE', 'OR', array['net_game'], array['transition_lob']);
   perform fixtures.settle('21', v, fixtures.at(7, '08:00'));
 
-  v := fixtures.played('22', 3, '16:00', 'ranked', 'best_of_3', array['OR', 'SO', 'MO', 'EG'],
+  v := fixtures.played('22', 'ranked', 'best_of_3', array['OR', 'SO', 'MO', 'EG'],
     jsonb_build_array(fixtures.set(7, 6, 7, 4), fixtures.set(6, 3)), 'MO', luzhniki);
   perform fixtures.feedback(v, 'EG', 'OR', array['defense']);
   v := fixtures.settle('22', v, fixtures.at(3, '16:00'));

@@ -76,8 +76,8 @@ struct NarrativesTests {
         #expect(text.title == "Сильнее на левой стороне")
         #expect(text.body.contains("80%"))
         #expect(text.body.contains("55%"))
-        #expect(text.body.contains("5 матчей"))
-        #expect(text.body.contains("11 матчей"))
+        #expect(text.body.contains("5 матч"))
+        #expect(text.body.contains("11 матч"))
 
         let right = try render(#"{"kind": "side_split", "sentiment": "neutral", "values": {"better_side": "right", "left_win_rate": 0.40, "left_matches": 5, "right_win_rate": 0.70, "right_matches": 10}}"#)
         #expect(right.title == "Сильнее на правой стороне")

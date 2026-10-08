@@ -112,6 +112,31 @@ struct DomainTests {
         #expect(!PasswordPolicy.hasDigit("abc"))
     }
 
+    // MARK: Username suggestions
+
+    @Test("Usernames transliterated from display names")
+    func transliteration() {
+        let cases: [(String, String)] = [
+            ("Иван Петров", "ivan_petrov"),
+            ("Илья Громов", "ilya_gromov"),
+            ("Артём Захаров", "artem_zakharov"),
+            ("Ян", "yan"),
+            ("Ли", "li1"),
+            ("José Núñez", "jose_nunez"),
+            ("  Анна  ", "anna"),
+            ("李小龙", ""),
+            ("", ""),
+        ]
+        for (name, expected) in cases {
+            #expect(Transliteration.username(from: name) == expected, "\(name)")
+        }
+        let long = Transliteration.username(from: "Александра Константинопольская")
+        #expect(long.count <= Transliteration.maximumLength)
+        #expect(!long.hasSuffix("_"))
+        let allowed = Set("abcdefghijklmnopqrstuvwxyz0123456789_")
+        #expect(long.allSatisfy { allowed.contains($0) })
+    }
+
     @Test("E-mail plausibility")
     func emails() {
         #expect(PasswordPolicy.isPlausibleEmail("m.orlov@padelid.app"))

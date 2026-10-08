@@ -98,7 +98,7 @@ struct APIClientTests {
 
         do {
             _ = try await client.data(.json(.post, "v1/matches/conflict/confirm", ["version": 1]))
-            Issue.record("Expected version_conflict")
+            Testing.Issue.record("Expected version_conflict")
         } catch let error as APIError {
             #expect(error.status == 409)
             #expect(error.code == "version_conflict")
@@ -110,7 +110,7 @@ struct APIClientTests {
 
         do {
             _ = try await client.data(.json(.post, "v1/clubs", ["name": "X"]))
-            Issue.record("Expected club_name_invalid")
+            Testing.Issue.record("Expected club_name_invalid")
         } catch let error as APIError {
             #expect(error.status == 400)
             #expect(error.code == "club_name_invalid")
@@ -120,7 +120,7 @@ struct APIClientTests {
 
         do {
             _ = try await client.data(.json(.post, "v1/matches/preview", ["format": "best_of_3"]))
-            Issue.record("Expected a server error")
+            Testing.Issue.record("Expected a server error")
         } catch let error as APIError {
             #expect(error.status == 500)
             #expect(error.code == "service_unavailable")
@@ -141,7 +141,7 @@ struct APIClientTests {
 
         do {
             _ = try await client.data(.json(.post, "v1/matches/preview", ["format": "best_of_3"]))
-            Issue.record("Expected a network error")
+            Testing.Issue.record("Expected a network error")
         } catch let error as APIError {
             #expect(error.isNetwork)
             #expect(error.kind == .network)
@@ -262,7 +262,7 @@ struct APIClientTests {
 
         do {
             _ = try await client.data(.get("v1/me"))
-            Issue.record("Expected the request to fail")
+            Testing.Issue.record("Expected the request to fail")
         } catch let error as APIError {
             #expect(error.status == 401)
             #expect(error.code == "session_expired" || error.code == "not_authenticated")
