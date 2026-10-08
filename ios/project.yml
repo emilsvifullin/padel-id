@@ -12,7 +12,6 @@ options:
 settings:
   base:
     SWIFT_VERSION: "6.0"
-    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
     SWIFT_APPROACHABLE_CONCURRENCY: YES
     SWIFT_STRICT_CONCURRENCY: complete
     MARKETING_VERSION: "1.0.0"
@@ -45,6 +44,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.padelid.ios
         PRODUCT_NAME: PadelID
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         INFOPLIST_FILE: PadelID/Resources/Info.plist
