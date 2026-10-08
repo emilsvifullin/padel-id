@@ -12,6 +12,36 @@ nonisolated enum OnboardingDestination: Hashable, Sendable {
     case club(cityId: Int)
 }
 
+/// The four steps of the onboarding flow.
+nonisolated enum OnboardingStep: Int, CaseIterable, Hashable, Sendable {
+    case profile = 1
+    case game
+    case level
+    case style
+
+    var title: String {
+        switch self {
+        case .profile: "Профиль"
+        case .game: "Игра"
+        case .level: "Уровень"
+        case .style: "Стиль игры"
+        }
+    }
+
+    var summary: String {
+        switch self {
+        case .profile:
+            "Так вас увидят партнёры и соперники."
+        case .game:
+            "Сторона корта и игровая рука помогают подбирать пары."
+        case .level:
+            "Шесть вопросов для стартового уровня. Дальше его уточнят рейтинговые матчи."
+        case .style:
+            "Оцените направления игры относительно своего общего уровня. Это отправная точка Padel DNA — дальше её уточняют партнёры, тренеры и результаты матчей."
+        }
+    }
+}
+
 // MARK: - Calibration answers (keys and values of `private.calibrate`)
 
 nonisolated enum OnboardingExperience: String, CaseIterable, Hashable, Sendable, Encodable {
@@ -21,13 +51,15 @@ nonisolated enum OnboardingExperience: String, CaseIterable, Hashable, Sendable,
     case oneToThreeYears = "1to3y"
     case overThreeYears = "gt3y"
 
+    static let question = "Как давно вы играете в падел?"
+
     var title: String {
         switch self {
-        case .beginner: "Только начинаю"
-        case .underSixMonths: "Меньше 6 месяцев"
-        case .sixToTwelveMonths: "От 6 месяцев до года"
-        case .oneToThreeYears: "От 1 года до 3 лет"
-        case .overThreeYears: "Больше 3 лет"
+        case .beginner: "Первые игры"
+        case .underSixMonths: "Меньше полугода"
+        case .sixToTwelveMonths: "От полугода до года"
+        case .oneToThreeYears: "От года до трёх лет"
+        case .overThreeYears: "Больше трёх лет"
         }
     }
 }
@@ -37,6 +69,8 @@ nonisolated enum OnboardingFrequency: String, CaseIterable, Hashable, Sendable, 
     case monthly
     case weekly
     case often
+
+    static let question = "Как часто вы играете?"
 
     var title: String {
         switch self {
@@ -54,21 +88,23 @@ nonisolated enum OnboardingRacket: String, CaseIterable, Hashable, Sendable, Enc
     case trained
     case competitive
 
+    static let question = "Играли в теннис или другие ракеточные виды?"
+
     var title: String {
         switch self {
         case .noExperience: "Нет опыта"
-        case .amateur: "Любительский уровень"
-        case .trained: "Занятия в секции или с тренером"
-        case .competitive: "Соревнования, спортивный разряд"
+        case .amateur: "Для себя"
+        case .trained: "В секции или с тренером"
+        case .competitive: "На соревнованиях"
         }
     }
 
-    var subtitle: String? {
+    var detail: String? {
         switch self {
         case .noExperience: nil
-        case .amateur: "Играю для себя, без регулярных тренировок"
+        case .amateur: "Без регулярных тренировок"
         case .trained: "Поставленная техника основных ударов"
-        case .competitive: "Участие в официальных турнирах"
+        case .competitive: "Официальные турниры, спортивный разряд"
         }
     }
 }
@@ -77,18 +113,19 @@ nonisolated enum OnboardingRacket: String, CaseIterable, Hashable, Sendable, Enc
 nonisolated enum OnboardingScaleQuestion: CaseIterable, Hashable, Sendable {
     case glass, net, competition
 
-    var title: String {
+    var question: String {
         switch self {
-        case .glass: "Игра от стекла"
-        case .net: "Игра у сетки"
-        case .competition: "Соревнования"
+        case .glass: "Как вы играете от стекла?"
+        case .net: "Как вы играете у сетки?"
+        case .competition: "Участвуете в турнирах?"
         }
     }
 
+    /// Option titles for the answers 0, 1, 2 and 3.
     var options: [String] {
         switch self {
         case .glass:
-            ["Не играю от стекла",
+            ["Пока не играю от стекла",
              "Отбиваю простые мячи после стекла",
              "Уверенно после одного стекла",
              "Уверенно после двух стёкол и в углах"]
@@ -116,7 +153,8 @@ nonisolated enum OnboardingValidation {
 
     private static let nameSymbols: Set<Character> = [" ", ".", "'", "’", "-"]
 
-    /// A user-facing problem with a (non-empty) display name, or nil when valid.
+    /// A user-facing problem with a display name, or nil when it is valid
+    /// (`^[[:alpha:]][[:alpha:][:space:].'’-]*$`, 2–40 characters).
     static func displayNameProblem(_ raw: String) -> String? {
         let name = normalizedName(raw)
         guard let first = name.first else { return "Введите имя." }
@@ -134,15 +172,16 @@ nonisolated enum OnboardingValidation {
         displayNameProblem(raw) == nil
     }
 
-    /// `private.validate_username` format rule (`^[a-z0-9_]{3,20}$`).
+    /// `private.validate_username` format rule (`^[a-z0-9_]{3,20}$`), as a
+    /// lowercase fragment completing "Недопустимо: …".
     static func usernameProblem(_ username: String) -> String? {
         let allowed = username.unicodeScalars.allSatisfy { scalar in
             let value = scalar.value
             return (0x61...0x7A).contains(value) || (0x30...0x39).contains(value) || value == 0x5F
         }
-        if !allowed { return "Только латинские буквы, цифры и «_»." }
-        if username.count < 3 { return "Минимум 3 символа." }
-        if username.count > 20 { return "Не больше 20 символов." }
+        if !allowed { return "только латинские буквы, цифры и «_»" }
+        if username.count < 3 { return "минимум 3 символа" }
+        if username.count > 20 { return "не больше 20 символов" }
         return nil
     }
 }
@@ -156,6 +195,7 @@ nonisolated enum OnboardingUsernameStatus: Equatable, Sendable {
     case checking
     case available
     case taken
+    /// Rejected by the format rules; the payload completes "Недопустимо: …".
     case invalid(String)
     /// The check could not reach the server; the server validates on finish.
     case unverified
@@ -198,8 +238,6 @@ private nonisolated struct OnboardingRequestBody: Encodable, Sendable {
 /// DNA self-assessment and the final submission.
 @Observable
 final class OnboardingModel {
-    static let stepCount = 4
-
     var path: [OnboardingDestination] = []
 
     // Step 1 — profile
@@ -233,7 +271,7 @@ final class OnboardingModel {
     // Submission
     private(set) var isSubmitting = false
     private(set) var submitError: APIError?
-    /// Incremented on every failed submission (drives the error haptic).
+    /// Incremented on every failed submission (drives the error haptic and scrolling).
     private(set) var failureCount = 0
     private(set) var result: Me?
 
@@ -241,6 +279,7 @@ final class OnboardingModel {
 
     // MARK: Step completeness
 
+    /// Problem with the display name to show under the field, if any.
     var nameMessage: String? {
         if let nameError { return nameError }
         let normalized = OnboardingValidation.normalizedName(displayName)
@@ -256,14 +295,20 @@ final class OnboardingModel {
 
     var isGameComplete: Bool { side != nil }
 
-    var isLevelComplete: Bool {
-        experience != nil && frequency != nil && racket != nil && glass != nil && net != nil && competition != nil
+    /// Number of unanswered calibration questions (0…6).
+    var remainingLevelAnswers: Int {
+        let answered: [Bool] = [experience != nil, frequency != nil, racket != nil,
+                                glass != nil, net != nil, competition != nil]
+        return answered.filter { !$0 }.count
     }
+
+    var isLevelComplete: Bool { remainingLevelAnswers == 0 }
 
     var canFinish: Bool {
         isProfileComplete && isGameComplete && isLevelComplete && !isSubmitting
     }
 
+    /// Years for "Когда начали играть": the current year down to 1990.
     static var yearOptions: [Int] {
         let current = Calendar.current.component(.year, from: .now)
         return Array(stride(from: max(current, 1990), through: 1990, by: -1))
@@ -291,6 +336,18 @@ final class OnboardingModel {
         guard lowered != username else { return }
         username = lowered
         scheduleUsernameCheck(api: api)
+    }
+
+    /// Binding target for the city picker.
+    var citySelection: NamedRef? {
+        get { city }
+        set { selectCity(newValue) }
+    }
+
+    /// Binding target for the club picker.
+    var clubSelection: NamedRef? {
+        get { club }
+        set { selectClub(newValue) }
     }
 
     /// Selecting another city resets the club (clubs belong to a city).
@@ -347,13 +404,15 @@ final class OnboardingModel {
 
     private static func reasonText(_ reason: String?) -> String {
         switch reason {
-        case "username_reserved": "Это имя пользователя недоступно."
-        default: "3–20 символов: латинские буквы, цифры и «_»."
+        case "username_reserved": "это имя зарезервировано"
+        default: "только латинские буквы, цифры и «_», от 3 до 20 символов"
         }
     }
 
     // MARK: Submission
 
+    /// Sends the onboarding answers. On success `result` holds the new `Me`
+    /// (already stored in the response cache); the caller applies it.
     func finish(app: AppModel) async {
         guard canFinish, let body = makeRequestBody() else { return }
         guard app.isOnline else {
@@ -365,6 +424,7 @@ final class OnboardingModel {
         submitError = nil
         defer { isSubmitting = false }
         do {
+            // Idempotent on the server: a retried request returns the current state.
             let data = try await app.api.data(.json(.post, "v1/me/onboarding", body, retryable: true))
             let me = try JSONCoding.decoder.decode(Me.self, from: data)
             app.cache.store(data, for: CacheKey.me)
@@ -380,15 +440,21 @@ final class OnboardingModel {
         }
     }
 
+    /// Routes field errors back to step 1; everything else is shown inline
+    /// at the bottom of the last step.
     private func handle(_ error: APIError) {
         switch error.code {
         case "username_taken":
             checkTask?.cancel()
             usernameStatus = .taken
             path = []
-        case "username_invalid", "username_reserved":
+        case "username_invalid":
             checkTask?.cancel()
-            usernameStatus = .invalid(error.message)
+            usernameStatus = .invalid(Self.reasonText(nil))
+            path = []
+        case "username_reserved":
+            checkTask?.cancel()
+            usernameStatus = .invalid(Self.reasonText("username_reserved"))
             path = []
         case "display_name_invalid":
             nameError = error.message

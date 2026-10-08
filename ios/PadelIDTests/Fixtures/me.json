@@ -1,0 +1,53 @@
+{
+  "email": "m.orlov@padelid.app",
+  "rating": {
+    "mu": 4.49,
+    "sigma": 0.621,
+    "peak_mu": 4.49,
+    "idle_days": 2,
+    "trend_30d": 0.24,
+    "initial_mu": 3.60,
+    "provisional": false,
+    "ranked_wins": 11,
+    "reliability": 47,
+    "last_ranked_at": "2026-10-05T19:05:00+00:00",
+    "ranked_matches": 16
+  },
+  "profile": {
+    "id": "03eed36a-a8a4-4767-9dd6-b1f89bf7267b",
+    "bio": "Играю справа, люблю атаковать у сетки. Ищу партнёров на утренние игры в будни.",
+    "city": {
+      "id": 1,
+      "name": "Москва"
+    },
+    "club": {
+      "id": 1,
+      "name": "Падел Арена Лужники"
+    },
+    "level": 4.49,
+    "deleted": false,
+    "is_coach": false,
+    "username": "m_orlov",
+    "avatar_path": null,
+    "reliability": 47,
+    "discoverable": true,
+    "display_name": "Михаил Орлов",
+    "member_since": "2026-07-08T17:40:00+00:00",
+    "dominant_hand": "right",
+    "playing_since": 2021,
+    "preferred_side": "right"
+  },
+  "user_id": "03eed36a-a8a4-4767-9dd6-b1f89bf7267b",
+  "dna_self": {
+    "defense": 1,
+    "net_game": 1,
+    "overheads": 0,
+    "serve_return": 0,
+    "transition_lob": -1,
+    "consistency_decisions": 0
+  },
+  "is_admin": false,
+  "coach_status": null,
+  "needs_onboarding": false,
+  "recovery_key_created_at": "2026-07-08T17:34:00+00:00"
+}

@@ -1,0 +1,339 @@
+{
+  "id": "cd3a6439-4648-41e4-8ed1-799cff17bb62",
+  "club": {
+    "id": 2,
+    "city": "Москва",
+    "name": "Corner Padel Club"
+  },
+  "sets": [
+    {
+      "t1": 4,
+      "t2": 6,
+      "tb1": null,
+      "tb2": null,
+      "super_tiebreak": false
+    },
+    {
+      "t1": 6,
+      "t2": 4,
+      "tb1": null,
+      "tb2": null,
+      "super_tiebreak": false
+    },
+    {
+      "t1": 4,
+      "t2": 6,
+      "tb1": null,
+      "tb2": null,
+      "super_tiebreak": false
+    }
+  ],
+  "format": "best_of_3",
+  "status": "confirmed",
+  "viewer": {
+    "team": 2,
+    "can_edit": false,
+    "feedback": [],
+    "response": "confirmed",
+    "can_cancel": false,
+    "is_creator": false,
+    "can_confirm": false,
+    "can_dispute": false,
+    "is_participant": true,
+    "can_give_feedback": true
+  },
+  "players": [
+    {
+      "team": 1,
+      "player": {
+        "id": "7983e0d7-9437-4dc3-b171-c443d13514c3",
+        "city": {
+          "id": 1,
+          "name": "Москва"
+        },
+        "club": {
+          "id": 2,
+          "name": "Corner Padel Club"
+        },
+        "level": 4.58,
+        "deleted": false,
+        "is_coach": false,
+        "username": "volkov_padel",
+        "avatar_path": null,
+        "reliability": 32,
+        "display_name": "Алексей Волков",
+        "preferred_side": "right"
+      },
+      "response": "confirmed",
+      "court_side": "right",
+      "responded_at": "2026-10-07T17:50:00+00:00",
+      "rating_change": {
+        "delta": -0.071,
+        "details": {
+          "won": false,
+          "coef": 0.4,
+          "gain": 0.2470868402311159,
+          "team": 1,
+          "weight": 0.6666666666666666,
+          "partner": {
+            "id": "70c78b8c-e283-494c-9344-3c901131e0f8",
+            "mu": 4.318862106977404
+          },
+          "algorithm": "PIR-1",
+          "idle_days": 6,
+          "opponents": [
+            {
+              "id": "d8b58bd9-8f8c-4732-a129-148692946aed",
+              "mu": 4.8869870951654955
+            },
+            {
+              "id": "03eed36a-a8a4-4767-9dd6-b1f89bf7267b",
+              "mu": 4.494538956749728
+            }
+          ],
+          "game_share": 0.4666666666666667,
+          "expected_win": 0.4273277074009056,
+          "margin_factor": 1.0156061999566603,
+          "repeat_lineup": 1,
+          "team_strength": 4.452911460053624,
+          "sigma_effective": 0.7359767666812689,
+          "opponent_strength": 4.651518212116035,
+          "expected_game_share": 0.47707079997110685
+        },
+        "mu_after": 4.582,
+        "mu_before": 4.654,
+        "sigma_after": 0.728,
+        "sigma_before": 0.736
+      },
+      "dispute_reason": null,
+      "dispute_comment": null
+    },
+    {
+      "team": 1,
+      "player": {
+        "id": "70c78b8c-e283-494c-9344-3c901131e0f8",
+        "city": {
+          "id": 1,
+          "name": "Москва"
+        },
+        "club": {
+          "id": 2,
+          "name": "Corner Padel Club"
+        },
+        "level": 4.19,
+        "deleted": false,
+        "is_coach": false,
+        "username": "kate_lebedeva",
+        "avatar_path": null,
+        "reliability": 25,
+        "display_name": "Екатерина Лебедева",
+        "preferred_side": "right"
+      },
+      "response": "confirmed",
+      "court_side": "left",
+      "responded_at": "2026-10-07T18:25:00+00:00",
+      "rating_change": {
+        "delta": -0.128,
+        "details": {
+          "won": false,
+          "coef": 0.6,
+          "gain": 0.4412562024907469,
+          "team": 1,
+          "weight": 0.6666666666666666,
+          "partner": {
+            "id": "7983e0d7-9437-4dc3-b171-c443d13514c3",
+            "mu": 4.6539854896679556
+          },
+          "algorithm": "PIR-1",
+          "idle_days": 6,
+          "opponents": [
+            {
+              "id": "d8b58bd9-8f8c-4732-a129-148692946aed",
+              "mu": 4.8869870951654955
+            },
+            {
+              "id": "03eed36a-a8a4-4767-9dd6-b1f89bf7267b",
+              "mu": 4.494538956749728
+            }
+          ],
+          "game_share": 0.4666666666666667,
+          "expected_win": 0.4273277074009056,
+          "margin_factor": 1.0156061999566603,
+          "repeat_lineup": 1,
+          "team_strength": 4.452911460053624,
+          "sigma_effective": 0.8030435143457021,
+          "opponent_strength": 4.651518212116035,
+          "expected_game_share": 0.47707079997110685
+        },
+        "mu_after": 4.191,
+        "mu_before": 4.319,
+        "sigma_after": 0.778,
+        "sigma_before": 0.803
+      },
+      "dispute_reason": null,
+      "dispute_comment": null
+    },
+    {
+      "team": 2,
+      "player": {
+        "id": "03eed36a-a8a4-4767-9dd6-b1f89bf7267b",
+        "city": {
+          "id": 1,
+          "name": "Москва"
+        },
+        "club": {
+          "id": 1,
+          "name": "Падел Арена Лужники"
+        },
+        "level": 4.57,
+        "deleted": false,
+        "is_coach": false,
+        "username": "m_orlov",
+        "avatar_path": null,
+        "reliability": 49,
+        "display_name": "Михаил Орлов",
+        "preferred_side": "right"
+      },
+      "response": "confirmed",
+      "court_side": "right",
+      "responded_at": "2026-10-08T05:38:48.528302+00:00",
+      "rating_change": {
+        "delta": 0.076,
+        "details": {
+          "won": true,
+          "coef": 0.6,
+          "gain": 0.264096005539524,
+          "team": 2,
+          "weight": 0.6666666666666666,
+          "partner": {
+            "id": "d8b58bd9-8f8c-4732-a129-148692946aed",
+            "mu": 4.8869870951654955
+          },
+          "algorithm": "PIR-1",
+          "idle_days": 2,
+          "opponents": [
+            {
+              "id": "70c78b8c-e283-494c-9344-3c901131e0f8",
+              "mu": 4.318862106977404
+            },
+            {
+              "id": "7983e0d7-9437-4dc3-b171-c443d13514c3",
+              "mu": 4.6539854896679556
+            }
+          ],
+          "game_share": 0.5333333333333333,
+          "expected_win": 0.5726722925990944,
+          "margin_factor": 1.0156061999566603,
+          "repeat_lineup": 1,
+          "team_strength": 4.651518212116035,
+          "sigma_effective": 0.6212617042047623,
+          "opponent_strength": 4.452911460053624,
+          "expected_game_share": 0.5229292000288932
+        },
+        "mu_after": 4.571,
+        "mu_before": 4.495,
+        "sigma_after": 0.610,
+        "sigma_before": 0.621
+      },
+      "dispute_reason": null,
+      "dispute_comment": null
+    },
+    {
+      "team": 2,
+      "player": {
+        "id": "d8b58bd9-8f8c-4732-a129-148692946aed",
+        "city": {
+          "id": 1,
+          "name": "Москва"
+        },
+        "club": {
+          "id": 1,
+          "name": "Падел Арена Лужники"
+        },
+        "level": 4.97,
+        "deleted": false,
+        "is_coach": false,
+        "username": "d_sokolov",
+        "avatar_path": null,
+        "reliability": 27,
+        "display_name": "Дмитрий Соколов",
+        "preferred_side": "left"
+      },
+      "response": "confirmed",
+      "court_side": "left",
+      "responded_at": "2026-10-07T19:00:00+00:00",
+      "rating_change": {
+        "delta": 0.079,
+        "details": {
+          "won": true,
+          "coef": 0.4,
+          "gain": 0.2723649053178432,
+          "team": 2,
+          "weight": 0.6666666666666666,
+          "partner": {
+            "id": "03eed36a-a8a4-4767-9dd6-b1f89bf7267b",
+            "mu": 4.494538956749728
+          },
+          "algorithm": "PIR-1",
+          "idle_days": 2,
+          "opponents": [
+            {
+              "id": "70c78b8c-e283-494c-9344-3c901131e0f8",
+              "mu": 4.318862106977404
+            },
+            {
+              "id": "7983e0d7-9437-4dc3-b171-c443d13514c3",
+              "mu": 4.6539854896679556
+            }
+          ],
+          "game_share": 0.5333333333333333,
+          "expected_win": 0.5726722925990944,
+          "margin_factor": 1.0156061999566603,
+          "repeat_lineup": 1,
+          "team_strength": 4.651518212116035,
+          "sigma_effective": 0.7727070426959851,
+          "opponent_strength": 4.452911460053624,
+          "expected_game_share": 0.5229292000288932
+        },
+        "mu_after": 4.966,
+        "mu_before": 4.887,
+        "sigma_after": 0.763,
+        "sigma_before": 0.773
+      },
+      "dispute_reason": null,
+      "dispute_comment": null
+    }
+  ],
+  "version": 1,
+  "analysis": {
+    "upset": false,
+    "bagels": 0,
+    "comeback": false,
+    "tiebreaks": 0,
+    "head_to_head": {
+      "matches": 1,
+      "team1_wins": 0
+    },
+    "partnerships": {
+      "team1": 2,
+      "team2": 8
+    },
+    "game_share_team1": 0.467,
+    "projected_change": null,
+    "expected_win_team1": 0.427
+  },
+  "played_at": "2026-10-07T16:30:00+00:00",
+  "created_at": "2026-10-07T17:50:00+00:00",
+  "created_by": "7983e0d7-9437-4dc3-b171-c443d13514c3",
+  "expires_at": null,
+  "match_type": "ranked",
+  "team1_sets": 1,
+  "team2_sets": 2,
+  "updated_at": "2026-10-08T05:38:48.528302+00:00",
+  "team1_games": 14,
+  "team2_games": 16,
+  "winner_team": 2,
+  "confirmed_at": "2026-10-08T05:38:48.528302+00:00",
+  "rating_weight": 0.6666666666666666,
+  "rating_applied": true
+}

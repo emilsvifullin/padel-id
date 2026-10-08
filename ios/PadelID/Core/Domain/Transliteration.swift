@@ -25,8 +25,9 @@ nonisolated enum Transliteration {
 
     private static let separators: Set<Character> = ["-", "‐", "‑", "–", "—", "_"]
 
-    /// A username suggestion for a display name, e.g. "Иван Петров" → "ivan_petrov".
-    /// Returns an empty string for an empty name.
+    /// A username suggestion for a display name, e.g. "Иван Петров" → "ivan_petrov",
+    /// "Ян" → "yan", "Ли" → "li1". Returns an empty string when nothing in the
+    /// name can be transliterated.
     static func username(from displayName: String) -> String {
         let source = displayName.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !source.isEmpty else { return "" }
@@ -56,8 +57,9 @@ nonisolated enum Transliteration {
         }
 
         if collapsed.isEmpty {
-            // Nothing transliterable (e.g. a name in another script).
-            return "player"
+            // Nothing transliterable (e.g. a name in another script): the
+            // user picks a username themselves.
+            return ""
         }
 
         var digit = 1

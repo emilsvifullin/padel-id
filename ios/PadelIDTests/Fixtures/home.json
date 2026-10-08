@@ -1,0 +1,1263 @@
+{
+  "dna": {
+    "archetype": "net_dominator",
+    "dimensions": [
+      {
+        "key": "serve_return",
+        "level": 4.58,
+        "offset": 0.09,
+        "trend_30d": 0.29,
+        "confidence": 0.52,
+        "self_signal": true,
+        "match_signal": false,
+        "peer_signals": 3,
+        "coach_signals": 1,
+        "coach_verified_at": "2026-10-02T10:30:00+00:00"
+      },
+      {
+        "key": "defense",
+        "level": 4.58,
+        "offset": 0.09,
+        "trend_30d": 0.25,
+        "confidence": 0.51,
+        "self_signal": true,
+        "match_signal": false,
+        "peer_signals": 2,
+        "coach_signals": 1,
+        "coach_verified_at": "2026-10-02T10:30:00+00:00"
+      },
+      {
+        "key": "transition_lob",
+        "level": 3.93,
+        "offset": -0.56,
+        "trend_30d": -0.05,
+        "confidence": 0.54,
+        "self_signal": true,
+        "match_signal": false,
+        "peer_signals": 5,
+        "coach_signals": 1,
+        "coach_verified_at": "2026-10-02T10:30:00+00:00"
+      },
+      {
+        "key": "net_game",
+        "level": 4.93,
+        "offset": 0.44,
+        "trend_30d": 0.49,
+        "confidence": 0.56,
+        "self_signal": true,
+        "match_signal": false,
+        "peer_signals": 7,
+        "coach_signals": 1,
+        "coach_verified_at": "2026-10-02T10:30:00+00:00"
+      },
+      {
+        "key": "overheads",
+        "level": 4.22,
+        "offset": -0.27,
+        "trend_30d": 0.09,
+        "confidence": 0.50,
+        "self_signal": true,
+        "match_signal": false,
+        "peer_signals": 2,
+        "coach_signals": 1,
+        "coach_verified_at": "2026-10-02T10:30:00+00:00"
+      },
+      {
+        "key": "consistency_decisions",
+        "level": 4.71,
+        "offset": 0.21,
+        "trend_30d": 0.35,
+        "confidence": 0.59,
+        "self_signal": true,
+        "match_signal": true,
+        "peer_signals": 2,
+        "coach_signals": 1,
+        "coach_verified_at": "2026-10-02T10:30:00+00:00"
+      }
+    ]
+  },
+  "stats": {
+    "form": [
+      "W",
+      "W",
+      "L",
+      "W",
+      "W",
+      "L",
+      "W",
+      "W",
+      "L",
+      "W"
+    ],
+    "sets": {
+      "won": 29,
+      "lost": 16
+    },
+    "wins": 14,
+    "games": {
+      "won": 231,
+      "lost": 201
+    },
+    "sides": {
+      "left": {
+        "wins": 4,
+        "matches": 4
+      },
+      "right": {
+        "wins": 10,
+        "matches": 15
+      }
+    },
+    "losses": 5,
+    "ranked": {
+      "wins": 11,
+      "matches": 16
+    },
+    "rivals": [
+      {
+        "wins": 4,
+        "player": {
+          "id": "7983e0d7-9437-4dc3-b171-c443d13514c3",
+          "city": {
+            "id": 1,
+            "name": "Москва"
+          },
+          "club": {
+            "id": 2,
+            "name": "Corner Padel Club"
+          },
+          "level": 4.65,
+          "deleted": false,
+          "is_coach": false,
+          "username": "volkov_padel",
+          "avatar_path": null,
+          "reliability": 31,
+          "display_name": "Алексей Волков",
+          "preferred_side": "right"
+        },
+        "matches": 7
+      },
+      {
+        "wins": 3,
+        "player": {
+          "id": "c1e87c5d-9f8f-4240-91cb-4fb7bc59a693",
+          "city": {
+            "id": 1,
+            "name": "Москва"
+          },
+          "club": null,
+          "level": 3.71,
+          "deleted": false,
+          "is_coach": false,
+          "username": "pavel_egorov",
+          "avatar_path": null,
+          "reliability": 28,
+          "display_name": "Павел Егоров",
+          "preferred_side": "left"
+        },
+        "matches": 5
+      },
+      {
+        "wins": 4,
+        "player": {
+          "id": "2becd560-4954-4ad9-ab50-e454ea8f2d73",
+          "city": {
+            "id": 1,
+            "name": "Москва"
+          },
+          "club": {
+            "id": 2,
+            "name": "Corner Padel Club"
+          },
+          "level": 3.18,
+          "deleted": false,
+          "is_coach": false,
+          "username": "s_morozov",
+          "avatar_path": null,
+          "reliability": 40,
+          "display_name": "Сергей Морозов",
+          "preferred_side": "left"
+        },
+        "matches": 5
+      }
+    ],
+    "streak": {
+      "type": "win",
+      "count": 2
+    },
+    "matches": 19,
+    "friendly": {
+      "wins": 3,
+      "matches": 3
+    },
+    "partners": [
+      {
+        "wins": 7,
+        "player": {
+          "id": "d8b58bd9-8f8c-4732-a129-148692946aed",
+          "city": {
+            "id": 1,
+            "name": "Москва"
+          },
+          "club": {
+            "id": 1,
+            "name": "Падел Арена Лужники"
+          },
+          "level": 4.89,
+          "deleted": false,
+          "is_coach": false,
+          "username": "d_sokolov",
+          "avatar_path": null,
+          "reliability": 25,
+          "display_name": "Дмитрий Соколов",
+          "preferred_side": "left"
+        },
+        "matches": 8
+      },
+      {
+        "wins": 3,
+        "player": {
+          "id": "811c461a-f805-4a50-9dc8-eb539f46dcac",
+          "city": {
+            "id": 1,
+            "name": "Москва"
+          },
+          "club": {
+            "id": 2,
+            "name": "Corner Padel Club"
+          },
+          "level": 2.25,
+          "deleted": false,
+          "is_coach": false,
+          "username": "maria_fedorova",
+          "avatar_path": null,
+          "reliability": 19,
+          "display_name": "Мария Фёдорова",
+          "preferred_side": "right"
+        },
+        "matches": 3
+      },
+      {
+        "wins": 2,
+        "player": {
+          "id": "359dfbcf-7da8-4e54-af5e-08c1096e5e44",
+          "city": {
+            "id": 1,
+            "name": "Москва"
+          },
+          "club": null,
+          "level": 2.63,
+          "deleted": false,
+          "is_coach": false,
+          "username": "igor_pavlov",
+          "avatar_path": null,
+          "reliability": 30,
+          "display_name": "Игорь Павлов",
+          "preferred_side": "both"
+        },
+        "matches": 2
+      }
+    ],
+    "tiebreaks": {
+      "won": 2,
+      "lost": 3
+    },
+    "deciding_sets": {
+      "won": 6,
+      "lost": 3
+    },
+    "last_played_at": "2026-10-05T16:00:00+00:00"
+  },
+  "rating": {
+    "mu": 4.49,
+    "sigma": 0.621,
+    "peak_mu": 4.49,
+    "idle_days": 2,
+    "trend_30d": 0.24,
+    "initial_mu": 3.60,
+    "provisional": false,
+    "ranked_wins": 11,
+    "reliability": 47,
+    "last_ranked_at": "2026-10-05T19:05:00+00:00",
+    "ranked_matches": 16
+  },
+  "viewer": {
+    "is_me": true,
+    "can_assess": false
+  },
+  "deleted": false,
+  "profile": {
+    "id": "03eed36a-a8a4-4767-9dd6-b1f89bf7267b",
+    "bio": "Играю справа, люблю атаковать у сетки. Ищу партнёров на утренние игры в будни.",
+    "city": {
+      "id": 1,
+      "name": "Москва"
+    },
+    "club": {
+      "id": 1,
+      "name": "Падел Арена Лужники"
+    },
+    "level": 4.49,
+    "deleted": false,
+    "is_coach": false,
+    "username": "m_orlov",
+    "avatar_path": null,
+    "reliability": 47,
+    "discoverable": true,
+    "display_name": "Михаил Орлов",
+    "member_since": "2026-07-08T17:40:00+00:00",
+    "dominant_hand": "right",
+    "playing_since": 2021,
+    "preferred_side": "right"
+  },
+  "insights": [
+    {
+      "kind": "reliability_path",
+      "values": {
+        "target": 70,
+        "reliability": 47,
+        "matches_needed": 10
+      },
+      "sentiment": "neutral"
+    },
+    {
+      "kind": "trend",
+      "values": {
+        "days": 30,
+        "delta": 0.24,
+        "matches": 6
+      },
+      "sentiment": "positive"
+    },
+    {
+      "kind": "vs_expectation",
+      "values": {
+        "matches": 10,
+        "residual": 0.16
+      },
+      "sentiment": "positive"
+    },
+    {
+      "kind": "side_split",
+      "values": {
+        "better_side": "left",
+        "left_matches": 4,
+        "left_win_rate": 1.00,
+        "right_matches": 15,
+        "right_win_rate": 0.67
+      },
+      "sentiment": "neutral"
+    },
+    {
+      "kind": "close_sets",
+      "values": {
+        "won": 10,
+        "total": 13
+      },
+      "sentiment": "positive"
+    },
+    {
+      "kind": "best_partner",
+      "values": {
+        "player": {
+          "id": "d8b58bd9-8f8c-4732-a129-148692946aed",
+          "city": {
+            "id": 1,
+            "name": "Москва"
+          },
+          "club": {
+            "id": 1,
+            "name": "Падел Арена Лужники"
+          },
+          "level": 4.89,
+          "deleted": false,
+          "is_coach": false,
+          "username": "d_sokolov",
+          "avatar_path": null,
+          "reliability": 25,
+          "display_name": "Дмитрий Соколов",
+          "preferred_side": "left"
+        },
+        "matches": 8,
+        "residual": 0.24
+      },
+      "sentiment": "positive"
+    },
+    {
+      "kind": "focus_area",
+      "values": {
+        "offset": -0.56,
+        "dimension": "transition_lob",
+        "confidence": 0.54
+      },
+      "sentiment": "neutral"
+    }
+  ],
+  "action_items": [
+    {
+      "id": "cd3a6439-4648-41e4-8ed1-799cff17bb62",
+      "sets": [
+        {
+          "t1": 4,
+          "t2": 6,
+          "tb1": null,
+          "tb2": null,
+          "super_tiebreak": false
+        },
+        {
+          "t1": 6,
+          "t2": 4,
+          "tb1": null,
+          "tb2": null,
+          "super_tiebreak": false
+        },
+        {
+          "t1": 4,
+          "t2": 6,
+          "tb1": null,
+          "tb2": null,
+          "super_tiebreak": false
+        }
+      ],
+      "format": "best_of_3",
+      "status": "pending",
+      "my_team": 2,
+      "players": [
+        {
+          "team": 1,
+          "player": {
+            "id": "7983e0d7-9437-4dc3-b171-c443d13514c3",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 2,
+              "name": "Corner Padel Club"
+            },
+            "level": 4.65,
+            "deleted": false,
+            "is_coach": false,
+            "username": "volkov_padel",
+            "avatar_path": null,
+            "reliability": 31,
+            "display_name": "Алексей Волков",
+            "preferred_side": "right"
+          },
+          "response": "confirmed",
+          "court_side": "right"
+        },
+        {
+          "team": 1,
+          "player": {
+            "id": "70c78b8c-e283-494c-9344-3c901131e0f8",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 2,
+              "name": "Corner Padel Club"
+            },
+            "level": 4.32,
+            "deleted": false,
+            "is_coach": false,
+            "username": "kate_lebedeva",
+            "avatar_path": null,
+            "reliability": 21,
+            "display_name": "Екатерина Лебедева",
+            "preferred_side": "right"
+          },
+          "response": "confirmed",
+          "court_side": "left"
+        },
+        {
+          "team": 2,
+          "player": {
+            "id": "03eed36a-a8a4-4767-9dd6-b1f89bf7267b",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 1,
+              "name": "Падел Арена Лужники"
+            },
+            "level": 4.49,
+            "deleted": false,
+            "is_coach": false,
+            "username": "m_orlov",
+            "avatar_path": null,
+            "reliability": 47,
+            "display_name": "Михаил Орлов",
+            "preferred_side": "right"
+          },
+          "response": "pending",
+          "court_side": "right"
+        },
+        {
+          "team": 2,
+          "player": {
+            "id": "d8b58bd9-8f8c-4732-a129-148692946aed",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 1,
+              "name": "Падел Арена Лужники"
+            },
+            "level": 4.89,
+            "deleted": false,
+            "is_coach": false,
+            "username": "d_sokolov",
+            "avatar_path": null,
+            "reliability": 25,
+            "display_name": "Дмитрий Соколов",
+            "preferred_side": "left"
+          },
+          "response": "confirmed",
+          "court_side": "left"
+        }
+      ],
+      "version": 1,
+      "club_name": "Corner Padel Club",
+      "played_at": "2026-10-07T16:30:00+00:00",
+      "expires_at": "2026-10-14T19:00:00+00:00",
+      "is_creator": false,
+      "match_type": "ranked",
+      "updated_at": "2026-10-07T19:00:00+00:00",
+      "my_response": "pending",
+      "winner_team": 2,
+      "needs_action": true,
+      "rating_delta": null,
+      "pending_count": 1,
+      "disputed_count": 0
+    }
+  ],
+  "compatibility": null,
+  "recent_matches": [
+    {
+      "id": "4378ad61-e749-4aac-b0a4-9d0274641619",
+      "sets": [
+        {
+          "t1": 7,
+          "t2": 6,
+          "tb1": 7,
+          "tb2": 4,
+          "super_tiebreak": false
+        },
+        {
+          "t1": 6,
+          "t2": 3,
+          "tb1": null,
+          "tb2": null,
+          "super_tiebreak": false
+        }
+      ],
+      "format": "best_of_3",
+      "status": "confirmed",
+      "my_team": 1,
+      "players": [
+        {
+          "team": 1,
+          "player": {
+            "id": "03eed36a-a8a4-4767-9dd6-b1f89bf7267b",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 1,
+              "name": "Падел Арена Лужники"
+            },
+            "level": 4.49,
+            "deleted": false,
+            "is_coach": false,
+            "username": "m_orlov",
+            "avatar_path": null,
+            "reliability": 47,
+            "display_name": "Михаил Орлов",
+            "preferred_side": "right"
+          },
+          "response": "confirmed",
+          "court_side": "right"
+        },
+        {
+          "team": 1,
+          "player": {
+            "id": "d8b58bd9-8f8c-4732-a129-148692946aed",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 1,
+              "name": "Падел Арена Лужники"
+            },
+            "level": 4.89,
+            "deleted": false,
+            "is_coach": false,
+            "username": "d_sokolov",
+            "avatar_path": null,
+            "reliability": 25,
+            "display_name": "Дмитрий Соколов",
+            "preferred_side": "left"
+          },
+          "response": "confirmed",
+          "court_side": "left"
+        },
+        {
+          "team": 2,
+          "player": {
+            "id": "2becd560-4954-4ad9-ab50-e454ea8f2d73",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 2,
+              "name": "Corner Padel Club"
+            },
+            "level": 3.18,
+            "deleted": false,
+            "is_coach": false,
+            "username": "s_morozov",
+            "avatar_path": null,
+            "reliability": 40,
+            "display_name": "Сергей Морозов",
+            "preferred_side": "left"
+          },
+          "response": "confirmed",
+          "court_side": "right"
+        },
+        {
+          "team": 2,
+          "player": {
+            "id": "c1e87c5d-9f8f-4240-91cb-4fb7bc59a693",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": null,
+            "level": 3.71,
+            "deleted": false,
+            "is_coach": false,
+            "username": "pavel_egorov",
+            "avatar_path": null,
+            "reliability": 28,
+            "display_name": "Павел Егоров",
+            "preferred_side": "left"
+          },
+          "response": "confirmed",
+          "court_side": "left"
+        }
+      ],
+      "version": 1,
+      "club_name": "Падел Арена Лужники",
+      "played_at": "2026-10-05T16:00:00+00:00",
+      "expires_at": null,
+      "is_creator": false,
+      "match_type": "ranked",
+      "updated_at": "2026-10-05T19:05:00+00:00",
+      "my_response": "confirmed",
+      "winner_team": 1,
+      "needs_action": false,
+      "rating_delta": 0.046,
+      "subject_team": 1,
+      "pending_count": 0,
+      "disputed_count": 0,
+      "subject_rating_delta": 0.046
+    },
+    {
+      "id": "70144234-5bc7-4ba7-a5c1-7c11272dd8e4",
+      "sets": [
+        {
+          "t1": 6,
+          "t2": 3,
+          "tb1": null,
+          "tb2": null,
+          "super_tiebreak": false
+        },
+        {
+          "t1": 4,
+          "t2": 6,
+          "tb1": null,
+          "tb2": null,
+          "super_tiebreak": false
+        },
+        {
+          "t1": 10,
+          "t2": 8,
+          "tb1": null,
+          "tb2": null,
+          "super_tiebreak": true
+        }
+      ],
+      "format": "best_of_3_super_tiebreak",
+      "status": "confirmed",
+      "my_team": 1,
+      "players": [
+        {
+          "team": 1,
+          "player": {
+            "id": "03eed36a-a8a4-4767-9dd6-b1f89bf7267b",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 1,
+              "name": "Падел Арена Лужники"
+            },
+            "level": 4.49,
+            "deleted": false,
+            "is_coach": false,
+            "username": "m_orlov",
+            "avatar_path": null,
+            "reliability": 47,
+            "display_name": "Михаил Орлов",
+            "preferred_side": "right"
+          },
+          "response": "confirmed",
+          "court_side": "right"
+        },
+        {
+          "team": 1,
+          "player": {
+            "id": "d8b58bd9-8f8c-4732-a129-148692946aed",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 1,
+              "name": "Падел Арена Лужники"
+            },
+            "level": 4.89,
+            "deleted": false,
+            "is_coach": false,
+            "username": "d_sokolov",
+            "avatar_path": null,
+            "reliability": 25,
+            "display_name": "Дмитрий Соколов",
+            "preferred_side": "left"
+          },
+          "response": "confirmed",
+          "court_side": "left"
+        },
+        {
+          "team": 2,
+          "player": {
+            "id": "70c78b8c-e283-494c-9344-3c901131e0f8",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 2,
+              "name": "Corner Padel Club"
+            },
+            "level": 4.32,
+            "deleted": false,
+            "is_coach": false,
+            "username": "kate_lebedeva",
+            "avatar_path": null,
+            "reliability": 21,
+            "display_name": "Екатерина Лебедева",
+            "preferred_side": "right"
+          },
+          "response": "confirmed",
+          "court_side": "right"
+        },
+        {
+          "team": 2,
+          "player": {
+            "id": "7983e0d7-9437-4dc3-b171-c443d13514c3",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 2,
+              "name": "Corner Padel Club"
+            },
+            "level": 4.65,
+            "deleted": false,
+            "is_coach": false,
+            "username": "volkov_padel",
+            "avatar_path": null,
+            "reliability": 31,
+            "display_name": "Алексей Волков",
+            "preferred_side": "right"
+          },
+          "response": "confirmed",
+          "court_side": "left"
+        }
+      ],
+      "version": 1,
+      "club_name": "Падел Арена Лужники",
+      "played_at": "2026-10-01T08:00:00+00:00",
+      "expires_at": null,
+      "is_creator": true,
+      "match_type": "ranked",
+      "updated_at": "2026-10-01T11:05:00+00:00",
+      "my_response": "confirmed",
+      "winner_team": 1,
+      "needs_action": false,
+      "rating_delta": 0.164,
+      "subject_team": 1,
+      "pending_count": 0,
+      "disputed_count": 0,
+      "subject_rating_delta": 0.164
+    },
+    {
+      "id": "4b48e4b0-4e39-4921-9d2d-31698d8ce29f",
+      "sets": [
+        {
+          "t1": 6,
+          "t2": 7,
+          "tb1": 6,
+          "tb2": 8,
+          "super_tiebreak": false
+        },
+        {
+          "t1": 7,
+          "t2": 5,
+          "tb1": null,
+          "tb2": null,
+          "super_tiebreak": false
+        },
+        {
+          "t1": 4,
+          "t2": 6,
+          "tb1": null,
+          "tb2": null,
+          "super_tiebreak": false
+        }
+      ],
+      "format": "best_of_3",
+      "status": "confirmed",
+      "my_team": 1,
+      "players": [
+        {
+          "team": 1,
+          "player": {
+            "id": "03eed36a-a8a4-4767-9dd6-b1f89bf7267b",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 1,
+              "name": "Падел Арена Лужники"
+            },
+            "level": 4.49,
+            "deleted": false,
+            "is_coach": false,
+            "username": "m_orlov",
+            "avatar_path": null,
+            "reliability": 47,
+            "display_name": "Михаил Орлов",
+            "preferred_side": "right"
+          },
+          "response": "confirmed",
+          "court_side": "right"
+        },
+        {
+          "team": 1,
+          "player": {
+            "id": "a612d312-413b-4a9b-b433-64c312049ebe",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 2,
+              "name": "Corner Padel Club"
+            },
+            "level": 3.53,
+            "deleted": false,
+            "is_coach": false,
+            "username": "artem_zakharov",
+            "avatar_path": null,
+            "reliability": 20,
+            "display_name": "Артём Захаров",
+            "preferred_side": "both"
+          },
+          "response": "confirmed",
+          "court_side": "left"
+        },
+        {
+          "team": 2,
+          "player": {
+            "id": "7983e0d7-9437-4dc3-b171-c443d13514c3",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 2,
+              "name": "Corner Padel Club"
+            },
+            "level": 4.65,
+            "deleted": false,
+            "is_coach": false,
+            "username": "volkov_padel",
+            "avatar_path": null,
+            "reliability": 31,
+            "display_name": "Алексей Волков",
+            "preferred_side": "right"
+          },
+          "response": "confirmed",
+          "court_side": "right"
+        },
+        {
+          "team": 2,
+          "player": {
+            "id": "c1e87c5d-9f8f-4240-91cb-4fb7bc59a693",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": null,
+            "level": 3.71,
+            "deleted": false,
+            "is_coach": false,
+            "username": "pavel_egorov",
+            "avatar_path": null,
+            "reliability": 28,
+            "display_name": "Павел Егоров",
+            "preferred_side": "left"
+          },
+          "response": "confirmed",
+          "court_side": "left"
+        }
+      ],
+      "version": 1,
+      "club_name": "Corner Padel Club",
+      "played_at": "2026-09-23T17:00:00+00:00",
+      "expires_at": null,
+      "is_creator": false,
+      "match_type": "ranked",
+      "updated_at": "2026-09-23T20:05:00+00:00",
+      "my_response": "confirmed",
+      "winner_team": 2,
+      "needs_action": false,
+      "rating_delta": -0.109,
+      "subject_team": 1,
+      "pending_count": 0,
+      "disputed_count": 0,
+      "subject_rating_delta": -0.109
+    },
+    {
+      "id": "adeb8fd9-1755-423a-87d1-db1c90f90ab8",
+      "sets": [
+        {
+          "t1": 6,
+          "t2": 4,
+          "tb1": null,
+          "tb2": null,
+          "super_tiebreak": false
+        },
+        {
+          "t1": 7,
+          "t2": 5,
+          "tb1": null,
+          "tb2": null,
+          "super_tiebreak": false
+        }
+      ],
+      "format": "best_of_3",
+      "status": "confirmed",
+      "my_team": 1,
+      "players": [
+        {
+          "team": 1,
+          "player": {
+            "id": "03eed36a-a8a4-4767-9dd6-b1f89bf7267b",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 1,
+              "name": "Падел Арена Лужники"
+            },
+            "level": 4.49,
+            "deleted": false,
+            "is_coach": false,
+            "username": "m_orlov",
+            "avatar_path": null,
+            "reliability": 47,
+            "display_name": "Михаил Орлов",
+            "preferred_side": "right"
+          },
+          "response": "confirmed",
+          "court_side": "right"
+        },
+        {
+          "team": 1,
+          "player": {
+            "id": "d8b58bd9-8f8c-4732-a129-148692946aed",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 1,
+              "name": "Падел Арена Лужники"
+            },
+            "level": 4.89,
+            "deleted": false,
+            "is_coach": false,
+            "username": "d_sokolov",
+            "avatar_path": null,
+            "reliability": 25,
+            "display_name": "Дмитрий Соколов",
+            "preferred_side": "left"
+          },
+          "response": "confirmed",
+          "court_side": "left"
+        },
+        {
+          "team": 2,
+          "player": {
+            "id": "72b11bd9-f270-4ae2-b104-25a132d48204",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 1,
+              "name": "Падел Арена Лужники"
+            },
+            "level": 4.61,
+            "deleted": false,
+            "is_coach": true,
+            "username": "coach_novikov",
+            "avatar_path": null,
+            "reliability": 17,
+            "display_name": "Андрей Новиков",
+            "preferred_side": "both"
+          },
+          "response": "confirmed",
+          "court_side": "right"
+        },
+        {
+          "team": 2,
+          "player": {
+            "id": "2becd560-4954-4ad9-ab50-e454ea8f2d73",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 2,
+              "name": "Corner Padel Club"
+            },
+            "level": 3.18,
+            "deleted": false,
+            "is_coach": false,
+            "username": "s_morozov",
+            "avatar_path": null,
+            "reliability": 40,
+            "display_name": "Сергей Морозов",
+            "preferred_side": "left"
+          },
+          "response": "confirmed",
+          "court_side": "left"
+        }
+      ],
+      "version": 1,
+      "club_name": "Падел Арена Лужники",
+      "played_at": "2026-09-19T16:00:00+00:00",
+      "expires_at": null,
+      "is_creator": false,
+      "match_type": "ranked",
+      "updated_at": "2026-09-19T19:05:00+00:00",
+      "my_response": "confirmed",
+      "winner_team": 1,
+      "needs_action": false,
+      "rating_delta": 0.099,
+      "subject_team": 1,
+      "pending_count": 0,
+      "disputed_count": 0,
+      "subject_rating_delta": 0.099
+    },
+    {
+      "id": "9e3c0525-e5b7-4d17-92d7-cbc5762c77a8",
+      "sets": [
+        {
+          "t1": 4,
+          "t2": 6,
+          "tb1": null,
+          "tb2": null,
+          "super_tiebreak": false
+        },
+        {
+          "t1": 6,
+          "t2": 4,
+          "tb1": null,
+          "tb2": null,
+          "super_tiebreak": false
+        },
+        {
+          "t1": 6,
+          "t2": 2,
+          "tb1": null,
+          "tb2": null,
+          "super_tiebreak": false
+        }
+      ],
+      "format": "best_of_3",
+      "status": "confirmed",
+      "my_team": 1,
+      "players": [
+        {
+          "team": 1,
+          "player": {
+            "id": "811c461a-f805-4a50-9dc8-eb539f46dcac",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 2,
+              "name": "Corner Padel Club"
+            },
+            "level": 2.25,
+            "deleted": false,
+            "is_coach": false,
+            "username": "maria_fedorova",
+            "avatar_path": null,
+            "reliability": 19,
+            "display_name": "Мария Фёдорова",
+            "preferred_side": "right"
+          },
+          "response": "confirmed",
+          "court_side": "right"
+        },
+        {
+          "team": 1,
+          "player": {
+            "id": "03eed36a-a8a4-4767-9dd6-b1f89bf7267b",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 1,
+              "name": "Падел Арена Лужники"
+            },
+            "level": 4.49,
+            "deleted": false,
+            "is_coach": false,
+            "username": "m_orlov",
+            "avatar_path": null,
+            "reliability": 47,
+            "display_name": "Михаил Орлов",
+            "preferred_side": "right"
+          },
+          "response": "confirmed",
+          "court_side": "left"
+        },
+        {
+          "team": 2,
+          "player": {
+            "id": "359dfbcf-7da8-4e54-af5e-08c1096e5e44",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": null,
+            "level": 2.63,
+            "deleted": false,
+            "is_coach": false,
+            "username": "igor_pavlov",
+            "avatar_path": null,
+            "reliability": 30,
+            "display_name": "Игорь Павлов",
+            "preferred_side": "both"
+          },
+          "response": "confirmed",
+          "court_side": "right"
+        },
+        {
+          "team": 2,
+          "player": {
+            "id": "e97c036b-f0f5-4449-b1d7-c05f4720f25e",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 1,
+              "name": "Падел Арена Лужники"
+            },
+            "level": 2.49,
+            "deleted": false,
+            "is_coach": false,
+            "username": "anna_kuz",
+            "avatar_path": null,
+            "reliability": 31,
+            "display_name": "Анна Кузнецова",
+            "preferred_side": "left"
+          },
+          "response": "confirmed",
+          "court_side": "left"
+        }
+      ],
+      "version": 1,
+      "club_name": "Corner Padel Club",
+      "played_at": "2026-09-16T07:00:00+00:00",
+      "expires_at": null,
+      "is_creator": true,
+      "match_type": "ranked",
+      "updated_at": "2026-09-16T10:05:00+00:00",
+      "my_response": "confirmed",
+      "winner_team": 1,
+      "needs_action": false,
+      "rating_delta": 0.099,
+      "subject_team": 1,
+      "pending_count": 0,
+      "disputed_count": 0,
+      "subject_rating_delta": 0.099
+    }
+  ],
+  "coach_assessments": [
+    {
+      "id": "cc376f73-aea7-434b-945f-f7b8dc3e7c89",
+      "note": "Сильная игра у сетки и хорошее чтение розыгрыша. Работаем над свечой из защиты: выше и глубже, меньше риска.",
+      "coach": {
+        "id": "72b11bd9-f270-4ae2-b104-25a132d48204",
+        "city": {
+          "id": 1,
+          "name": "Москва"
+        },
+        "club": {
+          "id": 1,
+          "name": "Падел Арена Лужники"
+        },
+        "level": 4.61,
+        "deleted": false,
+        "is_coach": true,
+        "username": "coach_novikov",
+        "avatar_path": null,
+        "reliability": 17,
+        "display_name": "Андрей Новиков",
+        "preferred_side": "both"
+      },
+      "scores": {
+        "defense": 4,
+        "net_game": 4.5,
+        "overheads": 3.5,
+        "serve_return": 4,
+        "transition_lob": 3,
+        "consistency_decisions": 4
+      },
+      "created_at": "2026-10-02T10:30:00+00:00"
+    }
+  ],
+  "open_matches_count": 3
+}

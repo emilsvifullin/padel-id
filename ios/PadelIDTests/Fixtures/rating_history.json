@@ -1,0 +1,175 @@
+{
+  "points": [
+    {
+      "at": "2026-07-08T17:40:00+00:00",
+      "mu": 3.600,
+      "won": null,
+      "kind": "calibration",
+      "delta": null,
+      "sigma": 0.900,
+      "match_id": null,
+      "expected_win": null
+    },
+    {
+      "at": "2026-07-30T19:05:00+00:00",
+      "mu": 3.897,
+      "won": true,
+      "kind": "match",
+      "delta": 0.297,
+      "sigma": 0.858,
+      "match_id": "0026af58-2280-47c6-b2df-9b7af47d6b4b",
+      "expected_win": 0.480
+    },
+    {
+      "at": "2026-08-02T08:35:00+00:00",
+      "mu": 3.804,
+      "won": false,
+      "kind": "match",
+      "delta": -0.092,
+      "sigma": 0.843,
+      "match_id": "e3543443-8d0e-42e9-a1ca-2d69fdf6e103",
+      "expected_win": 0.332
+    },
+    {
+      "at": "2026-08-08T11:05:00+00:00",
+      "mu": 3.936,
+      "won": true,
+      "kind": "match",
+      "delta": 0.132,
+      "sigma": 0.816,
+      "match_id": "b7befa43-e956-49fc-a70b-23a3b6839539",
+      "expected_win": 0.663
+    },
+    {
+      "at": "2026-08-14T19:35:00+00:00",
+      "mu": 4.083,
+      "won": true,
+      "kind": "match",
+      "delta": 0.147,
+      "sigma": 0.785,
+      "match_id": "1c3926ec-ddc6-4e93-b56b-078eb12f8ed5",
+      "expected_win": 0.668
+    },
+    {
+      "at": "2026-08-17T19:05:00+00:00",
+      "mu": 3.804,
+      "won": false,
+      "kind": "match",
+      "delta": -0.279,
+      "sigma": 0.756,
+      "match_id": "639139c7-c41a-4729-9d52-61e63300e15b",
+      "expected_win": 0.606
+    },
+    {
+      "at": "2026-08-20T09:05:00+00:00",
+      "mu": 3.928,
+      "won": true,
+      "kind": "match",
+      "delta": 0.123,
+      "sigma": 0.749,
+      "match_id": "f1f5ba6f-dd8b-441c-9bf4-fbf0fcc06b6d",
+      "expected_win": 0.442
+    },
+    {
+      "at": "2026-08-26T19:05:00+00:00",
+      "mu": 4.103,
+      "won": true,
+      "kind": "match",
+      "delta": 0.176,
+      "sigma": 0.721,
+      "match_id": "674dd3ce-735f-4d22-a87f-4d7bd723b9dc",
+      "expected_win": 0.559
+    },
+    {
+      "at": "2026-08-29T20:35:00+00:00",
+      "mu": 4.266,
+      "won": true,
+      "kind": "match",
+      "delta": 0.162,
+      "sigma": 0.713,
+      "match_id": "3a95000e-0bcd-4445-9d75-557157ac622f",
+      "expected_win": 0.350
+    },
+    {
+      "at": "2026-09-01T19:05:00+00:00",
+      "mu": 4.191,
+      "won": false,
+      "kind": "match",
+      "delta": -0.075,
+      "sigma": 0.704,
+      "match_id": "89c6805c-1519-4b60-890e-1ddeb41d7aad",
+      "expected_win": 0.353
+    },
+    {
+      "at": "2026-09-04T11:35:00+00:00",
+      "mu": 4.255,
+      "won": true,
+      "kind": "match",
+      "delta": 0.065,
+      "sigma": 0.689,
+      "match_id": "730e7257-1aac-4fc5-9b0c-2f89c077ed8b",
+      "expected_win": 0.763
+    },
+    {
+      "at": "2026-09-13T19:35:00+00:00",
+      "mu": 4.195,
+      "won": false,
+      "kind": "match",
+      "delta": -0.060,
+      "sigma": 0.682,
+      "match_id": "c5cffee0-f6b0-4470-a8b3-8fc4569fc88f",
+      "expected_win": 0.251
+    },
+    {
+      "at": "2026-09-16T10:05:00+00:00",
+      "mu": 4.294,
+      "won": true,
+      "kind": "match",
+      "delta": 0.099,
+      "sigma": 0.674,
+      "match_id": "9e3c0525-e5b7-4d17-92d7-cbc5762c77a8",
+      "expected_win": 0.542
+    },
+    {
+      "at": "2026-09-19T19:05:00+00:00",
+      "mu": 4.393,
+      "won": true,
+      "kind": "match",
+      "delta": 0.099,
+      "sigma": 0.654,
+      "match_id": "adeb8fd9-1755-423a-87d1-db1c90f90ab8",
+      "expected_win": 0.701
+    },
+    {
+      "at": "2026-09-23T20:05:00+00:00",
+      "mu": 4.284,
+      "won": false,
+      "kind": "match",
+      "delta": -0.109,
+      "sigma": 0.648,
+      "match_id": "4b48e4b0-4e39-4921-9d2d-31698d8ce29f",
+      "expected_win": 0.567
+    },
+    {
+      "at": "2026-10-01T11:05:00+00:00",
+      "mu": 4.449,
+      "won": true,
+      "kind": "match",
+      "delta": 0.164,
+      "sigma": 0.634,
+      "match_id": "70144234-5bc7-4ba7-a5c1-7c11272dd8e4",
+      "expected_win": 0.427
+    },
+    {
+      "at": "2026-10-05T19:05:00+00:00",
+      "mu": 4.495,
+      "won": true,
+      "kind": "match",
+      "delta": 0.046,
+      "sigma": 0.621,
+      "match_id": "4378ad61-e749-4aac-b0a4-9d0274641619",
+      "expected_win": 0.862
+    }
+  ],
+  "peak_mu": 4.49
+}
