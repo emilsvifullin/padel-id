@@ -1,0 +1,75 @@
+import BackgroundTasks
+import Foundation
+import UserNotifications
+
+/// Local notifications about matches awaiting the user's confirmation. Remote
+/// push is not used (it would require a paid developer account entitlement);
+/// instead the app checks periodically with background app refresh.
+final class NotificationService {
+    static let shared = NotificationService()
+    static let refreshTaskIdentifier = "app.padelid.refresh"
+
+    private let notifiedKey = "notifiedMatchIds"
+    private let enabledKey = "matchNotificationsEnabled"
+
+    var isEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: enabledKey) }
+        set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
+    }
+
+    func authorizationStatus() async -> UNAuthorizationStatus {
+        await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+    }
+
+    /// Requests permission; returns whether notifications are allowed.
+    @discardableResult
+    func requestAuthorization() async -> Bool {
+        let granted = (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])) ?? false
+        isEnabled = granted
+        if granted { scheduleBackgroundRefresh() }
+        return granted
+    }
+
+    func scheduleBackgroundRefresh() {
+        guard isEnabled else { return }
+        let request = BGAppRefreshTaskRequest(identifier: Self.refreshTaskIdentifier)
+        request.earliestBeginDate = Date(timeIntervalSinceNow: 30 * 60)
+        try? BGTaskScheduler.shared.submit(request)
+    }
+
+    /// Posts one notification per newly pending match and updates the badge.
+    func process(actionItems: [MatchListItem]) async {
+        let center = UNUserNotificationCenter.current()
+        let settings = await center.notificationSettings()
+        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else { return }
+        if settings.badgeSetting == .enabled {
+            try? await center.setBadgeCount(actionItems.count)
+        }
+        guard isEnabled else { return }
+        var notified = Set(UserDefaults.standard.stringArray(forKey: notifiedKey) ?? [])
+        for item in actionItems where !notified.contains(item.id.uuidString) {
+            let content = UNMutableNotificationContent()
+            let opponents = item.players.filter { $0.team != item.myTeam }.map { $0.player.displayName }.joined(separator: " и ")
+            let score = Format.score(item.sets, perspective: item.myTeam ?? 1)
+            if item.status == .disputed && item.isCreator {
+                content.title = "Результат оспорен"
+                content.body = "Матч против \(opponents) (\(score)): проверьте и исправьте счёт или отмените матч."
+            } else {
+                content.title = "Подтвердите результат"
+                content.body = "\(Narratives.matchType(item.matchType)) матч против \(opponents): \(score)."
+            }
+            content.sound = .default
+            content.threadIdentifier = "matches"
+            content.userInfo = ["matchId": item.id.uuidString]
+            let request = UNNotificationRequest(identifier: "match-\(item.id.uuidString)", content: content, trigger: nil)
+            try? await center.add(request)
+            notified.insert(item.id.uuidString)
+        }
+        UserDefaults.standard.set(Array(notified.sorted().suffix(300)), forKey: notifiedKey)
+    }
+
+    func clearBadge() async {
+        try? await UNUserNotificationCenter.current().setBadgeCount(0)
+        UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+    }
+}

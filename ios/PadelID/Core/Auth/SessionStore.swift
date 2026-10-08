@@ -4,6 +4,9 @@ import Observation
 /// Holds the current auth session and persists it in the Keychain.
 @Observable
 final class SessionStore {
+    /// Shared by the UI and background refresh so that rotating refresh
+    /// tokens are never used by two independent clients.
+    static let shared = SessionStore()
     private static let account = "session.v1"
 
     private(set) var session: Session?

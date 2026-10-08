@@ -10,6 +10,8 @@ import Foundation
 /// * Retries idempotent requests after transient failures with backoff.
 /// * Never logs request bodies or tokens.
 final class APIClient {
+    static let shared = APIClient(sessionStore: .shared)
+
     let baseURL: URL
     let sessionStore: SessionStore
     private let urlSession: URLSession
