@@ -11,9 +11,14 @@ final class SessionStore {
 
     private(set) var session: Session?
 
+    private static let installMarker = "sessionStore.installed"
+
     init() {
-        if AppEnvironment.shouldResetState {
+        // Keychain items outlive the app: a session must not come back after
+        // the app was deleted and installed again.
+        if AppEnvironment.shouldResetState || !UserDefaults.standard.bool(forKey: Self.installMarker) {
             Keychain.delete(account: Self.account)
+            UserDefaults.standard.set(true, forKey: Self.installMarker)
         }
         if let data = Keychain.load(account: Self.account),
            let stored = try? JSONCoding.decoder.decode(Session.self, from: data) {

@@ -95,8 +95,8 @@ class PadelIDUITestCase: XCTestCase {
         self.server = server
 
         let app = XCUIApplication()
-        app.launchArguments = ["-resetState"]
-        app.launchEnvironment = ["PADELID_API_URL": "http://localhost:\(server.port)"]
+        app.launchArguments = ["-padelid-uitest-reset-state"]
+        app.launchEnvironment = ["PADELID_UITEST_API_BASE_URL": "http://localhost:\(server.port)"]
         self.app = app
 
         interruptionMonitor = addUIInterruptionMonitor(withDescription: "System permission alert") { alert in

@@ -50,14 +50,14 @@ final class NotificationService {
         // Keyed by version and status: an edited (or again disputed) match is news.
         for item in actionItems where !notified.contains(Self.notificationKey(item)) {
             let content = UNMutableNotificationContent()
-            let opponents = item.players.filter { $0.team != item.myTeam }.map { $0.player.displayName }.joined(separator: " и ")
-            let score = Format.score(item.sets, perspective: item.myTeam ?? 1)
+            // Names and scores stay inside the app: notifications can be read
+            // on the lock screen.
             if item.status == .disputed && item.isCreator {
                 content.title = "Результат оспорен"
-                content.body = "Матч против \(opponents) (\(score)): проверьте и исправьте счёт или отмените матч."
+                content.body = "Проверьте возражение и исправьте счёт или отмените матч."
             } else {
                 content.title = "Подтвердите результат"
-                content.body = "\(Narratives.matchType(item.matchType)) матч против \(opponents): \(score)."
+                content.body = "\(Narratives.matchType(item.matchType)) матч ждёт вашего подтверждения."
             }
             content.sound = .default
             content.threadIdentifier = "matches"

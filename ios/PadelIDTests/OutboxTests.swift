@@ -124,7 +124,7 @@ struct OutboxTests {
         #expect(reloaded.operations.isEmpty)
     }
 
-    @Test("A transient failure keeps the operation and stops processing")
+    @Test("A temporary server error keeps the operations for a later pass")
     func transientFailure() async throws {
         let baseURL = StubURLProtocol.makeBaseURL()
         let (client, store) = makeClient(baseURL)
@@ -151,16 +151,22 @@ struct OutboxTests {
 
         #expect(deliveries == 0)
         #expect(outbox.operations.map(\.id) == [first.id, second.id])
-        #expect(outbox.operations.first?.attempts == 1)
-        #expect(outbox.operations.last?.attempts == 0)
+        #expect(outbox.operations.allSatisfy { $0.attempts == 1 })
         #expect(outbox.failed.isEmpty)
         #expect(outbox.pending.count == 2)
-        // The second operation was not attempted while the server is unavailable.
-        #expect(StubURLProtocol.requests(baseURL).count == 1)
+        // One failing operation does not hold back the others.
+        #expect(StubURLProtocol.requests(baseURL).count == 2)
 
         let reloaded = Outbox()
         reloaded.activate(userId: userId)
         #expect(reloaded.operations.first?.attempts == 1)
+
+        // After repeated server errors the operation is given up with a reason.
+        for _ in 1..<Outbox.maxAttempts {
+            await outbox.process(with: client)
+        }
+        #expect(outbox.failed.count == 2)
+        #expect(outbox.pending.isEmpty)
     }
 
     @Test("A permanent failure marks the operation and moves on")

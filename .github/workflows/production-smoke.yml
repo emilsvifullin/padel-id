@@ -49,7 +49,7 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' "$API_URL/v1/health?deep=1")" = "200"
           test "$(curl -s -o /dev/null -w '%{http_code}' "$API_URL/v1/me")" = "401"
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
         with:
           version: 10.28.0
       - uses: actions/setup-node@v5

@@ -5,9 +5,15 @@ import Foundation
 nonisolated enum AppEnvironment {
     static let productionAPI = URL(string: "https://padel-id-gamma.vercel.app")!
 
+    #if DEBUG
+    /// Debug-only test hooks (long names so the release check can find them).
+    static let uiTestAPIKey = "PADELID_UITEST_API_BASE_URL"
+    static let uiTestResetArgument = "-padelid-uitest-reset-state"
+    #endif
+
     static var apiBaseURL: URL {
         #if DEBUG
-        if let raw = ProcessInfo.processInfo.environment["PADELID_API_URL"], let url = URL(string: raw) {
+        if let raw = ProcessInfo.processInfo.environment[uiTestAPIKey], let url = URL(string: raw) {
             return url
         }
         #endif
@@ -25,7 +31,7 @@ nonisolated enum AppEnvironment {
     /// UI tests start every run from a clean state.
     static var shouldResetState: Bool {
         #if DEBUG
-        return ProcessInfo.processInfo.arguments.contains("-resetState")
+        return ProcessInfo.processInfo.arguments.contains(uiTestResetArgument)
         #else
         return false
         #endif
@@ -33,7 +39,7 @@ nonisolated enum AppEnvironment {
 
     static var isUITesting: Bool {
         #if DEBUG
-        return ProcessInfo.processInfo.environment["PADELID_API_URL"] != nil
+        return ProcessInfo.processInfo.environment[uiTestAPIKey] != nil
         #else
         return false
         #endif

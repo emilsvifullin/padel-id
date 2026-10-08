@@ -5,6 +5,7 @@ struct SecurityView: View {
     @Environment(AppModel.self) private var app
     @State private var isConfirmingGlobalSignOut = false
     @State private var isSigningOut = false
+    @State private var signOutError: APIError?
 
     var body: some View {
         List {
@@ -57,6 +58,14 @@ struct SecurityView: View {
                 } message: {
                     Text(globalSignOutMessage)
                 }
+                .alert("Не удалось завершить сеансы", isPresented: Binding(
+                    get: { signOutError != nil },
+                    set: { if !$0 { signOutError = nil } }
+                )) {
+                    Button("ОК", role: .cancel) {}
+                } message: {
+                    Text((signOutError?.message ?? "") + " Другие устройства пока остаются в аккаунте — попробуйте ещё раз.")
+                }
             } footer: {
                 Text(app.isOnline
                      ? "Завершает все сеансы, включая этот. На каждом устройстве нужно будет войти заново."
@@ -86,8 +95,12 @@ struct SecurityView: View {
         guard app.isOnline else { return }
         isSigningOut = true
         Task {
-            await app.signOut(everywhere: true)
-            app.isAccountPresented = false
+            do {
+                try await app.signOutEverywhere()
+                app.isAccountPresented = false
+            } catch let error as APIError {
+                signOutError = error
+            } catch {}
             isSigningOut = false
         }
     }

@@ -34,6 +34,8 @@ final class AppModel {
     var matchEditor: MatchEditorRequest?
     /// Presents the account & settings sheet.
     var isAccountPresented = false
+    /// The server no longer supports this build (426): the app asks for an update.
+    private(set) var isClientOutdated = false
 
     let sessionStore: SessionStore
     let api: APIClient
@@ -50,13 +52,19 @@ final class AppModel {
         api.onSessionInvalidated = { [weak self] in
             self?.handleSessionInvalidated()
         }
-        outbox.onDelivered = { [weak self] _, _ in
-            self?.dataDidChange()
+        api.onClientOutdated = { [weak self] in
+            self?.isClientOutdated = true
+        }
+        // One reload per delivery pass, not per delivered operation.
+        outbox.onFinished = { [weak self] delivered in
+            if delivered > 0 { self?.dataDidChange() }
         }
         connectivity.whenReconnected { [weak self] in
             guard let self else { return }
-            Task { await self.flushOutbox() }
-            self.dataDidChange()
+            Task {
+                await self.flushOutbox()
+                self.dataDidChange()
+            }
         }
     }
 
@@ -73,6 +81,7 @@ final class AppModel {
         if let cached = cache.value(Me.self, for: CacheKey.me) {
             apply(me: cached)
         }
+        NotificationService.shared.scheduleBackgroundRefresh()
         await refreshMe()
         await flushOutbox()
     }
@@ -160,10 +169,18 @@ final class AppModel {
         outbox.activate(userId: userId)
     }
 
-    func signOut(everywhere: Bool = false) async {
+    /// Signs out on this device (the server session is ended when reachable).
+    func signOut() async {
         if sessionStore.session != nil {
-            try? await api.sendVoid(.json(.post, "v1/auth/logout", ["scope": everywhere ? "global" : "local"]))
+            try? await api.sendVoid(.json(.post, "v1/auth/logout", ["scope": "local"]))
         }
+        resetLocalState()
+    }
+
+    /// Ends every session of the account. Unlike `signOut()` this must reach
+    /// the server: on failure the device stays signed in so the user can retry.
+    func signOutEverywhere() async throws {
+        try await api.sendVoid(.json(.post, "v1/auth/logout", ["scope": "global"], retryable: true))
         resetLocalState()
     }
 

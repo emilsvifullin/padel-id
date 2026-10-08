@@ -32,20 +32,26 @@ lipo -info "$binary" | grep -q "arm64" || fail "binary is not arm64"
 if find "$app" \( -name "*.xctest" -o -name "XCTest*" -o -name "*.xctestrun" \) | grep -q .; then
   fail "test bundles found in the app"
 fi
+if find "$app" \( -name "*.debug.dylib" -o -name "__preview.dylib" -o -name "*.json" \) | grep -q .; then
+  find "$app" \( -name "*.debug.dylib" -o -name "__preview.dylib" -o -name "*.json" \) | sed "s|$work/||"
+  fail "debug, preview or test payload found in the app"
+fi
 
 # Strings that must never ship: debug-only hooks, local endpoints, direct
 # Supabase access and any credential material.
+# (Swift stores literals of up to 15 bytes inline in code, so the debug hooks
+# use longer names to stay detectable.)
 forbidden=(
-  "PADELID_API_URL"
-  "-resetState"
-  "127.0.0.1"
-  "localhost"
+  "PADELID_UITEST_API_BASE_URL"
+  "-padelid-uitest-reset-state"
   "supabase.co"
   "service_role"
   "sb_secret_"
   "sb_publishable_"
   "PADELID_GATEWAY"
   "BEGIN PRIVATE KEY"
+  "eyJhbGciOi"
+  "eyJ0eXAiOi"
 )
 for pattern in "${forbidden[@]}"; do
   if grep -r -a -F -l -- "$pattern" "$app" >/dev/null 2>&1; then

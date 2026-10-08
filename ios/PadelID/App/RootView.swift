@@ -8,6 +8,43 @@ struct RootView: View {
     var body: some View {
         @Bindable var app = app
         ZStack {
+            if app.isClientOutdated {
+                UpdateRequiredView()
+                    .transition(.opacity)
+            } else {
+                phaseContent
+            }
+        }
+        .animation(.smooth, value: app.phase)
+        .animation(.smooth, value: app.isClientOutdated)
+        .task { await app.bootstrap() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .background {
+                // Keeps the match reminders scheduled even if iOS dropped the request.
+                NotificationService.shared.scheduleBackgroundRefresh()
+            }
+            guard phase == .active, app.phase == .ready else { return }
+            if Date.now.timeIntervalSince(lastForegroundRefresh) > 30 {
+                lastForegroundRefresh = .now
+                app.dataDidChange()
+                Task { await app.flushOutbox() }
+            }
+        }
+        .fullScreenCover(isPresented: Binding(
+            get: { app.recoveryKeyToShow != nil && app.phase != .launching },
+            set: { if !$0 { app.recoveryKeyToShow = nil } }
+        )) {
+            if let key = app.recoveryKeyToShow {
+                RecoveryKeyView(recoveryKey: key) {
+                    app.recoveryKeyToShow = nil
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var phaseContent: some View {
+        ZStack {
             switch app.phase {
             case .launching:
                 LaunchView()
@@ -26,26 +63,19 @@ struct RootView: View {
                     .transition(.opacity)
             }
         }
-        .animation(.smooth, value: app.phase)
-        .task { await app.bootstrap() }
-        .onChange(of: scenePhase) { _, phase in
-            guard phase == .active, app.phase == .ready else { return }
-            if Date.now.timeIntervalSince(lastForegroundRefresh) > 30 {
-                lastForegroundRefresh = .now
-                app.dataDidChange()
-                Task { await app.flushOutbox() }
-            }
+    }
+}
+
+/// Shown when the server no longer supports this build (426 client_outdated).
+struct UpdateRequiredView: View {
+    var body: some View {
+        ContentUnavailableView {
+            Label("Обновите Padel ID", systemImage: "arrow.down.app")
+        } description: {
+            Text("Эта версия приложения больше не поддерживается. Установите новую версию — аккаунт, матчи и рейтинг сохранятся.")
         }
-        .fullScreenCover(isPresented: Binding(
-            get: { app.recoveryKeyToShow != nil && app.phase != .launching },
-            set: { if !$0 { app.recoveryKeyToShow = nil } }
-        )) {
-            if let key = app.recoveryKeyToShow {
-                RecoveryKeyView(recoveryKey: key) {
-                    app.recoveryKeyToShow = nil
-                }
-            }
-        }
+        .background(Color(.systemGroupedBackground))
+        .accessibilityIdentifier("updateRequired")
     }
 }
 

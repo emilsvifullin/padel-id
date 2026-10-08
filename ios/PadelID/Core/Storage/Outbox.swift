@@ -38,6 +38,13 @@ final class Outbox {
 
     /// Called on the main actor after an operation was delivered.
     var onDelivered: ((PendingOperation, Data) -> Void)?
+    /// Called once after a pass with the number of delivered operations.
+    var onFinished: ((Int) -> Void)?
+    /// The operation being sent right now (it cannot be discarded meanwhile).
+    private(set) var inFlightId: UUID?
+
+    /// Attempts after which a failing (server-side) delivery is given up.
+    static let maxAttempts = 5
 
     var pending: [PendingOperation] { operations.filter { $0.failure == nil } }
     var failed: [PendingOperation] { operations.filter { $0.failure != nil } }
@@ -69,6 +76,7 @@ final class Outbox {
     }
 
     func discard(_ id: UUID) {
+        guard id != inFlightId else { return }
         operations.removeAll { $0.id == id }
         persist()
     }
@@ -83,29 +91,41 @@ final class Outbox {
         fileURL = nil
     }
 
-    /// Delivers pending operations in order. Stops at the first transient
-    /// failure (the network is likely still unavailable).
+    /// Delivers pending operations in order. Stops while the device cannot
+    /// reach the server (or must sign in / update); a temporary server error
+    /// keeps that operation for later and moves on; a rejection is recorded.
     func process(with api: APIClient) async {
         guard !isProcessing else { return }
         isProcessing = true
-        defer { isProcessing = false }
+        var delivered = 0
+        defer {
+            isProcessing = false
+            inFlightId = nil
+            onFinished?(delivered)
+        }
         var attempted = Set<UUID>()
-        // Operations queued while sending are picked up in the next pass.
+        // Operations queued while sending are picked up in the same pass.
         while let operation = operations.first(where: { $0.failure == nil && !attempted.contains($0.id) }) {
             attempted.insert(operation.id)
+            inFlightId = operation.id
             do {
                 let data = try await api.data(operation.endpoint)
+                inFlightId = nil
                 operations.removeAll { $0.id == operation.id }
                 persist()
+                delivered += 1
                 onDelivered?(operation, data)
             } catch let error as APIError {
+                inFlightId = nil
                 guard let index = operations.firstIndex(where: { $0.id == operation.id }) else { continue }
                 operations[index].attempts += 1
-                if error.isTransient || error.code == "not_authenticated" {
+                if error.isNetwork || error.code == "not_authenticated" || error.code == "client_outdated" {
                     persist()
                     return
                 }
-                operations[index].failure = error.message
+                if !error.isTransient || operations[index].attempts >= Self.maxAttempts {
+                    operations[index].failure = error.message
+                }
                 persist()
             } catch {
                 return

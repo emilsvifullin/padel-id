@@ -135,5 +135,7 @@ jobs:
           notes="docs/release-notes/$VERSION.md"
           [ -f "$notes" ] || { echo "Missing $notes"; exit 1; }
           (cd dist && shasum -a 256 -c PadelID.ipa.sha256)
+          # The rolling UI review screenshots are not part of a release.
+          gh release delete ui-screenshots --yes --cleanup-tag 2>/dev/null || true
           gh release create "$tag" dist/PadelID.ipa dist/PadelID.ipa.sha256 \
             --target "$GITHUB_SHA" --title "Padel ID $VERSION" --notes-file "$notes" --latest

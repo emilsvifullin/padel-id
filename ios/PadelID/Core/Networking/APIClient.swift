@@ -19,6 +19,8 @@ final class APIClient {
 
     /// Called when the session can no longer be refreshed.
     var onSessionInvalidated: (() -> Void)?
+    /// Called when the server requires a newer build of the app (426).
+    var onClientOutdated: (() -> Void)?
 
     init(baseURL: URL = AppEnvironment.apiBaseURL, sessionStore: SessionStore, urlSession: URLSession? = nil) {
         self.baseURL = baseURL
@@ -67,12 +69,20 @@ final class APIClient {
                 let token = endpoint.requiresAuth ? try await validAccessToken() : nil
                 return try await execute(endpoint, token: token)
             } catch let error as APIError {
+                if error.code == "client_outdated" {
+                    onClientOutdated?()
+                    throw error
+                }
                 if endpoint.requiresAuth, error.code == "session_expired", !refreshedAfterRejection {
                     refreshedAfterRejection = true
                     _ = try await refreshSession(force: true)
                     continue
                 }
-                if endpoint.retryable, error.isTransient, attempt < 2 {
+                // Mutations are not resent after a network failure: each attempt
+                // can wait for the full timeout, and the callers fall back to the
+                // offline outbox instead.
+                let maxAttempts = error.isNetwork && endpoint.method != .get ? 0 : 2
+                if endpoint.retryable, error.isTransient, attempt < maxAttempts {
                     attempt += 1
                     try await Task.sleep(for: .milliseconds(attempt == 1 ? 600 : 1800))
                     continue
@@ -101,6 +111,12 @@ final class APIClient {
         }
         if let token {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        if endpoint.path == "v1/auth/refresh" {
+            // A retry must land inside the server's refresh-token reuse window.
+            request.timeoutInterval = 8
+        } else if endpoint.method != .get {
+            request.timeoutInterval = 15
         }
         if let key = endpoint.idempotencyKey {
             request.setValue(key.uuidString.lowercased(), forHTTPHeaderField: "Idempotency-Key")
