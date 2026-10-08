@@ -6,7 +6,9 @@ name: Release
 
 on:
   push:
-    branches: [main]
+    # Every push to main (and to working branches) builds and verifies the
+    # IPA; publishing a GitHub Release is a separate, manual step.
+    branches: [main, "claude/**"]
     paths:
       - "ios/**"
       - "scripts/ios/**"
