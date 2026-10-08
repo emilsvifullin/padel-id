@@ -78,7 +78,7 @@ nonisolated final class StubCounter: @unchecked Sendable {
 nonisolated final class StubURLProtocol: URLProtocol, @unchecked Sendable {
     typealias Handler = @Sendable (StubRecordedRequest) -> StubResponse
 
-    nonisolated(unsafe) private static let lock = NSLock()
+    private static let lock = NSLock()
     nonisolated(unsafe) private static var handlers: [String: Handler] = [:]
     nonisolated(unsafe) private static var recordings: [String: [StubRecordedRequest]] = [:]
 

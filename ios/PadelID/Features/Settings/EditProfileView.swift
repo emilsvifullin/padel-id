@@ -139,8 +139,9 @@ struct EditProfileView: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(hasAvatar ? "Фото профиля" : "Фото профиля не выбрано")
                 .accessibilityValue(isAvatarBusy ? "Загружается" : "")
+            let pickerTitle = hasAvatar ? "Изменить фото" : "Выбрать фото"
             PhotosPicker(selection: $pickerItem, matching: .images) {
-                Label(hasAvatar ? "Изменить фото" : "Выбрать фото", systemImage: "photo")
+                Label(pickerTitle, systemImage: "photo")
             }
             .disabled(!app.isOnline || isAvatarBusy || isSaving)
             if hasAvatar {

@@ -5,7 +5,13 @@ import Foundation
 nonisolated enum JSONCoding {
     static let decoder: JSONDecoder = {
         let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        // Not `.convertFromSnakeCase`: it capitalises letters after digits
+        // ("trend_30d" would become "trend30D").
+        decoder.keyDecodingStrategy = .custom { path in
+            guard let key = path.last else { return JSONCodingKey(stringValue: "") }
+            if key.intValue != nil { return key }
+            return JSONCodingKey(stringValue: camelCase(key.stringValue))
+        }
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
             let raw = try container.decode(String.self)
@@ -24,6 +30,17 @@ nonisolated enum JSONCoding {
         }
         return encoder
     }()
+
+    /// `snake_case` → `camelCase`, upper-casing only the first character of
+    /// each later word: "matches_needed" → "matchesNeeded", "trend_30d" → "trend30d".
+    static func camelCase(_ key: String) -> String {
+        guard key.contains("_") else { return key }
+        let words = key.split(separator: "_")
+        guard let first = words.first else { return key }
+        return words.dropFirst().reduce(String(first)) { result, word in
+            result + word.prefix(1).uppercased() + word.dropFirst()
+        }
+    }
 
     static func formatDate(_ date: Date) -> String {
         date.formatted(Date.ISO8601FormatStyle(includingFractionalSeconds: true))
@@ -57,4 +74,13 @@ nonisolated enum JSONCoding {
         formatter.formatOptions = [.withInternetDateTime]
         return formatter.date(from: value)
     }
+}
+
+/// A plain string coding key used by the custom key decoding strategy.
+nonisolated struct JSONCodingKey: CodingKey, Sendable {
+    let stringValue: String
+    let intValue: Int? = nil
+
+    init(stringValue: String) { self.stringValue = stringValue }
+    init?(intValue: Int) { return nil }
 }
