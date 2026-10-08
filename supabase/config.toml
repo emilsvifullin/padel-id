@@ -172,7 +172,12 @@ enable_refresh_token_rotation = true
 # Requires enable_refresh_token_rotation = true.
 refresh_token_reuse_interval = 10
 # Allow/disallow new user signups to your project.
-enable_signup = true
+# Padel ID: off. Public /auth/v1/signup is rejected; accounts are created only by
+# the account Edge Function through the admin API (not affected by this switch),
+# and auth.users rejects rows without its app_metadata marker
+# (migration 20261008210000_security_and_search.sql). Hosted project: Auth
+# settings → "Allow new users to sign up" off.
+enable_signup = false
 # Allow/disallow anonymous sign-ins to your project.
 enable_anonymous_sign_ins = false
 # Allow/disallow testing manual linking of accounts
@@ -217,6 +222,10 @@ web3 = 30
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
+# Padel ID: must stay true. Despite its name this switch enables the email
+# provider itself (GoTrue EXTERNAL_EMAIL_ENABLED): with it off, email + password
+# sign-in fails with "Email logins are disabled". Public sign-up is blocked by
+# [auth] enable_signup = false above.
 enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.

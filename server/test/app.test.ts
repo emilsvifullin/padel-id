@@ -72,6 +72,18 @@ function routeTo(map: Record<string, Handler>, fallback: Handler = () => ({ stat
   };
 }
 
+/** In-memory stand-in for bff_rate_limit: counts hits per bucket against the requested limit. */
+function memoryLimiter() {
+  const hits = new Map<string, number>();
+  const handler: Handler = (call) => {
+    const { p_bucket, p_limit } = call.body as { p_bucket: string; p_limit: number };
+    const n = (hits.get(p_bucket) ?? 0) + 1;
+    hits.set(p_bucket, n);
+    return { status: 200, body: n <= p_limit };
+  };
+  return { hits, handler };
+}
+
 describe("password policy", () => {
   it("requires length, letters and digits", () => {
     expect(isStrongPassword("short1")).toBe(false);
@@ -208,6 +220,93 @@ describe("authentication", () => {
     expect((await res.json()).error.code).toBe("session_expired");
   });
 
+  it("ends the session only when the refresh token is rejected", async () => {
+    let status = 400;
+    const h = harness(
+      routeTo({
+        "/rpc/bff_rate_limit": () => ({ status: 200, body: true }),
+        "grant_type=refresh_token": () => ({ status, body: { error_code: "x" } }),
+      }),
+    );
+    const expected: Record<number, [number, string]> = {
+      400: [401, "session_expired"],
+      401: [401, "session_expired"],
+      403: [401, "session_expired"],
+      404: [503, "service_unavailable"],
+      408: [503, "service_unavailable"],
+      409: [503, "service_unavailable"],
+      422: [503, "service_unavailable"],
+      429: [429, "rate_limited"],
+      500: [503, "service_unavailable"],
+      502: [503, "service_unavailable"],
+    };
+    for (const [upstream, [httpStatus, code]] of Object.entries(expected)) {
+      status = Number(upstream);
+      const res = await h.request("/v1/auth/refresh", json({ refresh_token: "r".repeat(20) }));
+      expect(res.status, `upstream ${upstream}`).toBe(httpStatus);
+      expect((await res.json()).error.code, `upstream ${upstream}`).toBe(code);
+    }
+  });
+
+  it("does not let sign-in attempts from other addresses lock an account out", async () => {
+    const limiter = memoryLimiter();
+    const h = harness(
+      routeTo({
+        "/rpc/bff_rate_limit": limiter.handler,
+        "grant_type=password": (call) =>
+          (call.body as { password: string }).password === "Padel2026"
+            ? { status: 200, body: session }
+            : { status: 400, body: { error_code: "invalid_credentials" } },
+      }),
+    );
+    const login = (password: string, ip: string) =>
+      h.request("/v1/auth/login", json({ email: "anna@example.com", password }, { "x-real-ip": ip }));
+
+    for (let i = 0; i < 10; i++) expect((await login("wrong-1", "6.6.6.6")).status).toBe(401);
+    const blocked = await login("Padel2026", "6.6.6.6");
+    expect(blocked.status).toBe(429);
+    expect((await blocked.json()).error.code).toBe("rate_limited");
+    // The owner, from their own address, still signs in.
+    expect((await login("Padel2026", "1.2.3.4")).status).toBe(200);
+    // Buckets never contain the address in plain text.
+    expect([...limiter.hits.keys()].some((k) => k.includes("anna"))).toBe(false);
+    expect([...limiter.hits.keys()].filter((k) => k.startsWith("login:email-ip:"))).toHaveLength(2);
+  });
+
+  it("caps sign-in attempts per email across addresses", async () => {
+    const limiter = memoryLimiter();
+    const h = harness(
+      routeTo({
+        "/rpc/bff_rate_limit": limiter.handler,
+        "grant_type=password": () => ({ status: 400, body: { error_code: "invalid_credentials" } }),
+      }),
+    );
+    const login = (ip: string) => h.request("/v1/auth/login", json({ email: "anna@example.com", password: "x" }, { "x-real-ip": ip }));
+    for (let ip = 0; ip < 10; ip++) {
+      for (let i = 0; i < 10; i++) expect((await login(`10.0.0.${ip}`)).status).toBe(401);
+    }
+    expect((await login("10.0.1.1")).status).toBe(429);
+    const ceiling = [...limiter.hits.entries()].find(([k]) => k.startsWith("login:email:"))!;
+    expect(ceiling[1]).toBe(101);
+    // Other accounts are unaffected.
+    const other = await h.request("/v1/auth/login", json({ email: "boris@example.com", password: "x" }, { "x-real-ip": "10.0.1.1" }));
+    expect(other.status).toBe(401);
+  });
+
+  it("keeps rate-limit buckets short for long addresses", async () => {
+    const limiter = memoryLimiter();
+    const h = harness(
+      routeTo({
+        "/rpc/bff_rate_limit": limiter.handler,
+        "grant_type=password": () => ({ status: 400, body: { error_code: "invalid_credentials" } }),
+      }),
+    );
+    const longEmail = `${"a".repeat(64)}@${"b".repeat(180)}.com`;
+    const res = await h.request("/v1/auth/login", json({ email: longEmail, password: "x" }, { "x-real-ip": "f".repeat(300) }));
+    expect(res.status).toBe(401);
+    for (const bucket of limiter.hits.keys()) expect(bucket.length).toBeLessThanOrEqual(200);
+  });
+
   it("requires a bearer token for protected routes", async () => {
     const h = harness(() => ({ status: 200, body: {} }));
     const res = await h.request("/v1/me");
@@ -222,6 +321,121 @@ describe("authentication", () => {
     expect(res.status).toBe(403);
     expect((await res.json()).error.code).toBe("invalid_password");
     expect(h.calls.some((c) => c.url.includes("/auth/v1/user"))).toBe(false);
+  });
+});
+
+describe("account security", () => {
+  const ip = { "x-real-ip": "1.2.3.4" };
+  const del = (body: unknown, extra: Record<string, string> = {}) => ({ ...json(body, { ...auth, ...extra }), method: "DELETE" });
+  const routes: Array<[string, () => RequestInit, string]> = [
+    ["/v1/account/password", () => json({ current_password: "x", new_password: "Padel2027" }, { ...auth, ...ip }), "/rpc/verify_my_password"],
+    ["/v1/account/email", () => json({ new_email: "new@example.com", password: "x" }, { ...auth, ...ip }), "/functions/v1/account"],
+    ["/v1/account/recovery-key", () => json({ password: "x" }, { ...auth, ...ip }), "/rpc/regenerate_recovery_key"],
+    ["/v1/account", () => del({ password: "x" }, ip), "/functions/v1/account"],
+  ];
+
+  it("limits password-protected actions per client address before checking the password", async () => {
+    for (const [path, init, upstreamPath] of routes) {
+      let allowed = false;
+      const h = harness(routeTo({ "/rpc/bff_rate_limit": () => ({ status: 200, body: allowed }) }, () => ({ status: 200, body: {} })));
+      const res = await h.request(path, init());
+      expect(res.status, path).toBe(429);
+      expect((await res.json()).error.code).toBe("rate_limited");
+      expect(h.calls.some((c) => c.url.includes(upstreamPath)), path).toBe(false);
+      const limitCall = h.calls.find((c) => c.url.includes("bff_rate_limit"))!;
+      expect(limitCall.body).toMatchObject({ p_bucket: "password:ip:1.2.3.4", p_limit: 20, p_window_seconds: 900 });
+    }
+  });
+
+  it("maps a wrong password reported by regenerate_recovery_key to invalid_password", async () => {
+    let result: unknown = { error: "invalid_password" };
+    const h = harness(
+      routeTo({
+        "/rpc/bff_rate_limit": () => ({ status: 200, body: true }),
+        "/rpc/regenerate_recovery_key": () => ({ status: 200, body: result }),
+      }),
+    );
+    let res = await h.request("/v1/account/recovery-key", json({ password: "wrong" }, auth));
+    expect(res.status).toBe(403);
+    expect((await res.json()).error.code).toBe("invalid_password");
+
+    result = { recovery_key: "AAAAA-BBBBB-CCCCC-DDDDD" };
+    res = await h.request("/v1/account/recovery-key", json({ password: "Padel2026" }, auth));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ recovery_key: "AAAAA-BBBBB-CCCCC-DDDDD" });
+  });
+
+  it("passes the per-user password limit of the database through", async () => {
+    const h = harness(
+      routeTo({
+        "/rpc/bff_rate_limit": () => ({ status: 200, body: true }),
+        "/rpc/regenerate_recovery_key": () => ({ status: 400, body: { code: "P0001", message: "rate_limited", details: "" } }),
+        "/functions/v1/account": () => ({ status: 429, body: { error: { code: "rate_limited" } } }),
+      }),
+    );
+    let res = await h.request("/v1/account/recovery-key", json({ password: "x" }, auth));
+    expect(res.status).toBe(429);
+    res = await h.request("/v1/account", del({ password: "x" }));
+    expect(res.status).toBe(429);
+    expect((await res.json()).error.code).toBe("rate_limited");
+  });
+
+  function passwordChange(logout: Handler) {
+    return harness(
+      routeTo({
+        "/rpc/bff_rate_limit": () => ({ status: 200, body: true }),
+        "/rpc/verify_my_password": () => ({ status: 200, body: true }),
+        "/auth/v1/user": () => ({ status: 200, body: { id: session.user.id } }),
+        "/auth/v1/logout": logout,
+      }),
+    );
+  }
+  const change = () => json({ current_password: "Padel2026", new_password: "Padel2027" }, auth);
+  const logoutCalls = (h: ReturnType<typeof harness>) => h.calls.filter((c) => c.url.includes("/auth/v1/logout?scope=others"));
+
+  it("ends the other sessions after a password change", async () => {
+    const h = passwordChange(() => ({ status: 204 }));
+    const res = await h.request("/v1/account/password", change());
+    expect(res.status).toBe(204);
+    expect(logoutCalls(h)).toHaveLength(1);
+    expect(h.calls.findIndex((c) => c.url.includes("/auth/v1/user"))).toBeLessThan(h.calls.indexOf(logoutCalls(h)[0]!));
+  });
+
+  it("retries ending the other sessions once", async () => {
+    let attempt = 0;
+    const h = passwordChange(() => (++attempt === 1 ? { status: 503 } : { status: 204 }));
+    const res = await h.request("/v1/account/password", change());
+    expect(res.status).toBe(204);
+    expect(logoutCalls(h)).toHaveLength(2);
+  });
+
+  it("tells the user the password changed when the other sessions could not be ended", async () => {
+    for (const failure of [
+      () => ({ status: 502 }),
+      () => ({ status: 429 }),
+      () => {
+        throw new TypeError("fetch failed");
+      },
+    ]) {
+      const h = passwordChange(failure);
+      const res = await h.request("/v1/account/password", change());
+      expect(res.status).toBe(503);
+      const body = await res.json();
+      expect(body.error.code).toBe("password_changed_sessions_active");
+      expect(body.error.message).toContain("Пароль изменён");
+      expect(body.error.message).toContain("«Выйти на всех устройствах»");
+      expect(logoutCalls(h)).toHaveLength(2);
+      expect(h.calls.filter((c) => c.url.includes("/auth/v1/user"))).toHaveLength(1);
+    }
+  });
+
+  it("treats an already ended session as signed out, and other logout failures as errors", async () => {
+    const expected: Record<number, number> = { 204: 204, 401: 204, 403: 204, 404: 204, 429: 429, 400: 503, 500: 503 };
+    for (const [upstream, status] of Object.entries(expected)) {
+      const h = harness(routeTo({ "/auth/v1/logout": () => ({ status: Number(upstream) }) }));
+      const res = await h.request("/v1/auth/logout", json({ scope: "global" }, auth));
+      expect(res.status, `upstream ${upstream}`).toBe(status);
+    }
   });
 });
 

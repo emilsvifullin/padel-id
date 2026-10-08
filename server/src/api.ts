@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { Hono, type Context } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { z } from "zod";
@@ -97,8 +98,26 @@ function idempotencyKey(c: Context<Env>): string {
 
 function clientIp(c: Context<Env>): string {
   const real = c.req.header("x-real-ip") ?? c.req.header("x-vercel-forwarded-for") ?? c.req.header("x-forwarded-for") ?? "";
-  return real.split(",")[0]?.trim() || "unknown";
+  // Bounded so that rate-limit buckets stay within the database's 200 characters.
+  return (real.split(",")[0]?.trim() || "unknown").slice(0, 64);
 }
+
+/**
+ * Rate-limit key for an email: fixed length (a 254-character address would
+ * exceed the bucket size, and the limiter fails open on invalid buckets) and
+ * no plain addresses in the rate-limit table.
+ */
+function emailKey(value: string): string {
+  return createHash("sha256").update(value).digest("base64url");
+}
+
+/** Attempts per client IP at password-protected account actions (15 minutes). */
+const PASSWORD_ATTEMPTS_PER_IP = 20;
+/** Sign-in attempts for one email from one IP, and from all IPs together. */
+const LOGIN_PER_EMAIL_AND_IP = 10;
+const LOGIN_PER_EMAIL = 100;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function intQuery(c: Context<Env>, name: string, min: number, max: number): number | undefined {
   const raw = c.req.query(name);
@@ -204,6 +223,13 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
     if (!(await up().rateLimit(bucket, max, windowSeconds))) throw apiError("rate_limited");
   }
 
+  // Password-protected account actions. The database also limits password
+  // checks per user (10 per 15 minutes, failed attempts included); this
+  // bounds one client across accounts.
+  async function limitPasswordAttempts(c: Context<Env>): Promise<void> {
+    await limit(`password:ip:${clientIp(c)}`, PASSWORD_ATTEMPTS_PER_IP, 900);
+  }
+
   // ---------------------------------------------------------------------
   // Service
   // ---------------------------------------------------------------------
@@ -238,8 +264,13 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
 
   app.post("/v1/auth/login", async (c) => {
     const body = await parseJson(c, schemas.login);
-    await limit(`login:ip:${clientIp(c)}`, 30, 600);
-    await limit(`login:email:${body.email}`, 10, 600);
+    const ip = clientIp(c);
+    const email = emailKey(body.email);
+    await limit(`login:ip:${ip}`, 30, 600);
+    // Per email *and* IP, so that attempts from elsewhere cannot lock the owner
+    // out; the high per-email ceiling still bounds distributed guessing.
+    await limit(`login:email-ip:${email}:${ip}`, LOGIN_PER_EMAIL_AND_IP, 600);
+    await limit(`login:email:${email}`, LOGIN_PER_EMAIL, 3600);
     const session = await up().passwordGrant(body.email, body.password);
     return c.json(sessionBody(session));
   });
@@ -264,7 +295,7 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
   app.post("/v1/auth/recover", async (c) => {
     const body = await parseJson(c, schemas.recover);
     await limit(`recover:ip:${clientIp(c)}`, 10, 3600);
-    await limit(`recover:email:${body.email}`, 5, 3600);
+    await limit(`recover:email:${emailKey(body.email)}`, 5, 3600);
     const result = await up().account<{ recovery_key: string }>("recover", {
       email: body.email,
       recovery_key: body.recovery_key,
@@ -286,16 +317,30 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
   app.post("/v1/account/password", async (c) => {
     const token = bearer(c);
     const body = await parseJson(c, schemas.changePassword);
+    await limitPasswordAttempts(c);
     const ok = await up().rpc<boolean>("verify_my_password", { p_password: body.current_password }, token);
     if (ok !== true) throw apiError("invalid_password");
     await up().updatePassword(token, body.new_password);
-    await up().logout(token, "others");
+    // End every other session (a stolen device must not keep access). Retried
+    // once; if it still fails the user is told that the password did change
+    // and how to end the other sessions, instead of a generic error.
+    try {
+      await up().logout(token, "others", 5000);
+    } catch {
+      await sleep(300);
+      try {
+        await up().logout(token, "others", 5000);
+      } catch (e) {
+        throw apiError("password_changed_sessions_active", e instanceof ApiError ? e.code : undefined);
+      }
+    }
     return c.body(null, 204);
   });
 
   app.post("/v1/account/email", async (c) => {
     const token = bearer(c);
     const body = await parseJson(c, schemas.changeEmail);
+    await limitPasswordAttempts(c);
     await up().account("change_email", { access_token: token, password: body.password, new_email: body.new_email });
     return c.json(await up().rpc("me", {}, token));
   });
@@ -303,12 +348,21 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
   app.post("/v1/account/recovery-key", async (c) => {
     const token = bearer(c);
     const body = await parseJson(c, schemas.passwordOnly);
-    return c.json(await up().rpc("regenerate_recovery_key", { p_password: body.password }, token));
+    await limitPasswordAttempts(c);
+    const result = await up().rpc<{ recovery_key?: string; error?: string }>(
+      "regenerate_recovery_key",
+      { p_password: body.password },
+      token,
+    );
+    // A wrong password comes back as a result (so the database keeps counting it).
+    if (typeof result?.error === "string") throw apiError(result.error);
+    return c.json(result);
   });
 
   app.delete("/v1/account", async (c) => {
     const token = bearer(c);
     const body = await parseJson(c, schemas.passwordOnly);
+    await limitPasswordAttempts(c);
     await up().account("delete_account", { access_token: token, password: body.password });
     return c.body(null, 204);
   });

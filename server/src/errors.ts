@@ -43,6 +43,11 @@ const SPECS: Record<string, ErrorSpec> = {
   email_taken: { status: 409, message: "Аккаунт с этой почтой уже существует." },
   invalid_password: { status: 403, message: "Неверный пароль." },
   invalid_recovery: { status: 403, message: "Почта или ключ восстановления не подходят." },
+  // The password change itself succeeded; only ending the other sessions failed.
+  password_changed_sessions_active: {
+    status: 503,
+    message: "Пароль изменён, но завершить сеансы на других устройствах не удалось. Нажмите «Выйти на всех устройствах».",
+  },
 
   // Profile & onboarding
   onboarding_required: { status: 409, message: "Сначала заполните профиль." },

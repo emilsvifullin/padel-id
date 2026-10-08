@@ -76,10 +76,15 @@ async function userFromToken(token: unknown): Promise<string> {
   return data.user.id;
 }
 
+// svc_check_password counts every attempt per user (shared with the other
+// password checks) and raises rate_limited once the budget is spent.
 async function requirePassword(userId: string, password: unknown): Promise<void> {
   const value = requireString(password, "invalid_password", 200);
   const { data, error } = await admin.rpc("svc_check_password", { p_user: userId, p_password: value });
-  if (error) throw new ServiceError(503, "service_unavailable");
+  if (error) {
+    if (error.code === "P0001" && error.message === "rate_limited") throw new ServiceError(429, "rate_limited");
+    throw new ServiceError(503, "service_unavailable");
+  }
   if (data !== true) throw new ServiceError(403, "invalid_password");
 }
 
@@ -94,10 +99,20 @@ function isEmailTaken(error: { message?: string; code?: string; status?: number 
   return error.code === "email_exists" || error.status === 422 && /already|exists|registered/i.test(error.message ?? "");
 }
 
+// The database accepts new auth users only with this app_metadata marker
+// (app_metadata is writable only with the service role). Public GoTrue
+// sign-up is disabled; every account is created here.
+const ORIGIN_METADATA = { padelid_origin: "account-service" } as const;
+
 async function signup(body: Json): Promise<Json> {
   const email = normalizeEmail(body.email);
   const password = validatePassword(body.password);
-  const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    app_metadata: ORIGIN_METADATA,
+  });
   if (isEmailTaken(error)) throw new ServiceError(409, "email_taken");
   if (error || !data.user) throw new ServiceError(503, "service_unavailable");
   const recoveryKey = await issueRecoveryKey(data.user.id);

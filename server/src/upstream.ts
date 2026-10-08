@@ -144,17 +144,27 @@ export class Upstream {
     });
     if (res.status === 200) return Upstream.toSession(res.body);
     if (res.status === 429) throw apiError("rate_limited");
-    if (res.status >= 400 && res.status < 500) throw apiError("session_expired");
+    // Only a rejected refresh token ends the session; anything else (408, 409,
+    // unexpected 4xx, 5xx) is a temporary failure the client may retry.
+    if (res.status === 400 || res.status === 401 || res.status === 403) throw apiError("session_expired");
     throw apiError("service_unavailable");
   }
 
-  async logout(accessToken: string, scope: "local" | "global" | "others"): Promise<void> {
+  /**
+   * Ends sessions. Succeeds when GoTrue confirms it, or answers 401/403/404
+   * (the session is already gone); every other answer is an error, so callers
+   * never report a revocation that did not happen.
+   */
+  async logout(accessToken: string, scope: "local" | "global" | "others", timeoutMs?: number): Promise<void> {
     const res = await this.request(`/auth/v1/logout?scope=${scope}`, {
       method: "POST",
       headers: this.headers(accessToken),
+      ...(timeoutMs === undefined ? {} : { timeoutMs }),
     });
-    // 401/403/404: the session is already gone, which is the desired outcome.
-    if (res.status >= 500) throw apiError("service_unavailable");
+    if (res.status >= 200 && res.status < 300) return;
+    if (res.status === 401 || res.status === 403 || res.status === 404) return;
+    if (res.status === 429) throw apiError("rate_limited");
+    throw apiError("service_unavailable", `logout ${res.status}`);
   }
 
   async updatePassword(accessToken: string, password: string): Promise<void> {
