@@ -356,6 +356,7 @@ class PadelIDUITestCase: XCTestCase {
             scrollIntoView(field, file: file, line: line)
             field.tap()
             dismissKeyboardIntroduction()
+            chooseOwnPasswordIfOffered()
             var focused = waitUntil(timeout: 3) { Self.hasKeyboardFocus(field) }
             if !focused, attempt % 2 == 1, app.keyboards.firstMatch.exists {
                 // Return in the e-mail field moves focus to the password
@@ -375,6 +376,21 @@ class PadelIDUITestCase: XCTestCase {
         }
         snap("password-not-accepted")
         XCTFail("The password was not accepted by the form", file: file, line: line)
+    }
+
+    /// iOS can replace the keyboard of a sign-up password field with its
+    /// strong-password suggestion; picking an own password brings it back.
+    func chooseOwnPasswordIfOffered() {
+        let predicate = NSPredicate(format: "label CONTAINS[c] %@ OR label CONTAINS[c] %@",
+                                    "Own Password", "свой пароль")
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        for process in [app!, springboard] {
+            let button = process.buttons.matching(predicate).firstMatch
+            if button.waitForExistence(timeout: 1), button.isHittable {
+                button.tap()
+                return
+            }
+        }
     }
 
     static func hasKeyboardFocus(_ element: XCUIElement) -> Bool {

@@ -44,11 +44,17 @@ struct PasswordRequirements: View {
 
 extension View {
     /// Content type of a field for a new password: `.newPassword` lets iOS
-    /// suggest a strong password. UI tests get `.password`, because the
-    /// automatic strong-password sheet swallows synthesized typing.
+    /// suggest a strong password.
     func newPasswordContentType() -> some View {
-        let contentType: UITextContentType = AppEnvironment.isUITesting ? .password : .newPassword
-        return textContentType(contentType)
+        autoFillContentType(.newPassword)
+    }
+
+    /// AutoFill content type of an account form field. UI tests get none:
+    /// iOS recognises a sign-up form by its content types and replaces the
+    /// keyboard with its strong-password input, which swallows synthesized
+    /// typing.
+    func autoFillContentType(_ contentType: UITextContentType) -> some View {
+        textContentType(AppEnvironment.isUITesting ? nil : contentType)
     }
 }
 
@@ -169,7 +175,7 @@ struct SignUpView: View {
         Form {
             Section {
                 TextField("Электронная почта", text: $email)
-                    .textContentType(.username)
+                    .autoFillContentType(.username)
                     .keyboardType(.emailAddress)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
