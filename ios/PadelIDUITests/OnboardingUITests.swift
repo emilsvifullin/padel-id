@@ -60,12 +60,20 @@ final class OnboardingUITests: PadelIDUITestCase {
 
         // Step 3 — calibration questions
         requireScreen("Уровень")
-        for answer in ["От полугода до года", "3 раза в неделю и чаще", "Для себя",
-                       "Уверенно после одного стекла", "Уверенный воллей и бандеха", "Клубные американо"] {
-            chooseAnswer(answer)
+        let levelNext = element("onboarding.next")
+        // A second pass picks up an answer whose tap was lost (answers that
+        // are already selected are left alone).
+        for _ in 0..<2 {
+            for answer in ["От полугода до года", "3 раза в неделю и чаще", "Для себя",
+                           "Уверенно после одного стекла", "Уверенный воллей и бандеха", "Клубные американо"] {
+                chooseAnswer(answer)
+            }
+            if waitUntil(timeout: 2, { levelNext.exists && levelNext.isEnabled }) {
+                break
+            }
         }
         snap("onboarding-level")
-        tapWhenEnabled(element("onboarding.next"), "onboarding.next on the level step")
+        tapWhenEnabled(levelNext, "onboarding.next on the level step")
 
         // Step 4 — Padel DNA self-assessment (defaults are valid answers)
         requireScreen("Стиль игры")
@@ -106,6 +114,9 @@ final class OnboardingUITests: PadelIDUITestCase {
         // Rows further down are created only when scrolled near.
         _ = answer.waitForExistence(timeout: 2)
         scrollIntoView(answer, file: file, line: line)
+        if answer.isSelected {
+            return
+        }
         answer.tap()
         if !waitUntil(timeout: 2, { answer.exists && answer.isSelected }) {
             // Selecting the same answer again is harmless if the first tap was lost.

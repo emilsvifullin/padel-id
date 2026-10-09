@@ -448,6 +448,11 @@ class PadelIDUITestCase: XCTestCase {
     func turnOn(_ toggle: XCUIElement, until isDone: () -> Bool, file: StaticString = #filePath, line: UInt = #line) {
         require(toggle, "toggle", file: file, line: line)
         scrollIntoView(toggle, file: file, line: line)
+        // A floating action bar does not make the row unhittable for XCTest,
+        // but takes the tap; bring rows near the bottom edge further up.
+        if toggle.frame.midY > app.frame.maxY - app.frame.height * 0.3 {
+            drag(upwards: true)
+        }
         if isDone() { return }
         let control = toggle.switches.firstMatch
         if control.exists && control.isHittable {
