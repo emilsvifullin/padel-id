@@ -387,9 +387,12 @@ class PadelIDUITestCase: XCTestCase {
         snap("password-not-accepted")
         let requirements = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label CONTAINS %@", "выполнено"))
-            .allElementsBoundByIndex.map(\.label)
+            .allElementsBoundByIndex.map { "\($0.label) [\(($0.value as? String) ?? "")]" }
+        // A secure field reports one bullet per character it holds (or its
+        // placeholder when empty).
+        let held = (field.value as? String) ?? "nil"
         XCTFail("The password was not accepted by the form (focus: \(Self.hasKeyboardFocus(field)), "
-                + "requirements: \(requirements))", file: file, line: line)
+                + "field value: \(held), requirements: \(requirements))", file: file, line: line)
     }
 
     /// iOS can replace the keyboard of a sign-up password field with its

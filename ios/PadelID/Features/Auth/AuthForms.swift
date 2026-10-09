@@ -24,13 +24,15 @@ struct PasswordRequirements: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            requirement("Не меньше 8 символов", met: password.count >= 8)
+            // VoiceOver does not read the characters of a secure field, so
+            // the length requirement also says how many have been typed.
+            requirement("Не меньше 8 символов", met: password.count >= 8, value: "\(password.count) из 8")
             requirement("Буквы и цифры", met: PasswordPolicy.hasLetter(password) && PasswordPolicy.hasDigit(password))
         }
         .font(.footnote)
     }
 
-    private func requirement(_ text: String, met: Bool) -> some View {
+    private func requirement(_ text: String, met: Bool, value: String = "") -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Image(systemName: met ? "checkmark.circle.fill" : "circle")
             Text(text)
@@ -39,6 +41,7 @@ struct PasswordRequirements: View {
         .foregroundStyle(met ? Theme.positive : .secondary)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(text + (met ? ", выполнено" : ", не выполнено"))
+        .accessibilityValue(value)
     }
 }
 
