@@ -345,13 +345,16 @@ class PadelIDUITestCase: XCTestCase {
     }
 
     /// Types a password into a secure field. Secure fields in the simulator
-    /// sometimes do not take keyboard focus from a tap, so focus is checked
-    /// and the entry retried until `accepted` reports that the form has it.
-    /// Text is only ever typed into the secure field itself: typing blind
-    /// would land in the field that still has focus (the e-mail field).
+    /// sometimes do not take keyboard focus from a tap and drop characters
+    /// typed in one burst, so focus is checked, the password is typed one
+    /// character at a time, and the entry is retried until `accepted`
+    /// reports that the form has it. Text is only ever typed into the
+    /// secure field itself: typing blind would land in the field that still
+    /// has focus (the e-mail field).
     func enterPassword(_ text: String, into field: XCUIElement, accepted: () -> Bool,
                        file: StaticString = #filePath, line: UInt = #line) {
-        for attempt in 0..<4 {
+        let attempts = 4
+        for attempt in 0..<attempts {
             declineSavePasswordIfShown()
             if !Self.hasKeyboardFocus(field) {
                 scrollIntoView(field, file: file, line: line)
@@ -367,9 +370,14 @@ class PadelIDUITestCase: XCTestCase {
                 focused = waitUntil(timeout: 3) { Self.hasKeyboardFocus(field) }
             }
             guard focused else { continue }
-            field.typeText(text)
+            for character in text {
+                field.typeText(String(character))
+            }
             if waitUntil(timeout: 3, accepted) {
                 return
+            }
+            if attempt == attempts - 1 {
+                break
             }
             // Clear whatever was typed before the next attempt.
             if Self.hasKeyboardFocus(field) {
@@ -377,7 +385,11 @@ class PadelIDUITestCase: XCTestCase {
             }
         }
         snap("password-not-accepted")
-        XCTFail("The password was not accepted by the form", file: file, line: line)
+        let requirements = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS %@", "выполнено"))
+            .allElementsBoundByIndex.map(\.label)
+        XCTFail("The password was not accepted by the form (focus: \(Self.hasKeyboardFocus(field)), "
+                + "requirements: \(requirements))", file: file, line: line)
     }
 
     /// iOS can replace the keyboard of a sign-up password field with its
