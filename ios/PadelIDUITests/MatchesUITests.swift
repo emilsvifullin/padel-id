@@ -27,8 +27,7 @@ final class MatchesUITests: PadelIDUITestCase {
         waitForHome()
         openPendingMatch(screenshotList: false)
 
-        tap(require(element("match.dispute"), timeout: 15, "match.dispute"))
-        requireScreen("Оспорить результат")
+        open(require(element("match.dispute"), timeout: 15, "match.dispute"), screen: "Оспорить результат")
         let reason = require(button(labelPrefix: "Неверный сч"), "first dispute reason")
         tap(reason)
         let send = button(label: "Отправить")
@@ -52,9 +51,7 @@ final class MatchesUITests: PadelIDUITestCase {
         signIn()
         waitForHome()
         selectTab("Матчи")
-        tap(require(element("matches.new"), timeout: 15, "matches.new"))
-
-        requireScreen("Новый матч")
+        open(require(element("matches.new"), timeout: 15, "matches.new"), screen: "Новый матч")
         scrollIntoView(find("editor.slot.1.left"))
         snap("editor-empty")
 
@@ -114,8 +111,7 @@ final class MatchesUITests: PadelIDUITestCase {
         if screenshotList {
             snap("matches-list")
         }
-        tap(pendingRow, file: file, line: line)
-        requireScreen("Матч", file: file, line: line)
+        open(pendingRow, screen: "Матч", file: file, line: line)
         waitForRequest("GET", "v1/matches/\(StubServer.pendingMatchID)", file: file, line: line)
     }
 

@@ -19,31 +19,27 @@ final class HomeUITests: PadelIDUITestCase {
         snap("home-insights")
 
         // Rating
-        tap(require(element("home.rating"), "home.rating"))
-        requireScreen("Рейтинг")
+        open(require(element("home.rating"), "home.rating"), screen: "Рейтинг")
         snap("rating-detail")
         XCTAssertFalse(server.recorded("GET", "v1/players/\(StubServer.currentUserID)/rating-history").isEmpty)
         goBack(previousTitle: "Padel ID")
         requireScreen("Padel ID")
 
         // Padel DNA
-        tap(require(element("home.dna"), "home.dna"))
-        requireScreen("Padel DNA")
+        open(require(element("home.dna"), "home.dna"), screen: "Padel DNA")
         snap("dna-detail")
         waitForRequest("GET", "v1/players/\(StubServer.currentUserID)/dna")
         goBack(previousTitle: "Padel ID")
         requireScreen("Padel ID")
 
         // Insights
-        tap(insightsLink())
-        requireScreen("Анализ")
+        open(insightsLink(), screen: "Анализ")
         snap("insights")
         goBack(previousTitle: "Padel ID")
         requireScreen("Padel ID")
 
         // Statistics
-        tap(statsLink())
-        requireScreen("Статистика")
+        open(statsLink(), screen: "Статистика")
         snap("stats")
         goBack(previousTitle: "Padel ID")
         requireScreen("Padel ID")

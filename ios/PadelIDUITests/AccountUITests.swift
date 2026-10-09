@@ -26,29 +26,25 @@ final class AccountUITests: PadelIDUITestCase {
         snap("account")
 
         // Profile
-        tap(editProfile)
-        requireScreen("Профиль")
+        open(editProfile, screen: "Профиль")
         snap("edit-profile")
         goBack(previousTitle: "Аккаунт")
         requireScreen("Аккаунт")
 
         // Security
-        tap(element("account.security"))
-        requireScreen("Безопасность")
+        open(element("account.security"), screen: "Безопасность")
         snap("security")
         goBack(previousTitle: "Аккаунт")
         requireScreen("Аккаунт")
 
         // How the rating works
-        tap(aboutRatingRow())
-        requireScreen("Рейтинг и Padel DNA")
+        open(aboutRatingRow(), screen: "Рейтинг и Padel DNA")
         snap("about-rating")
         goBack(previousTitle: "Аккаунт")
         requireScreen("Аккаунт")
 
         // Account deletion (only opened, never confirmed)
-        tap(element("account.deleteAccount"))
-        requireScreen("Удаление аккаунта")
+        open(element("account.deleteAccount"), screen: "Удаление аккаунта")
         snap("delete-account")
         goBack(previousTitle: "Аккаунт")
         requireScreen("Аккаунт")

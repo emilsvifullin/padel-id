@@ -287,6 +287,23 @@ class PadelIDUITestCase: XCTestCase {
             || app.navigationBars.staticTexts.matching(NSPredicate(format: "label == %@", title)).firstMatch.exists
     }
 
+    /// Taps the element and waits for the screen with the title, tapping
+    /// again if it did not open (a tap during a transition can be lost).
+    func open(_ element: XCUIElement, screen title: String, attempts: Int = 3,
+              file: StaticString = #filePath, line: UInt = #line) {
+        for attempt in 0..<attempts {
+            if attempt > 0 {
+                guard element.exists else { break }
+                moveAboveBottomBar(element)
+            }
+            tap(element, file: file, line: line)
+            if waitUntil(timeout: 6, { isScreenShown(title) }) {
+                return
+            }
+        }
+        requireScreen(title, file: file, line: line)
+    }
+
     func requireScreen(_ title: String, timeout: TimeInterval = 10, file: StaticString = #filePath, line: UInt = #line) {
         if !waitUntil(timeout: timeout, { isScreenShown(title) }) {
             XCTFail("Screen «\(title)» did not open", file: file, line: line)

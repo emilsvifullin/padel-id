@@ -51,9 +51,13 @@ final class PlayersUITests: PadelIDUITestCase {
         waitForRequest("GET", "v1/players/\(StubServer.partnerID)")
         snap("profile-top")
         let compatibility = require(element("profile.compatibility"), "profile.compatibility")
-        scrollIntoView(compatibility, hittable: false)
-        drag(upwards: true)
-        drag(upwards: true)
+        // Scroll until the block starts in the upper part of the screen (it
+        // can be taller than the visible band, so "fully visible" is not a
+        // target to aim for).
+        for _ in 0..<10 where compatibility.frame.minY > app.frame.maxY * 0.45 {
+            drag(upwards: true)
+        }
+        XCTAssertLessThan(compatibility.frame.minY, app.frame.maxY * 0.6, "profile.compatibility scrolled into view")
         snap("profile-scrolled")
     }
 
