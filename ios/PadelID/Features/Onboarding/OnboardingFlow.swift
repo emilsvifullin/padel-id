@@ -498,9 +498,11 @@ private struct OnboardingChoiceRow: View {
                         .foregroundStyle(Color.primary)
                         .fixedSize(horizontal: false, vertical: true)
                     if let detail {
+                        // Color.secondary: inside a button `.secondary` would be
+                        // a lighter shade of the accent tint.
                         Text(detail)
                             .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
