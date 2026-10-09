@@ -196,7 +196,8 @@ final class AppModel {
         matchEditor = nil
         signOutNotice = notice
         withAnimation(.smooth) { phase = .signedOut }
-        Task { await NotificationService.shared.clearBadge() }
+        AvatarLoader.cache.removeAllCachedResponses()
+        Task { await NotificationService.shared.reset() }
     }
 
     private func handleSessionInvalidated() {

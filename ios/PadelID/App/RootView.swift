@@ -111,7 +111,7 @@ struct LaunchFailureView: View {
             }
             .buttonStyle(.borderedProminent)
             Button("Выйти из аккаунта", role: .destructive) {
-                app.resetLocalState()
+                Task { await app.signOut() }
             }
             .buttonStyle(.borderless)
         }

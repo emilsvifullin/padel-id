@@ -29,6 +29,10 @@ struct PlayerProfileView: View {
             .task(id: app.dataRevision) {
                 loadMyDNA()
                 await profile.load(using: app)
+                if isUnavailable {
+                    // Not even a cached copy of a hidden profile is kept.
+                    app.cache.remove(CacheKey.player(playerId))
+                }
             }
             .sheet(isPresented: $isAssessing) { assessmentSheet }
             .sensoryFeedback(.success, trigger: savedAssessments)
@@ -38,7 +42,9 @@ struct PlayerProfileView: View {
 
     @ViewBuilder
     private var content: some View {
-        if let value = profile.value {
+        if isUnavailable {
+            unavailableState
+        } else if let value = profile.value {
             if value.deleted {
                 deletedState
             } else {
@@ -58,6 +64,14 @@ struct PlayerProfileView: View {
             Label("Удалённый игрок", systemImage: "person.crop.circle.badge.xmark")
         } description: {
             Text("Аккаунт этого игрока удалён. Сыгранные с ним матчи остаются в истории участников, но профиль больше недоступен.")
+        }
+    }
+
+    private var unavailableState: some View {
+        ContentUnavailableView {
+            Label("Профиль недоступен", systemImage: "eye.slash")
+        } description: {
+            Text("Игрок скрыл профиль или его больше нет в Padel ID.")
         }
     }
 
@@ -405,7 +419,7 @@ struct PlayerProfileView: View {
             ForEach(assessments) { assessment in
                 PlayerProfileAssessmentCard(assessment: assessment)
             }
-            Text("Оценки тренеров подтверждают навыки в Padel DNA и учитываются 180 дней.")
+            Text("Оценки тренеров подтверждают навыки в Padel DNA 180 дней, а их вес со временем снижается.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -417,7 +431,7 @@ struct PlayerProfileView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-        if let value = profile.value, !value.deleted, !isMe(value) {
+        if !isUnavailable, let value = profile.value, !value.deleted, !isMe(value) {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Button {
@@ -441,7 +455,7 @@ struct PlayerProfileView: View {
 
     @ViewBuilder
     private var actionArea: some View {
-        if let value = profile.value, !value.deleted, !isMe(value) {
+        if !isUnavailable, let value = profile.value, !value.deleted, !isMe(value) {
             GlassEffectContainer {
                 Button {
                     app.matchEditor = MatchEditorRequest(mode: .create(partner: value.profile.card, opponents: []))
@@ -474,9 +488,13 @@ struct PlayerProfileView: View {
     // MARK: - Helpers
 
     private var titleText: String {
-        guard showsTitle, let value = profile.value, !value.deleted else { return "" }
+        guard showsTitle, !isUnavailable, let value = profile.value, !value.deleted else { return "" }
         return value.profile.displayName
     }
+
+    /// The player turned off search visibility (and shares no match with the
+    /// viewer) or no longer exists: the server answers `player_not_found`.
+    private var isUnavailable: Bool { profile.error?.code == "player_not_found" }
 
     private func isMe(_ value: PlayerProfileResponse) -> Bool {
         value.viewer?.isMe ?? (playerId == app.me?.userId)

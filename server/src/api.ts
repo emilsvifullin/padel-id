@@ -53,7 +53,11 @@ const schemas = {
   }),
   updateMatch: z.object({ version, match: z.record(z.string(), z.unknown()) }),
   club: z.object({ city_id: z.number().int().positive(), name: z.string().min(1).max(120) }),
-  review: z.object({ decision: z.enum(["approved", "rejected", "revoked"]), note: z.string().max(300).nullish() }),
+  review: z.object({
+    decision: z.enum(["approved", "rejected", "revoked"]),
+    // 300 code points in the database (see the dispute comment above).
+    note: z.string().max(600).nullish(),
+  }),
   object: z.record(z.string(), z.unknown()),
 };
 

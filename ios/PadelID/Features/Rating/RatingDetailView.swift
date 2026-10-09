@@ -329,7 +329,9 @@ private struct RatingDetailSummary: View {
         case .high:
             text = "Высокая надёжность: уровень подтверждён многими матчами и меняется плавно."
         }
-        if rating.idleDays > 14 {
+        // Without ranked matches `idle_days` counts from sign-up, and the
+        // starting uncertainty is already above the inactivity cap.
+        if rating.idleDays > 14, rating.rankedMatches > 0 {
             text += " Без рейтинговых матчей \(Format.days(rating.idleDays)) — во время перерыва надёжность постепенно снижается."
         }
         return text

@@ -77,4 +77,10 @@ final class NotificationService {
         try? await UNUserNotificationCenter.current().setBadgeCount(0)
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()
     }
+
+    /// Forgets the signed-out account's notifications (sign-out, account deletion).
+    func reset() async {
+        UserDefaults.standard.removeObject(forKey: notifiedKey)
+        await clearBadge()
+    }
 }

@@ -32,7 +32,7 @@ struct CoachAssessmentView: View {
                         LevelChip(level: player.level, reliability: player.reliability)
                     }
                 } footer: {
-                    Text("Оценка подтверждает навыки в Padel DNA игрока и учитывается 180 дней. Используйте ту же шкалу 0–7, что и для общего уровня.")
+                    Text("Оценка подтверждает навыки в Padel DNA игрока 180 дней, а её вес со временем снижается. Используйте ту же шкалу 0–7, что и для общего уровня.")
                 }
 
                 Section {

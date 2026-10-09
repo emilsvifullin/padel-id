@@ -110,6 +110,7 @@ struct DomainTests {
         #expect(!PasswordPolicy.hasLetter("1234"))
         #expect(PasswordPolicy.hasDigit("abc9"))
         #expect(!PasswordPolicy.hasDigit("abc"))
+        #expect(!PasswordPolicy.hasDigit("abc²"))
     }
 
     // MARK: Username suggestions

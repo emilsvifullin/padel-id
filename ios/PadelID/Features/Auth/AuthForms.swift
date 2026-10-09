@@ -8,7 +8,8 @@ enum PasswordPolicy {
     }
 
     static func hasLetter(_ value: String) -> Bool { value.contains { $0.isLetter } }
-    static func hasDigit(_ value: String) -> Bool { value.contains { $0.isNumber } }
+    /// ASCII digits only, the same rule as the server.
+    static func hasDigit(_ value: String) -> Bool { value.contains { $0.isASCII && $0.isNumber } }
 
     static func isPlausibleEmail(_ value: String) -> Bool {
         let trimmed = value.trimmingCharacters(in: .whitespaces)

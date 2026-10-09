@@ -146,9 +146,13 @@ extension AvatarView {
 
 /// Loads immutable images through a dedicated, persistent URL cache.
 enum AvatarLoader {
+    /// Emptied on sign-out: the next account must not inherit the photos the
+    /// previous one browsed.
+    static let cache = URLCache(memoryCapacity: 16 * 1024 * 1024, diskCapacity: 128 * 1024 * 1024)
+
     static let session: URLSession = {
         let configuration = URLSessionConfiguration.default
-        configuration.urlCache = URLCache(memoryCapacity: 16 * 1024 * 1024, diskCapacity: 128 * 1024 * 1024)
+        configuration.urlCache = cache
         configuration.requestCachePolicy = .returnCacheDataElseLoad
         configuration.timeoutIntervalForRequest = 20
         return URLSession(configuration: configuration)
