@@ -42,7 +42,8 @@ final class OnboardingUITests: PadelIDUITestCase {
         // to go before the city row.
         dismissKeyboard()
 
-        tap("onboarding.city")
+        // The keyboard may still be closing and move the row under the tap.
+        tap(find("onboarding.city"), until: button(label: "Москва"))
         let moscow = require(button(label: "Москва"), timeout: 15, "Москва in the city picker")
         snap("onboarding-city")
         tap(moscow)
@@ -76,6 +77,9 @@ final class OnboardingUITests: PadelIDUITestCase {
             }
         }
         snap("onboarding-level")
+        if !(levelNext.exists && levelNext.isEnabled) {
+            reportSelectedAnswers(from: "Как давно вы играете в падел?")
+        }
         tapWhenEnabled(levelNext, "onboarding.next on the level step")
 
         // Step 4 — Padel DNA self-assessment (defaults are valid answers)
@@ -118,6 +122,22 @@ final class OnboardingUITests: PadelIDUITestCase {
         for _ in 0..<12 where !(header.exists && header.isHittable) {
             drag(upwards: false)
         }
+    }
+
+    /// Records which answers the screen reports as selected, from the first
+    /// question down (diagnostics for a step that does not complete).
+    private func reportSelectedAnswers(from question: String) {
+        scrollToQuestion(question)
+        var selected: [String] = []
+        for _ in 0..<12 {
+            let labels = app.buttons.matching(NSPredicate(format: "selected == true"))
+                .allElementsBoundByIndex.map(\.label)
+            selected.append(contentsOf: labels.filter { !selected.contains($0) })
+            drag(upwards: true)
+        }
+        let footer = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Осталось ответить"))
+            .firstMatch
+        XCTFail("Selected answers: \(selected); footer: \(footer.exists ? footer.label : "none")")
     }
 
     /// Taps a single-choice answer row (labels start with the option title).

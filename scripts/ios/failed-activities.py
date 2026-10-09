@@ -25,7 +25,7 @@ def walk(activities, depth, lines):
 
 def main():
     path = sys.argv[1]
-    limit = int(sys.argv[2]) if len(sys.argv) > 2 else 250
+    limit = int(sys.argv[2]) if len(sys.argv) > 2 else 1200
     summary = xcresult("summary", "--path", path)
     seen = set()
     for failure in summary.get("testFailures", []):
