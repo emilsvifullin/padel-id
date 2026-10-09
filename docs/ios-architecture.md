@@ -153,10 +153,15 @@ the models in `Core/Models/Models.swift` with `JSONCoding.decoder`.
 | PUT `v1/coach/application` | `{experience_years, certification?, about (20–500), club_id?}` | `CoachApplication` |
 | GET `v1/admin/coach-applications?status=` | pending/approved/rejected/revoked | `[CoachApplication]` |
 | POST `v1/admin/coach-applications/{player_id}` | `{decision: approved/rejected/revoked, note?}` | `CoachApplication` |
-| POST `v1/account/password` | `{current_password, new_password}` | 204 |
+| POST `v1/account/password` | `{current_password, new_password}` | 204; 503 `password_changed_sessions_active` when the password did change but the other sessions could not be ended (show the message: it tells the user to use «Выйти на всех устройствах») |
 | POST `v1/account/email` | `{new_email, password}` | `Me` |
 | POST `v1/account/recovery-key` | `{password}` | `{recovery_key}` |
 | DELETE `v1/account` | `{password}` | 204 |
+
+Password-protected account actions answer `429 rate_limited` after 10 password
+attempts per user in 15 minutes (shared by all four) or 20 per client address.
+Player endpoints (`v1/players/{id}…`) answer `404 player_not_found` for a player
+with `discoverable = false` unless the viewer has shared a match with them.
 
 Server rules worth mirroring in the UI (the server stays authoritative):
 * 4 distinct onboarded players, 2 per team, one `right` and one `left` per

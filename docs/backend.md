@@ -52,6 +52,23 @@ iPhone (Padel ID) ──HTTPS──▶ Vercel: padel-id-gamma.vercel.app (Hono, 
   per-dimension confidence.
 - Account recovery uses one-time recovery keys (SHA-256 stored, rotated on use)
   because no email delivery is configured.
+- Accounts are created only by the account service. Public GoTrue sign-up is
+  off (`[auth] enable_signup = false`; the email provider itself stays on for
+  sign-in), and a deferred constraint trigger on `auth.users` rejects, at
+  commit, any new user without `app_metadata.padelid_origin = 'account-service'`
+  (set by the account service's `createUser`; GoTrue merges app_metadata after
+  the insert, hence the commit-time check). Users created any other way,
+  including from the Supabase dashboard, are rejected.
+- Password checks (`verify_my_password`, `regenerate_recovery_key`,
+  `svc_check_password`) share a per-user budget of 10 attempts per 15 minutes;
+  a wrong password is returned rather than raised so the attempt stays counted.
+  The gateway also limits password-protected account actions to 20 per client
+  IP per 15 minutes, and sign-in to 30 per IP, 10 per email and IP (10 minutes)
+  and 100 per email (hour); email buckets are keyed by a SHA-256 of the address.
+- A player with `discoverable = false` is visible only to themselves, to players
+  who share a match with them and to administrators: search, profile, DNA,
+  rating history, match history, compatibility and coach assessment answer
+  `player_not_found` to anyone else. Line-up cards inside matches stay visible.
 
 ## Secrets
 
