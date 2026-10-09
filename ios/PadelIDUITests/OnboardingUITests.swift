@@ -38,9 +38,9 @@ final class OnboardingUITests: PadelIDUITestCase {
         requireScreen("Профиль", timeout: 15)
         let name = require(element("onboarding.displayName"), "onboarding.displayName")
         enter("Ilya Gromov", into: name)
-        let username = find("onboarding.username")
-        tap(username)
-        username.typeText("\n")
+        // The username is suggested from the name; only the keyboard has
+        // to go before the city row.
+        dismissKeyboard()
 
         tap("onboarding.city")
         let moscow = require(button(label: "Москва"), timeout: 15, "Москва in the city picker")
@@ -63,7 +63,10 @@ final class OnboardingUITests: PadelIDUITestCase {
         let levelNext = element("onboarding.next")
         // A second pass picks up an answer whose tap was lost (answers that
         // are already selected are left alone).
-        for _ in 0..<2 {
+        for pass in 0..<2 {
+            if pass > 0 {
+                scrollToQuestion("Как давно вы играете в падел?")
+            }
             for answer in ["От полугода до года", "3 раза в неделю и чаще", "Для себя",
                            "Уверенно после одного стекла", "Уверенный воллей и бандеха", "Клубные американо"] {
                 chooseAnswer(answer)
@@ -106,6 +109,15 @@ final class OnboardingUITests: PadelIDUITestCase {
         tap(openApp)
         waitForHome()
         snap("home-new")
+    }
+
+    /// Scrolls back up to a question header: rows are created lazily, and
+    /// looking for an answer only scrolls down.
+    private func scrollToQuestion(_ question: String) {
+        let header = app.staticTexts[question]
+        for _ in 0..<12 where !(header.exists && header.isHittable) {
+            drag(upwards: false)
+        }
     }
 
     /// Taps a single-choice answer row (labels start with the option title).
