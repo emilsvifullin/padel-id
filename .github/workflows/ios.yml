@@ -1,0 +1,176 @@
+name: iOS
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths:
+      - "ios/**"
+      - "scripts/ios/**"
+      - ".github/actions/setup-ios/**"
+      - ".github/workflows/ios.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "ios/**"
+      - "scripts/ios/**"
+      - ".github/actions/setup-ios/**"
+      - ".github/workflows/ios.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: ${{ matrix.name }}
+    runs-on: macos-26
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: iPhone 17 Pro · light · unit + UI
+            slug: 17pro-light
+            device: iPhone 17 Pro
+            appearance: light
+            content_size: large
+            unit: true
+          - name: iPhone 17 Pro Max · dark · UI
+            slug: 17promax-dark
+            device: iPhone 17 Pro Max
+            appearance: dark
+            content_size: large
+            unit: false
+          - name: iPhone 16e · light · accessibility text · UI
+            slug: 16e-ax
+            device: iPhone 16e
+            appearance: light
+            content_size: accessibility-extra-large
+            unit: false
+          - name: iPhone 17 Pro · dark · large text · UI
+            slug: 17pro-dark-xxxl
+            device: iPhone 17 Pro
+            appearance: dark
+            content_size: extra-extra-extra-large
+            unit: false
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-ios
+
+      - name: Boot the simulator
+        id: sim
+        run: echo "udid=$(scripts/ios/simulator.sh '${{ matrix.device }}' '${{ matrix.appearance }}' '${{ matrix.content_size }}')" >> "$GITHUB_OUTPUT"
+
+      - name: Build for testing
+        working-directory: ios
+        run: |
+          if ! xcodebuild build-for-testing \
+            -project PadelID.xcodeproj -scheme PadelID -configuration Debug \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -derivedDataPath "$RUNNER_TEMP/dd" > "$RUNNER_TEMP/build.log" 2>&1; then
+            grep -E "error:" "$RUNNER_TEMP/build.log" | sort -u | head -300
+            tail -40 "$RUNNER_TEMP/build.log"
+            exit 1
+          fi
+          echo "Warnings:"
+          grep -E "warning:" "$RUNNER_TEMP/build.log" | grep -v "appintentsmetadataprocessor" | sort -u | head -200 || true
+
+      - name: Unit tests
+        if: matrix.unit
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project PadelID.xcodeproj -scheme PadelID -configuration Debug \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -derivedDataPath "$RUNNER_TEMP/dd" \
+            -only-testing:PadelIDTests \
+            -resultBundlePath "$RUNNER_TEMP/unit.xcresult" \
+            | tail -60
+
+      - name: UI tests
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project PadelID.xcodeproj -scheme PadelID -configuration Debug \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -derivedDataPath "$RUNNER_TEMP/dd" \
+            -only-testing:PadelIDUITests \
+            -resultBundlePath "$RUNNER_TEMP/ui.xcresult" \
+            | tail -80
+
+      - name: Test summary
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/screenshots"
+          summary="$RUNNER_TEMP/screenshots/${{ matrix.slug }}-summary.txt"
+          : > "$summary"
+          for r in unit ui; do
+            if [ -d "$RUNNER_TEMP/$r.xcresult" ]; then
+              echo "== $r" | tee -a "$summary"
+              xcrun xcresulttool get test-results summary --path "$RUNNER_TEMP/$r.xcresult" --compact \
+                | python3 -c 'import json,sys; s=json.load(sys.stdin); print({k: s.get(k) for k in ("result","totalTestCount","passedTests","failedTests","skippedTests")}); [print("FAILED:", f.get("testName"), "-", f.get("failureText")) for f in s.get("testFailures", [])]' \
+                | tee -a "$summary"
+              python3 scripts/ios/failed-activities.py "$RUNNER_TEMP/$r.xcresult" >> "$summary" || true
+            fi
+          done
+
+      - name: Export screenshots
+        if: always()
+        run: python3 scripts/ios/export-screenshots.py "$RUNNER_TEMP/ui.xcresult" "$RUNNER_TEMP/screenshots" "${{ matrix.slug }}-"
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: screenshots-${{ matrix.slug }}
+          path: ${{ runner.temp }}/screenshots
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: xcresult-${{ matrix.slug }}
+          path: |
+            ${{ runner.temp }}/unit.xcresult
+            ${{ runner.temp }}/ui.xcresult
+            ${{ runner.temp }}/build.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # Screenshots for design review, published as one rolling prerelease asset
+  # (never on main; removed before the final release).
+  screenshots:
+    name: Publish screenshots for review
+    needs: test
+    if: always() && github.event_name == 'push' && github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: screenshots-*
+          path: screenshots
+          merge-multiple: true
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          count=$(find screenshots -type f 2>/dev/null | wc -l | tr -d ' ')
+          echo "Screenshots: $count"
+          [ "$count" -gt 0 ] || exit 0
+          (cd screenshots && zip -q -r ../screenshots.zip .)
+          gh release delete ui-screenshots --yes --cleanup-tag 2>/dev/null || true
+          gh release create ui-screenshots screenshots.zip --prerelease --target "$GITHUB_SHA" \
+            --title "UI screenshots (CI review)" \
+            --notes "Generated by the iOS workflow for ${GITHUB_SHA} to review the interface. Not a release."

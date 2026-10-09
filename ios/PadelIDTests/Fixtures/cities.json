@@ -1,0 +1,807 @@
+[
+  {
+    "id": 1,
+    "name": "Москва",
+    "country_code": "RU"
+  },
+  {
+    "id": 2,
+    "name": "Санкт-Петербург",
+    "country_code": "RU"
+  },
+  {
+    "id": 97,
+    "name": "Абакан",
+    "country_code": "RU"
+  },
+  {
+    "id": 81,
+    "name": "Анапа",
+    "country_code": "RU"
+  },
+  {
+    "id": 65,
+    "name": "Архангельск",
+    "country_code": "RU"
+  },
+  {
+    "id": 42,
+    "name": "Астрахань",
+    "country_code": "RU"
+  },
+  {
+    "id": 35,
+    "name": "Балашиха",
+    "country_code": "RU"
+  },
+  {
+    "id": 20,
+    "name": "Барнаул",
+    "country_code": "RU"
+  },
+  {
+    "id": 54,
+    "name": "Белгород",
+    "country_code": "RU"
+  },
+  {
+    "id": 98,
+    "name": "Благовещенск",
+    "country_code": "RU"
+  },
+  {
+    "id": 49,
+    "name": "Брянск",
+    "country_code": "RU"
+  },
+  {
+    "id": 69,
+    "name": "Великий Новгород",
+    "country_code": "RU"
+  },
+  {
+    "id": 26,
+    "name": "Владивосток",
+    "country_code": "RU"
+  },
+  {
+    "id": 87,
+    "name": "Владикавказ",
+    "country_code": "RU"
+  },
+  {
+    "id": 52,
+    "name": "Владимир",
+    "country_code": "RU"
+  },
+  {
+    "id": 16,
+    "name": "Волгоград",
+    "country_code": "RU"
+  },
+  {
+    "id": 59,
+    "name": "Волжский",
+    "country_code": "RU"
+  },
+  {
+    "id": 63,
+    "name": "Вологда",
+    "country_code": "RU"
+  },
+  {
+    "id": 14,
+    "name": "Воронеж",
+    "country_code": "RU"
+  },
+  {
+    "id": 82,
+    "name": "Геленджик",
+    "country_code": "RU"
+  },
+  {
+    "id": 58,
+    "name": "Грозный",
+    "country_code": "RU"
+  },
+  {
+    "id": 78,
+    "name": "Домодедово",
+    "country_code": "RU"
+  },
+  {
+    "id": 102,
+    "name": "Евпатория",
+    "country_code": "RU"
+  },
+  {
+    "id": 4,
+    "name": "Екатеринбург",
+    "country_code": "RU"
+  },
+  {
+    "id": 85,
+    "name": "Ессентуки",
+    "country_code": "RU"
+  },
+  {
+    "id": 51,
+    "name": "Иваново",
+    "country_code": "RU"
+  },
+  {
+    "id": 22,
+    "name": "Ижевск",
+    "country_code": "RU"
+  },
+  {
+    "id": 25,
+    "name": "Иркутск",
+    "country_code": "RU"
+  },
+  {
+    "id": 93,
+    "name": "Йошкар-Ола",
+    "country_code": "RU"
+  },
+  {
+    "id": 5,
+    "name": "Казань",
+    "country_code": "RU"
+  },
+  {
+    "id": 38,
+    "name": "Калининград",
+    "country_code": "RU"
+  },
+  {
+    "id": 56,
+    "name": "Калуга",
+    "country_code": "RU"
+  },
+  {
+    "id": 31,
+    "name": "Кемерово",
+    "country_code": "RU"
+  },
+  {
+    "id": 41,
+    "name": "Киров",
+    "country_code": "RU"
+  },
+  {
+    "id": 84,
+    "name": "Кисловодск",
+    "country_code": "RU"
+  },
+  {
+    "id": 76,
+    "name": "Королёв",
+    "country_code": "RU"
+  },
+  {
+    "id": 71,
+    "name": "Кострома",
+    "country_code": "RU"
+  },
+  {
+    "id": 74,
+    "name": "Красногорск",
+    "country_code": "RU"
+  },
+  {
+    "id": 12,
+    "name": "Краснодар",
+    "country_code": "RU"
+  },
+  {
+    "id": 7,
+    "name": "Красноярск",
+    "country_code": "RU"
+  },
+  {
+    "id": 46,
+    "name": "Курск",
+    "country_code": "RU"
+  },
+  {
+    "id": 40,
+    "name": "Липецк",
+    "country_code": "RU"
+  },
+  {
+    "id": 77,
+    "name": "Люберцы",
+    "country_code": "RU"
+  },
+  {
+    "id": 101,
+    "name": "Магадан",
+    "country_code": "RU"
+  },
+  {
+    "id": 48,
+    "name": "Магнитогорск",
+    "country_code": "RU"
+  },
+  {
+    "id": 88,
+    "name": "Майкоп",
+    "country_code": "RU"
+  },
+  {
+    "id": 21,
+    "name": "Махачкала",
+    "country_code": "RU"
+  },
+  {
+    "id": 64,
+    "name": "Мурманск",
+    "country_code": "RU"
+  },
+  {
+    "id": 72,
+    "name": "Мытищи",
+    "country_code": "RU"
+  },
+  {
+    "id": 32,
+    "name": "Набережные Челны",
+    "country_code": "RU"
+  },
+  {
+    "id": 86,
+    "name": "Нальчик",
+    "country_code": "RU"
+  },
+  {
+    "id": 99,
+    "name": "Нижневартовск",
+    "country_code": "RU"
+  },
+  {
+    "id": 6,
+    "name": "Нижний Новгород",
+    "country_code": "RU"
+  },
+  {
+    "id": 55,
+    "name": "Нижний Тагил",
+    "country_code": "RU"
+  },
+  {
+    "id": 34,
+    "name": "Новокузнецк",
+    "country_code": "RU"
+  },
+  {
+    "id": 66,
+    "name": "Новороссийск",
+    "country_code": "RU"
+  },
+  {
+    "id": 3,
+    "name": "Новосибирск",
+    "country_code": "RU"
+  },
+  {
+    "id": 100,
+    "name": "Новый Уренгой",
+    "country_code": "RU"
+  },
+  {
+    "id": 91,
+    "name": "Норильск",
+    "country_code": "RU"
+  },
+  {
+    "id": 80,
+    "name": "Обнинск",
+    "country_code": "RU"
+  },
+  {
+    "id": 75,
+    "name": "Одинцово",
+    "country_code": "RU"
+  },
+  {
+    "id": 13,
+    "name": "Омск",
+    "country_code": "RU"
+  },
+  {
+    "id": 33,
+    "name": "Оренбург",
+    "country_code": "RU"
+  },
+  {
+    "id": 96,
+    "name": "Орёл",
+    "country_code": "RU"
+  },
+  {
+    "id": 39,
+    "name": "Пенза",
+    "country_code": "RU"
+  },
+  {
+    "id": 15,
+    "name": "Пермь",
+    "country_code": "RU"
+  },
+  {
+    "id": 68,
+    "name": "Петрозаводск",
+    "country_code": "RU"
+  },
+  {
+    "id": 90,
+    "name": "Петропавловск-Камчатский",
+    "country_code": "RU"
+  },
+  {
+    "id": 61,
+    "name": "Подольск",
+    "country_code": "RU"
+  },
+  {
+    "id": 70,
+    "name": "Псков",
+    "country_code": "RU"
+  },
+  {
+    "id": 83,
+    "name": "Пятигорск",
+    "country_code": "RU"
+  },
+  {
+    "id": 79,
+    "name": "Реутов",
+    "country_code": "RU"
+  },
+  {
+    "id": 11,
+    "name": "Ростов-на-Дону",
+    "country_code": "RU"
+  },
+  {
+    "id": 36,
+    "name": "Рязань",
+    "country_code": "RU"
+  },
+  {
+    "id": 9,
+    "name": "Самара",
+    "country_code": "RU"
+  },
+  {
+    "id": 94,
+    "name": "Саранск",
+    "country_code": "RU"
+  },
+  {
+    "id": 17,
+    "name": "Саратов",
+    "country_code": "RU"
+  },
+  {
+    "id": 28,
+    "name": "Севастополь",
+    "country_code": "RU"
+  },
+  {
+    "id": 53,
+    "name": "Симферополь",
+    "country_code": "RU"
+  },
+  {
+    "id": 60,
+    "name": "Смоленск",
+    "country_code": "RU"
+  },
+  {
+    "id": 62,
+    "name": "Сочи",
+    "country_code": "RU"
+  },
+  {
+    "id": 29,
+    "name": "Ставрополь",
+    "country_code": "RU"
+  },
+  {
+    "id": 45,
+    "name": "Сургут",
+    "country_code": "RU"
+  },
+  {
+    "id": 92,
+    "name": "Сыктывкар",
+    "country_code": "RU"
+  },
+  {
+    "id": 95,
+    "name": "Тамбов",
+    "country_code": "RU"
+  },
+  {
+    "id": 47,
+    "name": "Тверь",
+    "country_code": "RU"
+  },
+  {
+    "id": 19,
+    "name": "Тольятти",
+    "country_code": "RU"
+  },
+  {
+    "id": 30,
+    "name": "Томск",
+    "country_code": "RU"
+  },
+  {
+    "id": 43,
+    "name": "Тула",
+    "country_code": "RU"
+  },
+  {
+    "id": 18,
+    "name": "Тюмень",
+    "country_code": "RU"
+  },
+  {
+    "id": 44,
+    "name": "Улан-Удэ",
+    "country_code": "RU"
+  },
+  {
+    "id": 24,
+    "name": "Ульяновск",
+    "country_code": "RU"
+  },
+  {
+    "id": 10,
+    "name": "Уфа",
+    "country_code": "RU"
+  },
+  {
+    "id": 23,
+    "name": "Хабаровск",
+    "country_code": "RU"
+  },
+  {
+    "id": 67,
+    "name": "Ханты-Мансийск",
+    "country_code": "RU"
+  },
+  {
+    "id": 73,
+    "name": "Химки",
+    "country_code": "RU"
+  },
+  {
+    "id": 37,
+    "name": "Чебоксары",
+    "country_code": "RU"
+  },
+  {
+    "id": 8,
+    "name": "Челябинск",
+    "country_code": "RU"
+  },
+  {
+    "id": 57,
+    "name": "Чита",
+    "country_code": "RU"
+  },
+  {
+    "id": 89,
+    "name": "Южно-Сахалинск",
+    "country_code": "RU"
+  },
+  {
+    "id": 50,
+    "name": "Якутск",
+    "country_code": "RU"
+  },
+  {
+    "id": 103,
+    "name": "Ялта",
+    "country_code": "RU"
+  },
+  {
+    "id": 27,
+    "name": "Ярославль",
+    "country_code": "RU"
+  },
+  {
+    "id": 123,
+    "name": "Абу-Даби",
+    "country_code": "AE"
+  },
+  {
+    "id": 136,
+    "name": "Аликанте",
+    "country_code": "ES"
+  },
+  {
+    "id": 107,
+    "name": "Алматы",
+    "country_code": "KZ"
+  },
+  {
+    "id": 149,
+    "name": "Амстердам",
+    "country_code": "NL"
+  },
+  {
+    "id": 126,
+    "name": "Анталья",
+    "country_code": "TR"
+  },
+  {
+    "id": 108,
+    "name": "Астана",
+    "country_code": "KZ"
+  },
+  {
+    "id": 110,
+    "name": "Атырау",
+    "country_code": "KZ"
+  },
+  {
+    "id": 118,
+    "name": "Баку",
+    "country_code": "AZ"
+  },
+  {
+    "id": 159,
+    "name": "Бангкок",
+    "country_code": "TH"
+  },
+  {
+    "id": 131,
+    "name": "Барселона",
+    "country_code": "ES"
+  },
+  {
+    "id": 117,
+    "name": "Батуми",
+    "country_code": "GE"
+  },
+  {
+    "id": 153,
+    "name": "Белград",
+    "country_code": "RS"
+  },
+  {
+    "id": 144,
+    "name": "Берлин",
+    "country_code": "DE"
+  },
+  {
+    "id": 113,
+    "name": "Бишкек",
+    "country_code": "KG"
+  },
+  {
+    "id": 105,
+    "name": "Брест",
+    "country_code": "BY"
+  },
+  {
+    "id": 150,
+    "name": "Брюссель",
+    "country_code": "BE"
+  },
+  {
+    "id": 154,
+    "name": "Будва",
+    "country_code": "ME"
+  },
+  {
+    "id": 156,
+    "name": "Буэнос-Айрес",
+    "country_code": "AR"
+  },
+  {
+    "id": 132,
+    "name": "Валенсия",
+    "country_code": "ES"
+  },
+  {
+    "id": 121,
+    "name": "Вильнюс",
+    "country_code": "LT"
+  },
+  {
+    "id": 106,
+    "name": "Гомель",
+    "country_code": "BY"
+  },
+  {
+    "id": 147,
+    "name": "Гётеборг",
+    "country_code": "SE"
+  },
+  {
+    "id": 161,
+    "name": "Денпасар",
+    "country_code": "ID"
+  },
+  {
+    "id": 124,
+    "name": "Доха",
+    "country_code": "QA"
+  },
+  {
+    "id": 122,
+    "name": "Дубай",
+    "country_code": "AE"
+  },
+  {
+    "id": 114,
+    "name": "Душанбе",
+    "country_code": "TJ"
+  },
+  {
+    "id": 115,
+    "name": "Ереван",
+    "country_code": "AM"
+  },
+  {
+    "id": 152,
+    "name": "Копенгаген",
+    "country_code": "DK"
+  },
+  {
+    "id": 128,
+    "name": "Ларнака",
+    "country_code": "CY"
+  },
+  {
+    "id": 127,
+    "name": "Лимасол",
+    "country_code": "CY"
+  },
+  {
+    "id": 140,
+    "name": "Лиссабон",
+    "country_code": "PT"
+  },
+  {
+    "id": 143,
+    "name": "Лондон",
+    "country_code": "GB"
+  },
+  {
+    "id": 130,
+    "name": "Мадрид",
+    "country_code": "ES"
+  },
+  {
+    "id": 158,
+    "name": "Майами",
+    "country_code": "US"
+  },
+  {
+    "id": 133,
+    "name": "Малага",
+    "country_code": "ES"
+  },
+  {
+    "id": 148,
+    "name": "Мальмё",
+    "country_code": "SE"
+  },
+  {
+    "id": 134,
+    "name": "Марбелья",
+    "country_code": "ES"
+  },
+  {
+    "id": 157,
+    "name": "Мехико",
+    "country_code": "MX"
+  },
+  {
+    "id": 139,
+    "name": "Милан",
+    "country_code": "IT"
+  },
+  {
+    "id": 104,
+    "name": "Минск",
+    "country_code": "BY"
+  },
+  {
+    "id": 145,
+    "name": "Мюнхен",
+    "country_code": "DE"
+  },
+  {
+    "id": 137,
+    "name": "Пальма",
+    "country_code": "ES"
+  },
+  {
+    "id": 142,
+    "name": "Париж",
+    "country_code": "FR"
+  },
+  {
+    "id": 129,
+    "name": "Пафос",
+    "country_code": "CY"
+  },
+  {
+    "id": 155,
+    "name": "Подгорица",
+    "country_code": "ME"
+  },
+  {
+    "id": 141,
+    "name": "Порту",
+    "country_code": "PT"
+  },
+  {
+    "id": 160,
+    "name": "Пхукет",
+    "country_code": "TH"
+  },
+  {
+    "id": 119,
+    "name": "Рига",
+    "country_code": "LV"
+  },
+  {
+    "id": 138,
+    "name": "Рим",
+    "country_code": "IT"
+  },
+  {
+    "id": 112,
+    "name": "Самарканд",
+    "country_code": "UZ"
+  },
+  {
+    "id": 135,
+    "name": "Севилья",
+    "country_code": "ES"
+  },
+  {
+    "id": 125,
+    "name": "Стамбул",
+    "country_code": "TR"
+  },
+  {
+    "id": 146,
+    "name": "Стокгольм",
+    "country_code": "SE"
+  },
+  {
+    "id": 120,
+    "name": "Таллин",
+    "country_code": "EE"
+  },
+  {
+    "id": 111,
+    "name": "Ташкент",
+    "country_code": "UZ"
+  },
+  {
+    "id": 116,
+    "name": "Тбилиси",
+    "country_code": "GE"
+  },
+  {
+    "id": 151,
+    "name": "Хельсинки",
+    "country_code": "FI"
+  },
+  {
+    "id": 109,
+    "name": "Шымкент",
+    "country_code": "KZ"
+  }
+]

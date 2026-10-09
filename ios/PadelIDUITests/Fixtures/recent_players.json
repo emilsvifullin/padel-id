@@ -1,0 +1,216 @@
+[
+  {
+    "id": "70c78b8c-e283-494c-9344-3c901131e0f8",
+    "city": {
+      "id": 1,
+      "name": "Москва"
+    },
+    "club": {
+      "id": 2,
+      "name": "Corner Padel Club"
+    },
+    "level": 4.32,
+    "deleted": false,
+    "is_coach": false,
+    "username": "kate_lebedeva",
+    "avatar_path": null,
+    "reliability": 21,
+    "display_name": "Екатерина Лебедева",
+    "preferred_side": "right",
+    "matches_together": 6
+  },
+  {
+    "id": "7983e0d7-9437-4dc3-b171-c443d13514c3",
+    "city": {
+      "id": 1,
+      "name": "Москва"
+    },
+    "club": {
+      "id": 2,
+      "name": "Corner Padel Club"
+    },
+    "level": 4.65,
+    "deleted": false,
+    "is_coach": false,
+    "username": "volkov_padel",
+    "avatar_path": null,
+    "reliability": 31,
+    "display_name": "Алексей Волков",
+    "preferred_side": "right",
+    "matches_together": 8
+  },
+  {
+    "id": "d8b58bd9-8f8c-4732-a129-148692946aed",
+    "city": {
+      "id": 1,
+      "name": "Москва"
+    },
+    "club": {
+      "id": 1,
+      "name": "Падел Арена Лужники"
+    },
+    "level": 4.89,
+    "deleted": false,
+    "is_coach": false,
+    "username": "d_sokolov",
+    "avatar_path": null,
+    "reliability": 25,
+    "display_name": "Дмитрий Соколов",
+    "preferred_side": "left",
+    "matches_together": 10
+  },
+  {
+    "id": "2becd560-4954-4ad9-ab50-e454ea8f2d73",
+    "city": {
+      "id": 1,
+      "name": "Москва"
+    },
+    "club": {
+      "id": 2,
+      "name": "Corner Padel Club"
+    },
+    "level": 3.18,
+    "deleted": false,
+    "is_coach": false,
+    "username": "s_morozov",
+    "avatar_path": null,
+    "reliability": 40,
+    "display_name": "Сергей Морозов",
+    "preferred_side": "left",
+    "matches_together": 7
+  },
+  {
+    "id": "570680bb-d101-43b8-a051-89bc70ab4e70",
+    "city": {
+      "id": 1,
+      "name": "Москва"
+    },
+    "club": {
+      "id": 1,
+      "name": "Падел Арена Лужники"
+    },
+    "level": 2.38,
+    "deleted": false,
+    "is_coach": false,
+    "username": "olga_vasilyeva",
+    "avatar_path": null,
+    "reliability": 17,
+    "display_name": "Ольга Васильева",
+    "preferred_side": "right",
+    "matches_together": 4
+  },
+  {
+    "id": "c1e87c5d-9f8f-4240-91cb-4fb7bc59a693",
+    "city": {
+      "id": 1,
+      "name": "Москва"
+    },
+    "club": null,
+    "level": 3.71,
+    "deleted": false,
+    "is_coach": false,
+    "username": "pavel_egorov",
+    "avatar_path": null,
+    "reliability": 28,
+    "display_name": "Павел Егоров",
+    "preferred_side": "left",
+    "matches_together": 7
+  },
+  {
+    "id": "a612d312-413b-4a9b-b433-64c312049ebe",
+    "city": {
+      "id": 1,
+      "name": "Москва"
+    },
+    "club": {
+      "id": 2,
+      "name": "Corner Padel Club"
+    },
+    "level": 3.53,
+    "deleted": false,
+    "is_coach": false,
+    "username": "artem_zakharov",
+    "avatar_path": null,
+    "reliability": 20,
+    "display_name": "Артём Захаров",
+    "preferred_side": "both",
+    "matches_together": 5
+  },
+  {
+    "id": "e97c036b-f0f5-4449-b1d7-c05f4720f25e",
+    "city": {
+      "id": 1,
+      "name": "Москва"
+    },
+    "club": {
+      "id": 1,
+      "name": "Падел Арена Лужники"
+    },
+    "level": 2.49,
+    "deleted": false,
+    "is_coach": false,
+    "username": "anna_kuz",
+    "avatar_path": null,
+    "reliability": 31,
+    "display_name": "Анна Кузнецова",
+    "preferred_side": "left",
+    "matches_together": 5
+  },
+  {
+    "id": "359dfbcf-7da8-4e54-af5e-08c1096e5e44",
+    "city": {
+      "id": 1,
+      "name": "Москва"
+    },
+    "club": null,
+    "level": 2.63,
+    "deleted": false,
+    "is_coach": false,
+    "username": "igor_pavlov",
+    "avatar_path": null,
+    "reliability": 30,
+    "display_name": "Игорь Павлов",
+    "preferred_side": "both",
+    "matches_together": 7
+  },
+  {
+    "id": "72b11bd9-f270-4ae2-b104-25a132d48204",
+    "city": {
+      "id": 1,
+      "name": "Москва"
+    },
+    "club": {
+      "id": 1,
+      "name": "Падел Арена Лужники"
+    },
+    "level": 4.61,
+    "deleted": false,
+    "is_coach": true,
+    "username": "coach_novikov",
+    "avatar_path": null,
+    "reliability": 17,
+    "display_name": "Андрей Новиков",
+    "preferred_side": "both",
+    "matches_together": 3
+  },
+  {
+    "id": "811c461a-f805-4a50-9dc8-eb539f46dcac",
+    "city": {
+      "id": 1,
+      "name": "Москва"
+    },
+    "club": {
+      "id": 2,
+      "name": "Corner Padel Club"
+    },
+    "level": 2.25,
+    "deleted": false,
+    "is_coach": false,
+    "username": "maria_fedorova",
+    "avatar_path": null,
+    "reliability": 19,
+    "display_name": "Мария Фёдорова",
+    "preferred_side": "right",
+    "matches_together": 4
+  }
+]

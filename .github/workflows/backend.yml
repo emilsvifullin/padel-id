@@ -1,0 +1,133 @@
+name: Backend
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths:
+      - "supabase/**"
+      - "server/**"
+      - "scripts/db/**"
+      - ".github/workflows/backend.yml"
+  pull_request:
+    paths:
+      - "supabase/**"
+      - "server/**"
+      - "scripts/db/**"
+      - ".github/workflows/backend.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api-unit:
+    name: API gateway — typecheck & unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        with:
+          version: 10.28.0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: server/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: pnpm run build
+      - run: pnpm test
+
+  stack:
+    name: Database & end-to-end (Supabase stack)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1.7.3
+        with:
+          version: 2.117.0
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        with:
+          version: 10.28.0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: server/pnpm-lock.yaml
+
+      - name: Start Supabase (applies all migrations from scratch)
+        run: supabase start -x studio,imgproxy,mailpit,realtime,vector,logflare,supavisor
+
+      - name: Database test-suite (schema, rating engine, RLS, privileges)
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: "54322"
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: postgres
+        run: ./scripts/db/run-tests.sh
+
+      - name: Database linter
+        run: supabase db lint --level warning --fail-on error
+
+      - name: Configure gateway secret
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: "54322"
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: postgres
+        run: |
+          SECRET=$(openssl rand -hex 32)
+          echo "::add-mask::$SECRET"
+          echo "GATEWAY_SECRET=$SECRET" >> "$GITHUB_ENV"
+          psql -v ON_ERROR_STOP=1 -c "insert into private.bff_secret (secret_hash) values (extensions.digest('$SECRET', 'sha256')) on conflict (id) do update set secret_hash = excluded.secret_hash"
+
+      - name: Serve edge functions
+        run: |
+          nohup supabase functions serve > functions.log 2>&1 &
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:54321/functions/v1/account -H 'content-type: application/json' -d '{}') || true
+            if [ "$code" = "401" ]; then echo "account function ready"; exit 0; fi
+            sleep 2
+          done
+          cat functions.log; exit 1
+
+      - name: Start API gateway
+        working-directory: server
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+          eval "$(supabase status -o env | sed 's/^/export SB_/')"
+          export SUPABASE_URL="$SB_API_URL"
+          export SUPABASE_PUBLISHABLE_KEY="${SB_PUBLISHABLE_KEY:-$SB_ANON_KEY}"
+          export PADELID_GATEWAY_SECRET="$GATEWAY_SECRET"
+          export PADELID_SIGNUPS_PER_HOUR=100
+          nohup node dist/dev-server.js > ../gateway.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8787/v1/health && exit 0
+            sleep 1
+          done
+          cat ../gateway.log; exit 1
+
+      - name: End-to-end API tests
+        working-directory: server
+        env:
+          E2E_API_URL: http://127.0.0.1:8787
+          E2E_MODE: full
+        run: pnpm run test:e2e
+
+      - name: Logs on failure
+        if: failure()
+        run: |
+          echo "--- gateway"; cat gateway.log || true
+          echo "--- functions"; cat functions.log || true

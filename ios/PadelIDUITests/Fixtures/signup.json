@@ -1,0 +1,14 @@
+{
+  "session": {
+    "access_token": "ZM9YvE9fRflD5tQ-3rfCacr19QZCICPHKLillScm6QcMtxuG6VGTmjws_pp29drAj1GAAq0BUqjE5KTtCjTfPA",
+    "refresh_token": "qqCZebsGdHuZp-oOEK44e05SXW_krVJBZqwM1d8gJQKwrA5cj1BPEeh2eIW55nqjIJaABzf11xjTguD6Cl_dNg",
+    "expires_in": 3600,
+    "expires_at": 4102444800,
+    "token_type": "bearer",
+    "user": {
+      "id": "03eed36a-a8a4-4767-9dd6-b1f89bf7267b",
+      "email": "m.orlov@padelid.app"
+    }
+  },
+  "recovery_key": "7K2QD-M4XPR-9HV3A-TC8WN"
+}

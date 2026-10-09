@@ -1,0 +1,14 @@
+[
+  {
+    "id": 2,
+    "name": "Corner Padel Club",
+    "city_id": 1,
+    "players_count": 5
+  },
+  {
+    "id": 1,
+    "name": "Падел Арена Лужники",
+    "city_id": 1,
+    "players_count": 5
+  }
+]

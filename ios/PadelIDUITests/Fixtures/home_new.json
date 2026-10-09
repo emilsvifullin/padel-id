@@ -1,0 +1,181 @@
+{
+  "dna": {
+    "archetype": "forming",
+    "dimensions": [
+      {
+        "key": "serve_return",
+        "level": 1.25,
+        "offset": 0.00,
+        "trend_30d": null,
+        "confidence": 0.20,
+        "self_signal": true,
+        "match_signal": false,
+        "peer_signals": 0,
+        "coach_signals": 0,
+        "coach_verified_at": null
+      },
+      {
+        "key": "defense",
+        "level": 1.25,
+        "offset": 0.00,
+        "trend_30d": null,
+        "confidence": 0.20,
+        "self_signal": true,
+        "match_signal": false,
+        "peer_signals": 0,
+        "coach_signals": 0,
+        "coach_verified_at": null
+      },
+      {
+        "key": "transition_lob",
+        "level": 1.25,
+        "offset": 0.00,
+        "trend_30d": null,
+        "confidence": 0.20,
+        "self_signal": true,
+        "match_signal": false,
+        "peer_signals": 0,
+        "coach_signals": 0,
+        "coach_verified_at": null
+      },
+      {
+        "key": "net_game",
+        "level": 1.36,
+        "offset": 0.11,
+        "trend_30d": null,
+        "confidence": 0.20,
+        "self_signal": true,
+        "match_signal": false,
+        "peer_signals": 0,
+        "coach_signals": 0,
+        "coach_verified_at": null
+      },
+      {
+        "key": "overheads",
+        "level": 1.25,
+        "offset": 0.00,
+        "trend_30d": null,
+        "confidence": 0.20,
+        "self_signal": true,
+        "match_signal": false,
+        "peer_signals": 0,
+        "coach_signals": 0,
+        "coach_verified_at": null
+      },
+      {
+        "key": "consistency_decisions",
+        "level": 1.14,
+        "offset": -0.11,
+        "trend_30d": null,
+        "confidence": 0.20,
+        "self_signal": true,
+        "match_signal": false,
+        "peer_signals": 0,
+        "coach_signals": 0,
+        "coach_verified_at": null
+      }
+    ]
+  },
+  "stats": {
+    "form": [],
+    "sets": {
+      "won": 0,
+      "lost": 0
+    },
+    "wins": 0,
+    "games": {
+      "won": 0,
+      "lost": 0
+    },
+    "sides": {
+      "left": {
+        "wins": 0,
+        "matches": 0
+      },
+      "right": {
+        "wins": 0,
+        "matches": 0
+      }
+    },
+    "losses": 0,
+    "ranked": {
+      "wins": 0,
+      "matches": 0
+    },
+    "rivals": [],
+    "streak": null,
+    "matches": 0,
+    "friendly": {
+      "wins": 0,
+      "matches": 0
+    },
+    "partners": [],
+    "tiebreaks": {
+      "won": 0,
+      "lost": 0
+    },
+    "deciding_sets": {
+      "won": 0,
+      "lost": 0
+    },
+    "last_played_at": null
+  },
+  "rating": {
+    "mu": 1.25,
+    "sigma": 0.900,
+    "peak_mu": 1.25,
+    "idle_days": 0,
+    "trend_30d": 0.00,
+    "initial_mu": 1.25,
+    "provisional": true,
+    "ranked_wins": 0,
+    "reliability": 7,
+    "last_ranked_at": null,
+    "ranked_matches": 0
+  },
+  "viewer": {
+    "is_me": true,
+    "can_assess": false
+  },
+  "deleted": false,
+  "profile": {
+    "id": "630111f9-cb03-4398-8545-369199121755",
+    "bio": null,
+    "city": {
+      "id": 1,
+      "name": "Москва"
+    },
+    "club": {
+      "id": 2,
+      "name": "Corner Padel Club"
+    },
+    "level": 1.25,
+    "deleted": false,
+    "is_coach": false,
+    "username": "ilya_gromov",
+    "avatar_path": null,
+    "reliability": 7,
+    "discoverable": true,
+    "display_name": "Илья Громов",
+    "member_since": "2026-10-08T05:52:20.96971+00:00",
+    "dominant_hand": "right",
+    "playing_since": 2025,
+    "preferred_side": "right"
+  },
+  "insights": [
+    {
+      "kind": "reliability_path",
+      "values": {
+        "target": 70,
+        "reliability": 7,
+        "matches_needed": 16
+      },
+      "sentiment": "neutral"
+    }
+  ],
+  "action_items": [],
+  "compatibility": null,
+  "recent_matches": [],
+  "coach_assessments": [],
+  "open_matches_count": 0
+}

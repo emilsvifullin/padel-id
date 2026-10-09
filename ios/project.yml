@@ -1,0 +1,113 @@
+name: PadelID
+
+options:
+  bundleIdPrefix: app.padelid
+  deploymentTarget:
+    iOS: "26.0"
+  developmentLanguage: ru
+  xcodeVersion: "26.6"
+  createIntermediateGroups: true
+  generateEmptyDirectories: false
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    SWIFT_STRICT_CONCURRENCY: complete
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    ENABLE_MODULE_VERIFIER: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    SWIFT_EMIT_LOC_STRINGS: NO
+    DEAD_CODE_STRIPPING: YES
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+  configs:
+    Debug:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+      SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+    Release:
+      SWIFT_OPTIMIZATION_LEVEL: "-O"
+      SWIFT_COMPILATION_MODE: wholemodule
+      DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+      VALIDATE_PRODUCT: YES
+
+targets:
+  PadelID:
+    type: application
+    platform: iOS
+    sources:
+      - path: PadelID
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.padelid.ios
+        PRODUCT_NAME: PadelID
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        INFOPLIST_FILE: PadelID/Resources/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        ENABLE_PREVIEWS: YES
+        SUPPORTS_MACCATALYST: NO
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
+        # The Debug-only plist step below edits the processed Info.plist.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+    postBuildScripts:
+      - name: Allow loopback HTTP in Debug builds
+        basedOnDependencyAnalysis: false
+        script: |
+          # UI tests talk to a stub server on localhost. Release builds keep
+          # App Transport Security without any exception.
+          if [ "${CONFIGURATION}" = "Debug" ]; then
+            plist="${TARGET_BUILD_DIR}/${INFOPLIST_PATH}"
+            /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity dict" "$plist" 2>/dev/null || true
+            /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsLocalNetworking bool true" "$plist" 2>/dev/null || true
+          fi
+
+  PadelIDTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: PadelIDTests
+    dependencies:
+      - target: PadelID
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.padelid.ios.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/PadelID.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PadelID"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
+  PadelIDUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: PadelIDUITests
+    dependencies:
+      - target: PadelID
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.padelid.ios.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: PadelID
+
+schemes:
+  PadelID:
+    build:
+      targets:
+        PadelID: all
+        PadelIDTests: [test]
+        PadelIDUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - name: PadelIDTests
+        - name: PadelIDUITests
+    archive:
+      config: Release
