@@ -10,7 +10,7 @@ final class OnboardingUITests: PadelIDUITestCase {
         // Welcome
         let signUp = require(element("welcome.signUp"), timeout: 15, "welcome.signUp")
         snap("welcome")
-        tap(signUp)
+        tap(signUp, until: element("signUp.email"))
 
         // Account
         let email = require(element("signUp.email"), "signUp.email")

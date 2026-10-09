@@ -127,7 +127,8 @@ class PadelIDUITestCase: XCTestCase {
 
     /// Signs in as the existing user from the welcome screen.
     func signIn(screenshot: Bool = false, file: StaticString = #filePath, line: UInt = #line) {
-        tap(require(element("welcome.signIn"), timeout: 15, "welcome.signIn", file: file, line: line), file: file, line: line)
+        tap(require(element("welcome.signIn"), timeout: 15, "welcome.signIn", file: file, line: line),
+            until: element("signIn.email"), file: file, line: line)
         let email = require(element("signIn.email"), "signIn.email", file: file, line: line)
         enter(Self.email, into: email, file: file, line: line)
         let password = require(element("signIn.password"), "signIn.password", file: file, line: line)
@@ -318,8 +319,24 @@ class PadelIDUITestCase: XCTestCase {
     /// Scrolls the element into view and taps it.
     func tap(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
         declineSavePasswordIfShown()
+        // The software keyboard can cover the target (e.g. a bottom action bar).
+        if app.keyboards.firstMatch.exists && !element.isHittable {
+            dismissKeyboard()
+        }
         scrollIntoView(element, file: file, line: line)
         element.tap()
+    }
+
+    /// Taps the element until `next` appears: right after launch or a
+    /// transition a tap can be lost.
+    func tap(_ element: XCUIElement, until next: XCUIElement, attempts: Int = 3,
+             file: StaticString = #filePath, line: UInt = #line) {
+        for _ in 0..<attempts {
+            tap(element, file: file, line: line)
+            if next.waitForExistence(timeout: 5) || !element.exists {
+                return
+            }
+        }
     }
 
     /// Taps the element with the identifier; rows of lazy lists that are not
@@ -431,7 +448,12 @@ class PadelIDUITestCase: XCTestCase {
                 }
             }
         }
-        _ = waitUntil(timeout: 3) { !app.keyboards.firstMatch.exists }
+        if !waitUntil(timeout: 3, { !app.keyboards.firstMatch.exists }) {
+            // The return key has no known label (e.g. the «✓» of .done): send
+            // Return to the focused field; the forms' onSubmit drops focus.
+            app.typeText("\n")
+            _ = waitUntil(timeout: 3) { !app.keyboards.firstMatch.exists }
+        }
     }
 
     /// Fresh simulators can show the "slide to type" introduction over the keyboard.
