@@ -131,7 +131,9 @@ class PadelIDUITestCase: XCTestCase {
         let email = require(element("signIn.email"), "signIn.email", file: file, line: line)
         enter(Self.email, into: email, file: file, line: line)
         let password = require(element("signIn.password"), "signIn.password", file: file, line: line)
-        enter(Self.password, into: password, file: file, line: line)
+        let submitButton = element("signIn.submit")
+        enterPassword(Self.password, into: password, accepted: { submitButton.exists && submitButton.isEnabled },
+                      file: file, line: line)
         if screenshot {
             snap("sign-in")
         }
@@ -340,6 +342,40 @@ class PadelIDUITestCase: XCTestCase {
         field.tap()
         dismissKeyboardIntroduction()
         field.typeText(text)
+    }
+
+    /// Types a password into a secure field. Secure fields in the simulator
+    /// sometimes do not take keyboard focus from a tap, so focus is checked
+    /// and the entry retried until `accepted` reports that the form has it.
+    func enterPassword(_ text: String, into field: XCUIElement, accepted: () -> Bool,
+                       file: StaticString = #filePath, line: UInt = #line) {
+        for _ in 0..<4 {
+            declineSavePasswordIfShown()
+            scrollIntoView(field, file: file, line: line)
+            field.tap()
+            dismissKeyboardIntroduction()
+            let focused = waitUntil(timeout: 3) { Self.hasKeyboardFocus(field) }
+            if focused {
+                field.typeText(text)
+            } else if app.keyboards.firstMatch.exists {
+                // The keyboard is up for this field even if focus is not reported.
+                app.typeText(text)
+            } else {
+                continue
+            }
+            if waitUntil(timeout: 3, accepted) {
+                return
+            }
+            // Clear whatever was typed before the next attempt.
+            if Self.hasKeyboardFocus(field) {
+                field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: text.count + 4))
+            }
+        }
+        XCTFail("The password was not accepted by the form", file: file, line: line)
+    }
+
+    static func hasKeyboardFocus(_ element: XCUIElement) -> Bool {
+        (element.value(forKey: "hasKeyboardFocus") as? Bool) ?? false
     }
 
     /// Hides the software keyboard if it is shown (return-like key or the
