@@ -543,6 +543,21 @@ class PadelIDUITestCase: XCTestCase {
 
     /// Returns to the previous screen of a navigation stack.
     func goBack(previousTitle: String? = nil, file: StaticString = #filePath, line: UInt = #line) {
+        guard let previousTitle else {
+            performBack(previousTitle: nil)
+            return
+        }
+        // A tap on «Назад» during a transition can be lost: go back again
+        // until the previous screen is shown.
+        for _ in 0..<3 {
+            performBack(previousTitle: previousTitle)
+            if waitUntil(timeout: 5, { isScreenShown(previousTitle) }) {
+                return
+            }
+        }
+    }
+
+    private func performBack(previousTitle: String?) {
         declineSavePasswordIfShown()
         if let back = firstHittable(app.navigationBars.buttons.matching(identifier: "BackButton")) {
             back.tap()
