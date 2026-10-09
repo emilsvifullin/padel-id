@@ -353,10 +353,12 @@ class PadelIDUITestCase: XCTestCase {
                        file: StaticString = #filePath, line: UInt = #line) {
         for attempt in 0..<4 {
             declineSavePasswordIfShown()
-            scrollIntoView(field, file: file, line: line)
-            field.tap()
-            dismissKeyboardIntroduction()
-            chooseOwnPasswordIfOffered()
+            if !Self.hasKeyboardFocus(field) {
+                scrollIntoView(field, file: file, line: line)
+                field.tap()
+                dismissKeyboardIntroduction()
+                chooseOwnPasswordIfOffered()
+            }
             var focused = waitUntil(timeout: 3) { Self.hasKeyboardFocus(field) }
             if !focused, attempt % 2 == 1, app.keyboards.firstMatch.exists {
                 // Return in the e-mail field moves focus to the password

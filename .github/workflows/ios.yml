@@ -117,6 +117,7 @@ jobs:
               xcrun xcresulttool get test-results summary --path "$RUNNER_TEMP/$r.xcresult" --compact \
                 | python3 -c 'import json,sys; s=json.load(sys.stdin); print({k: s.get(k) for k in ("result","totalTestCount","passedTests","failedTests","skippedTests")}); [print("FAILED:", f.get("testName"), "-", f.get("failureText")) for f in s.get("testFailures", [])]' \
                 | tee -a "$summary"
+              python3 scripts/ios/failed-activities.py "$RUNNER_TEMP/$r.xcresult" >> "$summary" || true
             fi
           done
 

@@ -16,6 +16,8 @@ final class OnboardingUITests: PadelIDUITestCase {
         let email = require(element("signUp.email"), "signUp.email")
         enter("new.player@padelid.app", into: email)
         XCTAssertEqual(email.value as? String, "new.player@padelid.app", "e-mail typed into the sign-up form")
+        // Return moves focus to the password field (the form's onSubmit).
+        email.typeText("\n")
         let password = require(element("signUp.password"), "signUp.password")
         let submitButton = element("signUp.submit")
         enterPassword(Self.password, into: password, accepted: { submitButton.exists && submitButton.isEnabled })
