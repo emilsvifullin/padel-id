@@ -261,7 +261,14 @@ struct ChangePasswordView: View {
                     .focused($focus, equals: .replacement)
                     .submitLabel(.done)
                     .onSubmit(submit)
-            } footer: {
+            }
+            // The live requirements stay out of the password field's section:
+            // updating that section while typing restarts editing, and a
+            // secure field clears itself on the next keystroke.
+            Section {
+                SettingsActionButton(title: "Изменить пароль", isWorking: isSubmitting, action: submit)
+                    .disabled(!canSubmit)
+            } header: {
                 VStack(alignment: .leading, spacing: 8) {
                     PasswordRequirements(password: newPassword)
                     if isSamePassword {
@@ -273,10 +280,7 @@ struct ChangePasswordView: View {
                             .foregroundStyle(Theme.negative)
                     }
                 }
-            }
-            Section {
-                SettingsActionButton(title: "Изменить пароль", isWorking: isSubmitting, action: submit)
-                    .disabled(!canSubmit)
+                .textCase(nil)
             } footer: {
                 Text("После смены пароля другие устройства выйдут из аккаунта.")
             }

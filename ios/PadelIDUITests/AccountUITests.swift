@@ -9,7 +9,18 @@ final class AccountUITests: PadelIDUITestCase {
         signIn()
         waitForHome()
 
-        tap("home.account")
+        // Right after sign-in the toolbar button can still be settling (or
+        // under the save-password sheet), and the tap misses; tap again
+        // until the screen opens.
+        let account = find("home.account")
+        for _ in 0..<3 {
+            declineSavePasswordIfShown()
+            _ = waitUntil(timeout: 5) { account.isHittable }
+            account.tap()
+            if waitUntil(timeout: 5, { isScreenShown("Аккаунт") }) {
+                break
+            }
+        }
         requireScreen("Аккаунт")
         let editProfile = require(element("account.editProfile"), "account.editProfile")
         snap("account")

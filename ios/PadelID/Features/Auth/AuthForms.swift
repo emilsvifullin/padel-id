@@ -190,19 +190,24 @@ struct SignUpView: View {
                     .onSubmit(submit)
                     .accessibilityIdentifier("signUp.password")
             } footer: {
-                VStack(alignment: .leading, spacing: 8) {
-                    PasswordRequirements(password: password)
-                    Text("Почта используется для входа и видна только вам.")
-                    if let error {
-                        Text(error.message).foregroundStyle(Theme.negative)
-                    }
-                }
+                Text("Почта используется для входа и видна только вам.")
             }
 
+            // The live requirements stay out of the password field's section:
+            // updating that section while typing restarts editing, and a
+            // secure field clears itself on the next keystroke.
             Section {
                 AuthPrimaryButton(title: "Создать аккаунт", isBusy: isSubmitting, action: submit)
                     .disabled(!canSubmit)
                     .accessibilityIdentifier("signUp.submit")
+            } header: {
+                VStack(alignment: .leading, spacing: 8) {
+                    PasswordRequirements(password: password)
+                    if let error {
+                        Text(error.message).foregroundStyle(Theme.negative)
+                    }
+                }
+                .textCase(nil)
             }
         }
         .navigationTitle("Регистрация")
@@ -266,18 +271,20 @@ struct RecoverView: View {
                 SecureField("Новый пароль", text: $password)
                     .newPasswordContentType()
                     .accessibilityIdentifier("recover.password")
-            } footer: {
+            }
+            // Requirements outside the field's section (see SignUpView).
+            Section {
+                AuthPrimaryButton(title: "Восстановить доступ", isBusy: isSubmitting, action: submit)
+                    .disabled(!canSubmit)
+                    .accessibilityIdentifier("recover.submit")
+            } header: {
                 VStack(alignment: .leading, spacing: 8) {
                     PasswordRequirements(password: password)
                     if let error {
                         Text(error.message).foregroundStyle(Theme.negative)
                     }
                 }
-            }
-            Section {
-                AuthPrimaryButton(title: "Восстановить доступ", isBusy: isSubmitting, action: submit)
-                    .disabled(!canSubmit)
-                    .accessibilityIdentifier("recover.submit")
+                .textCase(nil)
             } footer: {
                 Text("После восстановления все другие устройства выйдут из аккаунта, а вы получите новый ключ.")
             }
