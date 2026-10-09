@@ -43,7 +43,10 @@ final class OnboardingUITests: PadelIDUITestCase {
         dismissKeyboard()
 
         // The keyboard may still be closing and move the row under the tap.
-        tap(find("onboarding.city"), until: button(label: "Москва"))
+        let cityRow = find("onboarding.city")
+        scrollIntoView(cityRow)
+        moveAboveBottomBar(cityRow)
+        tap(cityRow, until: button(label: "Москва"))
         let moscow = require(button(label: "Москва"), timeout: 15, "Москва in the city picker")
         snap("onboarding-city")
         tap(moscow)
@@ -149,6 +152,7 @@ final class OnboardingUITests: PadelIDUITestCase {
         if answer.isSelected {
             return
         }
+        moveAboveBottomBar(answer)
         answer.tap()
         if !waitUntil(timeout: 2, { answer.exists && answer.isSelected }) {
             // Selecting the same answer again is harmless if the first tap was lost.

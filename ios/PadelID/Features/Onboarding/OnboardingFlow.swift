@@ -529,9 +529,18 @@ private struct OnboardingQuestionSection<Option: Hashable>: View {
     var detail: (Option) -> String? = { _ in nil }
     var footer: String? = nil
 
+    /// Row identity scoped to the question: the scale questions all use the
+    /// options 0…3, and equal row IDs in one form let rows of different
+    /// questions be mixed up (a tap could answer another question).
+    nonisolated private struct RowID: Hashable {
+        let question: String
+        let option: Option
+    }
+
     var body: some View {
         Section {
-            ForEach(options, id: \.self) { option in
+            ForEach(options.map { RowID(question: question, option: $0) }, id: \.self) { row in
+                let option = row.option
                 OnboardingChoiceRow(title: title(option), detail: detail(option), isSelected: selection == option) {
                     selection = option
                 }

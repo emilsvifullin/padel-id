@@ -327,11 +327,23 @@ class PadelIDUITestCase: XCTestCase {
         element.tap()
     }
 
+    /// A floating bottom action bar does not make the rows under it
+    /// unhittable for XCTest, but takes their taps: content near the bottom
+    /// edge is scrolled further up first.
+    func moveAboveBottomBar(_ element: XCUIElement) {
+        if element.exists && element.frame.midY > app.frame.maxY - app.frame.height * 0.3 {
+            drag(upwards: true)
+        }
+    }
+
     /// Taps the element until `next` appears: right after launch or a
-    /// transition a tap can be lost.
+    /// transition a tap can be lost, and a row can sit under the action bar.
     func tap(_ element: XCUIElement, until next: XCUIElement, attempts: Int = 3,
              file: StaticString = #filePath, line: UInt = #line) {
-        for _ in 0..<attempts {
+        for attempt in 0..<attempts {
+            if attempt > 0 {
+                moveAboveBottomBar(element)
+            }
             tap(element, file: file, line: line)
             if next.waitForExistence(timeout: 5) || !element.exists {
                 return
@@ -470,11 +482,7 @@ class PadelIDUITestCase: XCTestCase {
     func turnOn(_ toggle: XCUIElement, until isDone: () -> Bool, file: StaticString = #filePath, line: UInt = #line) {
         require(toggle, "toggle", file: file, line: line)
         scrollIntoView(toggle, file: file, line: line)
-        // A floating action bar does not make the row unhittable for XCTest,
-        // but takes the tap; bring rows near the bottom edge further up.
-        if toggle.frame.midY > app.frame.maxY - app.frame.height * 0.3 {
-            drag(upwards: true)
-        }
+        moveAboveBottomBar(toggle)
         if isDone() { return }
         let control = toggle.switches.firstMatch
         if control.exists && control.isHittable {
