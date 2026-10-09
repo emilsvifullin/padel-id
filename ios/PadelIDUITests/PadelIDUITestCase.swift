@@ -347,22 +347,24 @@ class PadelIDUITestCase: XCTestCase {
     /// Types a password into a secure field. Secure fields in the simulator
     /// sometimes do not take keyboard focus from a tap, so focus is checked
     /// and the entry retried until `accepted` reports that the form has it.
+    /// Text is only ever typed into the secure field itself: typing blind
+    /// would land in the field that still has focus (the e-mail field).
     func enterPassword(_ text: String, into field: XCUIElement, accepted: () -> Bool,
                        file: StaticString = #filePath, line: UInt = #line) {
-        for _ in 0..<4 {
+        for attempt in 0..<4 {
             declineSavePasswordIfShown()
             scrollIntoView(field, file: file, line: line)
             field.tap()
             dismissKeyboardIntroduction()
-            let focused = waitUntil(timeout: 3) { Self.hasKeyboardFocus(field) }
-            if focused {
-                field.typeText(text)
-            } else if app.keyboards.firstMatch.exists {
-                // The keyboard is up for this field even if focus is not reported.
-                app.typeText(text)
-            } else {
-                continue
+            var focused = waitUntil(timeout: 3) { Self.hasKeyboardFocus(field) }
+            if !focused, attempt % 2 == 1, app.keyboards.firstMatch.exists {
+                // Return in the e-mail field moves focus to the password
+                // (the forms' onSubmit), which does not depend on hit testing.
+                app.typeText("\n")
+                focused = waitUntil(timeout: 3) { Self.hasKeyboardFocus(field) }
             }
+            guard focused else { continue }
+            field.typeText(text)
             if waitUntil(timeout: 3, accepted) {
                 return
             }
@@ -371,6 +373,7 @@ class PadelIDUITestCase: XCTestCase {
                 field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: text.count + 4))
             }
         }
+        snap("password-not-accepted")
         XCTFail("The password was not accepted by the form", file: file, line: line)
     }
 
