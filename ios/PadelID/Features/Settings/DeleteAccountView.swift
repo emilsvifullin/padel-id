@@ -34,6 +34,7 @@ struct DeleteAccountView: View {
             }
             Section {
                 SecureField("Пароль", text: $password)
+                    .keyboardType(.asciiCapable)
                     .textContentType(.password)
                     .submitLabel(.done)
             } footer: {

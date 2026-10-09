@@ -113,6 +113,7 @@ struct SignInView: View {
                     .onSubmit { focus = .password }
                     .accessibilityIdentifier("signIn.email")
                 SecureField("Пароль", text: $password)
+                    .keyboardType(.asciiCapable)
                     .textContentType(.password)
                     .focused($focus, equals: .password)
                     .submitLabel(.go)
@@ -187,30 +188,26 @@ struct SignUpView: View {
                     .onSubmit { focus = .password }
                     .accessibilityIdentifier("signUp.email")
                 SecureField("Пароль", text: $password)
+                    .keyboardType(.asciiCapable)
                     .newPasswordContentType()
                     .focused($focus, equals: .password)
                     .submitLabel(.done)
                     .onSubmit(submit)
                     .accessibilityIdentifier("signUp.password")
             } footer: {
-                Text("Почта используется для входа и видна только вам.")
-            }
-
-            // The live requirements stay out of the password field's section:
-            // updating that section while typing restarts editing, and a
-            // secure field clears itself on the next keystroke.
-            Section {
-                AuthPrimaryButton(title: "Создать аккаунт", isBusy: isSubmitting, action: submit)
-                    .disabled(!canSubmit)
-                    .accessibilityIdentifier("signUp.submit")
-            } header: {
                 VStack(alignment: .leading, spacing: 8) {
                     PasswordRequirements(password: password)
+                    Text("Почта используется для входа и видна только вам.")
                     if let error {
                         Text(error.message).foregroundStyle(Theme.negative)
                     }
                 }
-                .textCase(nil)
+            }
+
+            Section {
+                AuthPrimaryButton(title: "Создать аккаунт", isBusy: isSubmitting, action: submit)
+                    .disabled(!canSubmit)
+                    .accessibilityIdentifier("signUp.submit")
             }
         }
         .navigationTitle("Регистрация")
@@ -272,22 +269,21 @@ struct RecoverView: View {
             }
             Section {
                 SecureField("Новый пароль", text: $password)
+                    .keyboardType(.asciiCapable)
                     .newPasswordContentType()
                     .accessibilityIdentifier("recover.password")
-            }
-            // Requirements outside the field's section (see SignUpView).
-            Section {
-                AuthPrimaryButton(title: "Восстановить доступ", isBusy: isSubmitting, action: submit)
-                    .disabled(!canSubmit)
-                    .accessibilityIdentifier("recover.submit")
-            } header: {
+            } footer: {
                 VStack(alignment: .leading, spacing: 8) {
                     PasswordRequirements(password: password)
                     if let error {
                         Text(error.message).foregroundStyle(Theme.negative)
                     }
                 }
-                .textCase(nil)
+            }
+            Section {
+                AuthPrimaryButton(title: "Восстановить доступ", isBusy: isSubmitting, action: submit)
+                    .disabled(!canSubmit)
+                    .accessibilityIdentifier("recover.submit")
             } footer: {
                 Text("После восстановления все другие устройства выйдут из аккаунта, а вы получите новый ключ.")
             }

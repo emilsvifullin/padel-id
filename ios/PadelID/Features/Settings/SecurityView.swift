@@ -141,6 +141,7 @@ struct ChangeEmailView: View {
                     .submitLabel(.next)
                     .onSubmit { focus = .password }
                 SecureField("Текущий пароль", text: $password)
+                    .keyboardType(.asciiCapable)
                     .textContentType(.password)
                     .focused($focus, equals: .password)
                     .submitLabel(.done)
@@ -250,6 +251,7 @@ struct ChangePasswordView: View {
             }
             Section {
                 SecureField("Текущий пароль", text: $currentPassword)
+                    .keyboardType(.asciiCapable)
                     .textContentType(.password)
                     .focused($focus, equals: .current)
                     .submitLabel(.next)
@@ -257,18 +259,12 @@ struct ChangePasswordView: View {
             }
             Section {
                 SecureField("Новый пароль", text: $newPassword)
+                    .keyboardType(.asciiCapable)
                     .newPasswordContentType()
                     .focused($focus, equals: .replacement)
                     .submitLabel(.done)
                     .onSubmit(submit)
-            }
-            // The live requirements stay out of the password field's section:
-            // updating that section while typing restarts editing, and a
-            // secure field clears itself on the next keystroke.
-            Section {
-                SettingsActionButton(title: "Изменить пароль", isWorking: isSubmitting, action: submit)
-                    .disabled(!canSubmit)
-            } header: {
+            } footer: {
                 VStack(alignment: .leading, spacing: 8) {
                     PasswordRequirements(password: newPassword)
                     if isSamePassword {
@@ -280,7 +276,10 @@ struct ChangePasswordView: View {
                             .foregroundStyle(Theme.negative)
                     }
                 }
-                .textCase(nil)
+            }
+            Section {
+                SettingsActionButton(title: "Изменить пароль", isWorking: isSubmitting, action: submit)
+                    .disabled(!canSubmit)
             } footer: {
                 Text("После смены пароля другие устройства выйдут из аккаунта.")
             }
@@ -362,6 +361,7 @@ private struct SecurityRecoveryKeyView: View {
             }
             Section {
                 SecureField("Пароль", text: $password)
+                    .keyboardType(.asciiCapable)
                     .textContentType(.password)
                     .submitLabel(.done)
                     .onSubmit(submit)

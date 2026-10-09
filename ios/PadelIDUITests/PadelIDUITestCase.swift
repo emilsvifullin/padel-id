@@ -345,12 +345,11 @@ class PadelIDUITestCase: XCTestCase {
     }
 
     /// Types a password into a secure field. Secure fields in the simulator
-    /// sometimes do not take keyboard focus from a tap and drop characters
-    /// typed in one burst, so focus is checked, the password is typed one
-    /// character at a time, and the entry is retried until `accepted`
-    /// reports that the form has it. Text is only ever typed into the
-    /// secure field itself: typing blind would land in the field that still
-    /// has focus (the e-mail field).
+    /// sometimes do not take keyboard focus from a tap, so focus is checked,
+    /// the password is typed one character at a time, and the entry is
+    /// retried until `accepted` reports that the form has it. Text is only
+    /// ever typed into the secure field itself: typing blind would land in
+    /// the field that still has focus (the e-mail field).
     func enterPassword(_ text: String, into field: XCUIElement, accepted: () -> Bool,
                        file: StaticString = #filePath, line: UInt = #line) {
         let attempts = 4

@@ -37,6 +37,14 @@ xcrun simctl bootstatus "$udid" -b >&2
 # keyboards then match the app); it applies after a restart.
 xcrun simctl spawn "$udid" defaults write -g AppleLanguages -array ru-RU >&2
 xcrun simctl spawn "$udid" defaults write -g AppleLocale -string ru_RU >&2
+# Latin keyboard first, Russian second, as on most Russian phones. UI tests
+# type through the hardware keyboard, and with a Russian first layout the
+# letters arrive as Cyrillic, which secure fields drop.
+xcrun simctl spawn "$udid" defaults write -g AppleKeyboards -array \
+  "en_US@sw=QWERTY;hw=Automatic" "ru_RU@sw=Russian;hw=Automatic" "emoji@sw=Emoji" >&2
+xcrun simctl spawn "$udid" defaults write -g AppleKeyboardsExpanded -bool true >&2
+xcrun simctl spawn "$udid" defaults write com.apple.Preferences KeyboardsCurrentAndNext -array \
+  "en_US@sw=QWERTY;hw=Automatic" "ru_RU@sw=Russian;hw=Automatic" >&2
 xcrun simctl shutdown "$udid" >&2
 xcrun simctl boot "$udid" >&2
 xcrun simctl bootstatus "$udid" -b >&2
