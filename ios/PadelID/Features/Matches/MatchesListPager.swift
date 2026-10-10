@@ -16,6 +16,8 @@ final class MatchesListPager {
     private var extraNextBeforeId: UUID?
     private var hasExtraPages = false
     private var generation = 0
+    private var loadRequestID = UUID()
+    private var moreRequestID = UUID()
 
     private let path: String
     private let query: [URLQueryItem]
@@ -50,14 +52,15 @@ final class MatchesListPager {
     var hasValue: Bool { firstPage.value != nil }
 
     var items: [MatchListItem] {
-        let base = firstPage.value?.items ?? []
+        guard let base = firstPage.value?.items else { return [] }
         guard hasExtraPages, !extraItems.isEmpty else { return base }
         let known = Set(base.map(\.id))
         return base + extraItems.filter { !known.contains($0.id) }
     }
 
     var nextBefore: String? {
-        hasExtraPages ? extraNextBefore : firstPage.value?.nextBefore
+        guard hasValue else { return nil }
+        return hasExtraPages ? extraNextBefore : firstPage.value?.nextBefore
     }
 
     /// Tie-breaker of the cursor: matches with the same `played_at` are ordered by id.
@@ -65,21 +68,39 @@ final class MatchesListPager {
         hasExtraPages ? extraNextBeforeId : firstPage.value?.nextBeforeId
     }
 
-    var canLoadMore: Bool { nextBefore != nil }
+    var canLoadMore: Bool { !firstPage.isLoading && nextBefore != nil }
 
     /// Reloads the first page. Pages appended below it stay while the fresh
     /// first page still ends where they begin (a background refresh after a
     /// change elsewhere); they are dropped when it does not, or on `reset`
     /// (pull to refresh).
     func load(using app: AppModel, reset: Bool = false) async {
+        let id = UUID()
+        loadRequestID = id
+        invalidateLoadMore()
         let previous = firstPage.value
         await firstPage.load(using: app)
+        guard loadRequestID == id, !Task.isCancelled else { return }
+        if firstPage.error?.code == "player_not_found" {
+            clearExtraPages()
+            return
+        }
         guard firstPage.error == nil, !firstPage.isStale else { return }
         if !reset, hasExtraPages, let previous, let fresh = firstPage.value,
            fresh.nextBefore == previous.nextBefore, fresh.nextBeforeId == previous.nextBeforeId {
             return
         }
+        clearExtraPages()
+    }
+
+    private func invalidateLoadMore() {
         generation += 1
+        moreRequestID = UUID()
+        isLoadingMore = false
+    }
+
+    private func clearExtraPages() {
+        invalidateLoadMore()
         extraItems = []
         extraNextBefore = nil
         extraNextBeforeId = nil
@@ -88,11 +109,13 @@ final class MatchesListPager {
     }
 
     func loadMore(using app: AppModel) async {
-        guard let before = nextBefore, !isLoadingMore else { return }
+        guard let before = nextBefore, !firstPage.isLoading, !isLoadingMore else { return }
         let started = generation
+        let id = UUID()
+        moreRequestID = id
         isLoadingMore = true
         loadMoreError = nil
-        defer { isLoadingMore = false }
+        defer { if moreRequestID == id { isLoadingMore = false } }
         do {
             var cursor = [URLQueryItem(name: "before", value: before)]
             if let id = nextBeforeId {
@@ -100,7 +123,7 @@ final class MatchesListPager {
             }
             let endpoint = Endpoint.get(path, query: query + cursor)
             let page = try await app.api.send(endpoint, as: MatchPage.self)
-            guard started == generation else { return }
+            guard started == generation, moreRequestID == id, !Task.isCancelled else { return }
             let known = Set(items.map(\.id))
             extraItems.append(contentsOf: page.items.filter { !known.contains($0.id) })
             extraNextBefore = page.nextBefore
@@ -109,10 +132,16 @@ final class MatchesListPager {
         } catch is CancellationError {
             return
         } catch let error as APIError {
-            guard started == generation else { return }
-            loadMoreError = error
+            guard started == generation, moreRequestID == id, !Task.isCancelled else { return }
+            if error.code == "player_not_found" {
+                loadRequestID = UUID()
+                firstPage.revokeAccess(error, using: app)
+                clearExtraPages()
+            } else {
+                loadMoreError = error
+            }
         } catch {
-            guard started == generation else { return }
+            guard started == generation, moreRequestID == id, !Task.isCancelled else { return }
             loadMoreError = APIError(kind: .decoding, code: "decoding", serverMessage: nil)
         }
     }

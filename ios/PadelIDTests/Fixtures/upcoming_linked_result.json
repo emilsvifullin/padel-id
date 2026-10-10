@@ -1,0 +1,189 @@
+{
+  "id": "a25966c3-bdd4-48c5-87d2-ca8a86b826d8",
+  "club": {
+    "id": 1,
+    "city": "Москва",
+    "name": "Падел Арена Лужники"
+  },
+  "sets": [
+    {
+      "t1": 6,
+      "t2": 3,
+      "tb1": null,
+      "tb2": null,
+      "super_tiebreak": false
+    },
+    {
+      "t1": 6,
+      "t2": 4,
+      "tb1": null,
+      "tb2": null,
+      "super_tiebreak": false
+    }
+  ],
+  "format": "best_of_3",
+  "status": "pending",
+  "viewer": {
+    "team": 1,
+    "can_edit": true,
+    "feedback": [],
+    "response": "confirmed",
+    "can_cancel": true,
+    "is_creator": true,
+    "can_confirm": false,
+    "can_dispute": false,
+    "is_participant": true,
+    "can_give_feedback": false
+  },
+  "players": [
+    {
+      "team": 1,
+      "player": {
+        "id": "03eed36a-a8a4-4767-9dd6-b1f89bf7267b",
+        "city": {
+          "id": 1,
+          "name": "Москва"
+        },
+        "club": {
+          "id": 1,
+          "name": "Падел Арена Лужники"
+        },
+        "level": 4.49,
+        "deleted": false,
+        "is_coach": false,
+        "username": "m_orlov",
+        "avatar_path": null,
+        "reliability": 47,
+        "display_name": "Михаил Орлов",
+        "preferred_side": "right"
+      },
+      "response": "confirmed",
+      "court_side": "right",
+      "responded_at": "2026-10-10T00:40:27.677015+00:00",
+      "rating_change": null,
+      "dispute_reason": null,
+      "dispute_comment": null
+    },
+    {
+      "team": 1,
+      "player": {
+        "id": "d8b58bd9-8f8c-4732-a129-148692946aed",
+        "city": {
+          "id": 1,
+          "name": "Москва"
+        },
+        "club": {
+          "id": 1,
+          "name": "Падел Арена Лужники"
+        },
+        "level": 4.89,
+        "deleted": false,
+        "is_coach": false,
+        "username": "d_sokolov",
+        "avatar_path": null,
+        "reliability": 25,
+        "display_name": "Дмитрий Соколов",
+        "preferred_side": "left"
+      },
+      "response": "pending",
+      "court_side": "left",
+      "responded_at": null,
+      "rating_change": null,
+      "dispute_reason": null,
+      "dispute_comment": null
+    },
+    {
+      "team": 2,
+      "player": {
+        "id": "72b11bd9-f270-4ae2-b104-25a132d48204",
+        "city": {
+          "id": 1,
+          "name": "Москва"
+        },
+        "club": {
+          "id": 1,
+          "name": "Падел Арена Лужники"
+        },
+        "level": 4.61,
+        "deleted": false,
+        "is_coach": true,
+        "username": "coach_novikov",
+        "avatar_path": null,
+        "reliability": 17,
+        "display_name": "Андрей Новиков",
+        "preferred_side": "both"
+      },
+      "response": "pending",
+      "court_side": "right",
+      "responded_at": null,
+      "rating_change": null,
+      "dispute_reason": null,
+      "dispute_comment": null
+    },
+    {
+      "team": 2,
+      "player": {
+        "id": "2becd560-4954-4ad9-ab50-e454ea8f2d73",
+        "city": {
+          "id": 1,
+          "name": "Москва"
+        },
+        "club": {
+          "id": 2,
+          "name": "Corner Padel Club"
+        },
+        "level": 3.18,
+        "deleted": false,
+        "is_coach": false,
+        "username": "s_morozov",
+        "avatar_path": null,
+        "reliability": 40,
+        "display_name": "Сергей Морозов",
+        "preferred_side": "left"
+      },
+      "response": "pending",
+      "court_side": "left",
+      "responded_at": null,
+      "rating_change": null,
+      "dispute_reason": null,
+      "dispute_comment": null
+    }
+  ],
+  "version": 1,
+  "analysis": {
+    "upset": false,
+    "bagels": 0,
+    "comeback": false,
+    "tiebreaks": 0,
+    "head_to_head": {
+      "matches": 2,
+      "team1_wins": 1
+    },
+    "partnerships": {
+      "team1": 8,
+      "team2": 2
+    },
+    "game_share_team1": 0.632,
+    "projected_change": {
+      "delta": 0.043,
+      "mu_after": 4.54
+    },
+    "expected_win_team1": 0.799
+  },
+  "played_at": "2026-10-09T23:40:27.677015+00:00",
+  "created_at": "2026-10-10T00:40:27.677015+00:00",
+  "created_by": "03eed36a-a8a4-4767-9dd6-b1f89bf7267b",
+  "expires_at": "2026-10-17T00:40:27.677015+00:00",
+  "match_type": "ranked",
+  "team1_sets": 2,
+  "team2_sets": 0,
+  "updated_at": "2026-10-10T00:40:27.677015+00:00",
+  "team1_games": 12,
+  "team2_games": 7,
+  "winner_team": 1,
+  "confirmed_at": null,
+  "rating_weight": null,
+  "rating_applied": false,
+  "scheduled_match_id": "4a1fccad-7969-40d3-be76-443cfeb3e3c5",
+  "scheduled_starts_at": "2026-10-09T22:40:27.262625+00:00"
+}

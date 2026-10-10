@@ -46,6 +46,8 @@ select fixtures.pid('OR') as me \gset
 select fixtures.pid('NEW') as newcomer \gset
 select id as action from fixtures.refs where key = 'action' \gset
 select id as recent from fixtures.refs where key = 'recent' \gset
+select id as upcoming from fixtures.refs where key = 'upcoming_main' \gset
+select id as upcoming_ready from fixtures.refs where key = 'upcoming_result_ready' \gset
 select id as moscow from public.cities where name = 'Москва' and country_code = 'RU' \gset
 -- The most frequent partner of the main user.
 select mp2.player_id as partner
@@ -204,6 +206,57 @@ select fixtures.run_as(:'me', 'select public.coach_application()');
 \o
 rollback;
 
+begin;
+\o :out/friends.raw
+select fixtures.run_as(:'me', 'select public.friendships()');
+\o
+rollback;
+
+begin;
+\o :out/friendship_status.raw
+select fixtures.run_as(:'me', format('select public.friendship_status(%L)', fixtures.pid('SO')));
+\o
+rollback;
+
+begin;
+\o :out/upcoming_mine.raw
+select fixtures.run_as(:'me', 'select public.scheduled_matches(''{"scope":"mine"}''::jsonb)');
+\o
+rollback;
+
+begin;
+\o :out/upcoming_home.raw
+select fixtures.run_as(:'me', 'select public.scheduled_matches(''{"scope":"mine","accepted_only":true}''::jsonb)');
+\o
+rollback;
+
+begin;
+\o :out/upcoming_open.raw
+select fixtures.run_as(:'me', 'select public.scheduled_matches(''{"scope":"open"}''::jsonb)');
+\o
+rollback;
+
+begin;
+\o :out/upcoming_match.raw
+select fixtures.run_as(:'me', format('select public.scheduled_match(%L)', :'upcoming'));
+\o
+rollback;
+
+begin;
+\o :out/upcoming_result_ready.raw
+select fixtures.run_as(:'me', format('select public.scheduled_match(%L)', :'upcoming_ready'));
+\o
+rollback;
+
+begin;
+\o :out/upcoming_linked_result.raw
+select fixtures.run_as(:'me',format('select public.submit_scheduled_result(%L,%L::jsonb,%L)', :'upcoming_ready',jsonb_build_object(
+  'match_type','ranked','format','best_of_3','played_at',now()-interval '1 hour',
+  'club_id',fixtures.club('Падел Арена Лужники'),'players',fixtures.lineup(array['OR','SO','NO','MO']),
+  'sets',jsonb_build_array(fixtures.set(6,3),fixtures.set(6,4)))::text,fixtures.uuid('idempotency:upcoming-result')));
+\o
+rollback;
+
 \o :out/ids.raw
 select concat_ws(' ', :'me', 'm.orlov@padelid.app', :'newcomer', (select email from fixtures.players where code = 'NEW'));
 \o
@@ -235,7 +288,7 @@ jq '{session: ., recovery_key: "7K2QD-M4XPR-9HV3A-TC8WN"}' "$OUT/session.json" >
 expected=(me me_new home home_new matches_open matches_history match_action match_action_confirmed
           match_confirmed match_created player_profile player_matches rating_history dna search
           recent_players cities clubs preview username_check coach_application session signup
-          new_user_session)
+          new_user_session friends friendship_status upcoming_mine upcoming_home upcoming_open upcoming_match upcoming_result_ready upcoming_linked_result)
 for name in "${expected[@]}"; do
   file="$OUT/$name.json"
   [ -s "$file" ] || { echo "export.sh: $name.json is missing or empty" >&2; exit 1; }

@@ -1,0 +1,157 @@
+{
+  "items": [
+    {
+      "id": "0b997649-0569-46fc-9111-972f456e861a",
+      "city": {
+        "id": 1,
+        "name": "Москва"
+      },
+      "club": {
+        "id": 1,
+        "name": "Падел Арена Лужники"
+      },
+      "note": "Открытая парная игра: возьмите ракетку и приходите за десять минут.",
+      "status": "open",
+      "viewer": {
+        "can_join": false,
+        "admission": "approval",
+        "is_organizer": true,
+        "participation": "accepted"
+      },
+      "location": "Корт № 2",
+      "admission": {
+        "min_reliability": 70,
+        "minimum_ranked_matches": 5
+      },
+      "client_id": "568477c0-9946-430a-93be-5d6033a74579",
+      "max_level": 7,
+      "min_level": 0,
+      "organizer": {
+        "id": "03eed36a-a8a4-4767-9dd6-b1f89bf7267b",
+        "city": {
+          "id": 1,
+          "name": "Москва"
+        },
+        "club": {
+          "id": 1,
+          "name": "Падел Арена Лужники"
+        },
+        "level": 4.49,
+        "deleted": false,
+        "is_coach": false,
+        "username": "m_orlov",
+        "avatar_path": null,
+        "reliability": 47,
+        "display_name": "Михаил Орлов",
+        "preferred_side": "right"
+      },
+      "starts_at": "2026-10-10T16:00:00+00:00",
+      "match_type": "ranked",
+      "spots_left": 3,
+      "applications": [],
+      "participants": [
+        {
+          "player": {
+            "id": "03eed36a-a8a4-4767-9dd6-b1f89bf7267b",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 1,
+              "name": "Падел Арена Лужники"
+            },
+            "level": 4.49,
+            "deleted": false,
+            "is_coach": false,
+            "username": "m_orlov",
+            "avatar_path": null,
+            "reliability": 47,
+            "display_name": "Михаил Орлов",
+            "preferred_side": "right"
+          },
+          "joined_at": "2026-10-09T20:54:27.24066+00:00"
+        }
+      ],
+      "result_status": null,
+      "result_match_id": null
+    },
+    {
+      "id": "b239eb17-5c52-4a3f-afc6-8a5681919ca8",
+      "city": {
+        "id": 1,
+        "name": "Москва"
+      },
+      "club": {
+        "id": 2,
+        "name": "Corner Padel Club"
+      },
+      "note": "Открытая парная игра: возьмите ракетку и приходите за десять минут.",
+      "status": "open",
+      "viewer": {
+        "can_join": true,
+        "admission": "approval",
+        "is_organizer": false,
+        "participation": "none"
+      },
+      "location": "Корт № 2",
+      "admission": {
+        "min_reliability": 70,
+        "minimum_ranked_matches": 5
+      },
+      "client_id": "9db23fb8-3149-4d7f-84ce-73d3abe6663e",
+      "max_level": 7,
+      "min_level": 0,
+      "organizer": {
+        "id": "d8b58bd9-8f8c-4732-a129-148692946aed",
+        "city": {
+          "id": 1,
+          "name": "Москва"
+        },
+        "club": {
+          "id": 1,
+          "name": "Падел Арена Лужники"
+        },
+        "level": 4.89,
+        "deleted": false,
+        "is_coach": false,
+        "username": "d_sokolov",
+        "avatar_path": null,
+        "reliability": 25,
+        "display_name": "Дмитрий Соколов",
+        "preferred_side": "left"
+      },
+      "starts_at": "2026-10-11T15:00:00+00:00",
+      "match_type": "ranked",
+      "spots_left": 3,
+      "applications": [],
+      "participants": [
+        {
+          "player": {
+            "id": "d8b58bd9-8f8c-4732-a129-148692946aed",
+            "city": {
+              "id": 1,
+              "name": "Москва"
+            },
+            "club": {
+              "id": 1,
+              "name": "Падел Арена Лужники"
+            },
+            "level": 4.89,
+            "deleted": false,
+            "is_coach": false,
+            "username": "d_sokolov",
+            "avatar_path": null,
+            "reliability": 25,
+            "display_name": "Дмитрий Соколов",
+            "preferred_side": "left"
+          },
+          "joined_at": "2026-10-09T20:54:27.24066+00:00"
+        }
+      ],
+      "result_status": null,
+      "result_match_id": null
+    }
+  ],
+  "next_offset": null
+}

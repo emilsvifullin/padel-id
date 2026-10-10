@@ -6,23 +6,14 @@ struct MainTabView: View {
     var body: some View {
         @Bindable var app = app
         TabView(selection: $app.selectedTab) {
-            Tab("Padel ID", systemImage: "person.text.rectangle", value: AppModel.Tab.padelID) {
-                HomeView()
-            }
-            Tab("Матчи", systemImage: "sportscourt", value: AppModel.Tab.matches) {
-                MatchesView()
-            }
-            .badge(app.actionCount)
-            Tab("Игроки", systemImage: "magnifyingglass", value: AppModel.Tab.players, role: .search) {
-                PlayersView()
-            }
+            Tab("Главная", systemImage: "house", value: AppModel.Tab.padelID) { HomeView() }
+            Tab("Матчи", systemImage: "tennis.racket", value: AppModel.Tab.matches) { MatchesView() }
+                .badge(app.actionCount)
+            Tab("Анализ", systemImage: "chart.xyaxis.line", value: AppModel.Tab.analysis) { AnalysisView() }
+            Tab("Друзья", systemImage: "person.2", value: AppModel.Tab.friends) { FriendsView() }
+            Tab("Профиль", systemImage: "person.crop.circle", value: AppModel.Tab.profile) { AccountView() }
         }
-        .tabBarMinimizeBehavior(.onScrollDown)
-        .sheet(item: $app.matchEditor) { request in
-            MatchEditorView(request: request)
-        }
-        .sheet(isPresented: $app.isAccountPresented) {
-            AccountView()
-        }
+        .tabBarMinimizeBehavior(.never)
+        .sheet(item: $app.matchEditor) { request in MatchEditorView(request: request) }
     }
 }

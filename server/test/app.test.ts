@@ -536,6 +536,136 @@ describe("data API", () => {
   });
 });
 
+describe("friendship and scheduled-game contracts", () => {
+  const player = "11111111-1111-1111-1111-111111111111";
+  const game = "6f1c1a5e-6a4b-4c43-9e0b-1c3b9f0f9a11";
+  const key = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+  const create = {
+    starts_at: "2026-10-12T19:00:00+03:00", city_id: 1, club_id: null,
+    location: "  Центральный корт  ", match_type: "ranked", min_level: 2.5, max_level: 4,
+    note: "Собираем пару",
+  };
+
+  it("requires authentication on every relationship and scheduled-game route", async () => {
+    const h = harness(() => ({ status: 200, body: {} }));
+    for (const [method, path] of [
+      ["GET", "/v1/friends"], ["GET", `/v1/friends/${player}`],
+      ["POST", `/v1/friends/${player}/request`], ["POST", `/v1/friends/${player}/respond`],
+      ["DELETE", `/v1/friends/${player}`], ["GET", "/v1/upcoming-matches"],
+      ["POST", "/v1/upcoming-matches"], ["GET", `/v1/upcoming-matches/${game}`],
+      ...["join", "leave", "cancel", "result"].map((a) => ["POST", `/v1/upcoming-matches/${game}/${a}`]),
+      ["POST", `/v1/upcoming-matches/${game}/requests/${player}/respond`],
+    ]) {
+      expect((await h.request(path!, { method })).status, path).toBe(401);
+    }
+    expect(h.calls).toHaveLength(0);
+  });
+
+  it("uses only the caller's token and maps friendship decisions explicitly", async () => {
+    const h = harness((call) => ({ status: 200, body: call.body }));
+    const res = await h.request("/v1/friends", { headers: auth });
+    expect(res.status).toBe(200);
+    expect(h.calls[0]!.url).toContain("/rpc/friendships");
+    const actions: Array<[string, RequestInit, string]> = [
+      [`/v1/friends/${player}/request`, { method: "POST", headers: auth }, "request"],
+      [`/v1/friends/${player}/respond`, json({ decision: "accepted" }, auth), "accept"],
+      [`/v1/friends/${player}/respond`, json({ decision: "rejected" }, auth), "reject"],
+      [`/v1/friends/${player}`, { method: "DELETE", headers: auth }, "remove"],
+    ];
+    for (const [path, init, action] of actions) {
+      const response = await h.request(path, init);
+      expect(await response.json()).toEqual({ p_player: player, p_action: action });
+      expect(h.calls.at(-1)!.url).toContain("/rpc/friendship_action");
+      expect(h.calls.at(-1)!.headers.authorization).toBe(auth.authorization);
+    }
+    const status = await h.request(`/v1/friends/${player.toUpperCase()}`, { headers: auth });
+    expect(await status.json()).toEqual({ p_player: player });
+    expect(h.calls.at(-1)!.url).toContain("/rpc/friendship_status");
+  });
+
+  it("rejects malformed decisions and identifiers without calling the database", async () => {
+    const h = harness(() => ({ status: 200 }));
+    for (const path of [`/v1/friends/${player}/respond`, `/v1/upcoming-matches/${game}/requests/${player}/respond`]) {
+      for (const body of [{ decision: "approved" }, { decision: "accepted", player_id: game }, {}]) {
+        expect((await h.request(path, json(body, auth))).status).toBe(400);
+      }
+    }
+    expect((await h.request("/v1/friends/not-uuid/request", { method: "POST", headers: auth })).status).toBe(404);
+    expect((await h.request(`/v1/upcoming-matches/${game}/requests/not-uuid/respond`, json({ decision: "accepted" }, auth))).status).toBe(404);
+    expect(h.calls).toHaveLength(0);
+  });
+
+  it("binds publication to its retry key and validates time, place and level boundaries", async () => {
+    const h = harness((call) => ({ status: 200, body: call.body }));
+    expect((await h.request("/v1/upcoming-matches", json(create, auth))).status).toBe(400);
+    const headers = { ...auth, "idempotency-key": key.toUpperCase() };
+    for (const patch of [
+      { min_level: 4.1 }, { min_level: -0.1 }, { max_level: 7.1 },
+      { starts_at: "2026-10-12" }, { starts_at: "2026-10-12T19:00:00" },
+      { city_id: 1.5 }, { location: " " }, { location: "а".repeat(161) },
+      { note: "а".repeat(501) }, { client_id: game }, { organizer_id: player },
+    ]) {
+      expect((await h.request("/v1/upcoming-matches", json({ ...create, ...patch }, headers))).status).toBe(400);
+    }
+    expect(h.calls).toHaveLength(0);
+    const res = await h.request("/v1/upcoming-matches", json({ ...create, client_id: key, min_level: 0, max_level: 7 }, headers));
+    expect(res.status).toBe(201);
+    expect(await res.json()).toEqual({ p: { ...create, location: "Центральный корт", client_id: key, min_level: 0, max_level: 7 } });
+    expect(h.calls[0]!.url).toContain("/rpc/create_scheduled_match");
+    expect(h.calls[0]!.headers.authorization).toBe(auth.authorization);
+  });
+
+  it("validates and preserves scheduled-game pagination and ownership scope", async () => {
+    const h = harness((call) => ({ status: 200, body: call.body }));
+    for (const query of ["scope=history", "scope=all", "city_id=-1", "limit=51", "offset=1.5", "accepted_only=1", "scope=open&accepted_only=true"]) {
+      expect((await h.request(`/v1/upcoming-matches?${query}`, { headers: auth })).status).toBe(400);
+    }
+    expect(h.calls).toHaveLength(0);
+    const res = await h.request("/v1/upcoming-matches?scope=mine&accepted_only=true&city_id=1&limit=20&offset=40", { headers: auth });
+    expect(await res.json()).toEqual({ p: { scope: "mine", accepted_only: true, city_id: 1, limit: 20, offset: 40 } });
+    expect(h.calls[0]!.url).toContain("/rpc/scheduled_matches");
+  });
+
+  it("routes participation and organizer review to separate authorized RPCs", async () => {
+    const h = harness((call) => ({ status: 200, body: call.body }));
+    for (const action of ["join", "leave", "cancel"]) {
+      const res = await h.request(`/v1/upcoming-matches/${game}/${action}`, { method: "POST", headers: auth });
+      expect(await res.json()).toEqual({ p_match: game });
+      expect(h.calls.at(-1)!.url).toContain(`/rpc/${action}_scheduled_match`);
+      expect(h.calls.at(-1)!.headers.authorization).toBe(auth.authorization);
+    }
+    const review = await h.request(`/v1/upcoming-matches/${game}/requests/${player}/respond`, json({ decision: "accepted" }, auth));
+    expect(await review.json()).toEqual({ p_match: game, p_player: player, p_decision: "accepted" });
+    expect(h.calls.at(-1)!.url).toContain("/rpc/review_scheduled_application");
+  });
+
+  it("keeps the played-result body and outbox retry key intact", async () => {
+    const h = harness((call) => ({ status: 200, body: call.body }));
+    const result = { match_type: "friendly", format: "best_of_3", played_at: "2026-10-12T21:00:00Z", players: [], sets: [] };
+    const path = `/v1/upcoming-matches/${game}/result`;
+    expect((await h.request(path, json(result, auth))).status).toBe(400);
+    expect(h.calls).toHaveLength(0);
+    const res = await h.request(path, json(result, { ...auth, "idempotency-key": key }));
+    expect(res.status).toBe(201);
+    expect(await res.json()).toEqual({ p_match: game, p: result, p_idempotency_key: key });
+    expect(h.calls[0]!.url).toContain("/rpc/submit_scheduled_result");
+  });
+
+  it("preserves actionable privacy, capacity and replay errors from the database", async () => {
+    for (const [code, status] of Object.entries({
+      friendship_self: 400, friendship_not_incoming: 409, friendship_not_pending: 409,
+      scheduled_match_not_found: 404, scheduled_match_full: 409, organizer_required: 403,
+      level_out_of_range: 403, scheduled_match_not_started: 409, scheduled_match_not_full: 409,
+      scheduled_lineup_mismatch: 400, scheduled_result_mismatch: 409, scheduled_match_closed: 409,
+    })) {
+      const h = harness(() => ({ status: 400, body: { code: "P0001", message: code } }));
+      const res = await h.request(`/v1/upcoming-matches/${game}/join`, { method: "POST", headers: auth });
+      expect(res.status, code).toBe(status);
+      expect((await res.json()).error.code).toBe(code);
+    }
+  });
+});
+
 describe("avatars", () => {
   it("accepts only JPEG uploads", async () => {
     const h = harness(() => ({ status: 200, body: {} }));

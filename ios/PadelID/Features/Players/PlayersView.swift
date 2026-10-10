@@ -13,7 +13,6 @@ struct PlayersView: View {
     init() {}
 
     var body: some View {
-        NavigationStack {
             List {
                 if isResultsMode {
                     resultsSection
@@ -27,8 +26,8 @@ struct PlayersView: View {
                     browseOverlay
                 }
             }
-            .navigationTitle("Игроки")
-            .searchable(text: $searchText, prompt: "Имя или @имя_пользователя")
+            .navigationTitle("Найти игроков")
+            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Имя или @имя_пользователя")
             .autocorrectionDisabled()
             .toolbar { toolbarContent }
             .task(id: taskID) { await run(taskID) }
@@ -40,7 +39,6 @@ struct PlayersView: View {
             }
             .sensoryFeedback(.selection, trigger: sort)
             .padelRoutes()
-        }
     }
 
     // MARK: - State

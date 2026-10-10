@@ -246,6 +246,12 @@ struct PlayerRow<Trailing: View>: View {
                         .accessibilityLabel("Тренер")
                 }
             }
+            if !card.deleted {
+                Text("Надёжность: \(card.reliability.map { String($0) + "%" } ?? "—")")
+                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Text("Предпочитает: \(card.preferredSide.map { $0 == .both ? "обе стороны" : Narratives.sideShort($0).lowercased() } ?? "не указано")")
+                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
             Text(subtitle ?? defaultSubtitle)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)

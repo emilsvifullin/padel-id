@@ -3,643 +3,643 @@
     "mu": 4.49,
     "sigma": 0.621,
     "peak_mu": 4.49,
-    "idle_days": 2,
+    "idle_days": 3,
     "trend_30d": 0.24,
     "initial_mu": 3.60,
     "provisional": false,
     "ranked_wins": 11,
     "reliability": 47,
-    "last_ranked_at": "2026-10-05T19:05:00+00:00",
+    "last_ranked_at": "2026-10-06T19:05:00+00:00",
     "ranked_matches": 16
   },
   "history": [
     {
-      "day": "2026-07-08",
+      "day": "2026-07-09",
       "level": 3.58,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-07-08",
+      "day": "2026-07-09",
       "level": 3.69,
       "dimension": "defense"
     },
     {
-      "day": "2026-07-08",
+      "day": "2026-07-09",
       "level": 3.69,
       "dimension": "net_game"
     },
     {
-      "day": "2026-07-08",
+      "day": "2026-07-09",
       "level": 3.58,
       "dimension": "overheads"
     },
     {
-      "day": "2026-07-08",
+      "day": "2026-07-09",
       "level": 3.58,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-07-08",
+      "day": "2026-07-09",
       "level": 3.47,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-07-30",
+      "day": "2026-07-31",
       "level": 3.86,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-07-30",
+      "day": "2026-07-31",
       "level": 3.97,
       "dimension": "defense"
     },
     {
-      "day": "2026-07-30",
+      "day": "2026-07-31",
       "level": 4.06,
       "dimension": "net_game"
     },
     {
-      "day": "2026-07-30",
+      "day": "2026-07-31",
       "level": 3.86,
       "dimension": "overheads"
     },
     {
-      "day": "2026-07-30",
+      "day": "2026-07-31",
       "level": 3.93,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-07-30",
+      "day": "2026-07-31",
       "level": 3.70,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-08-02",
+      "day": "2026-08-03",
       "level": 3.77,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-08-02",
+      "day": "2026-08-03",
       "level": 3.88,
       "dimension": "defense"
     },
     {
-      "day": "2026-08-02",
+      "day": "2026-08-03",
       "level": 3.96,
       "dimension": "net_game"
     },
     {
-      "day": "2026-08-02",
+      "day": "2026-08-03",
       "level": 3.77,
       "dimension": "overheads"
     },
     {
-      "day": "2026-08-02",
+      "day": "2026-08-03",
       "level": 3.83,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-08-02",
+      "day": "2026-08-03",
       "level": 3.62,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-08-05",
+      "day": "2026-08-06",
       "level": 3.77,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-08-05",
+      "day": "2026-08-06",
       "level": 3.88,
       "dimension": "defense"
     },
     {
-      "day": "2026-08-05",
+      "day": "2026-08-06",
       "level": 3.96,
       "dimension": "net_game"
     },
     {
-      "day": "2026-08-05",
+      "day": "2026-08-06",
       "level": 3.77,
       "dimension": "overheads"
     },
     {
-      "day": "2026-08-05",
+      "day": "2026-08-06",
       "level": 3.83,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-08-05",
+      "day": "2026-08-06",
       "level": 3.62,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-08-08",
+      "day": "2026-08-09",
       "level": 3.96,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-08-08",
+      "day": "2026-08-09",
       "level": 4.00,
       "dimension": "defense"
     },
     {
-      "day": "2026-08-08",
+      "day": "2026-08-09",
       "level": 4.08,
       "dimension": "net_game"
     },
     {
-      "day": "2026-08-08",
+      "day": "2026-08-09",
       "level": 3.89,
       "dimension": "overheads"
     },
     {
-      "day": "2026-08-08",
+      "day": "2026-08-09",
       "level": 3.95,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-08-08",
+      "day": "2026-08-09",
       "level": 3.74,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-08-14",
+      "day": "2026-08-15",
       "level": 4.09,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-08-14",
+      "day": "2026-08-15",
       "level": 4.19,
       "dimension": "defense"
     },
     {
-      "day": "2026-08-14",
+      "day": "2026-08-15",
       "level": 4.26,
       "dimension": "net_game"
     },
     {
-      "day": "2026-08-14",
+      "day": "2026-08-15",
       "level": 4.03,
       "dimension": "overheads"
     },
     {
-      "day": "2026-08-14",
+      "day": "2026-08-15",
       "level": 4.09,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-08-14",
+      "day": "2026-08-15",
       "level": 3.83,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-08-17",
+      "day": "2026-08-18",
       "level": 3.77,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-08-17",
+      "day": "2026-08-18",
       "level": 3.92,
       "dimension": "defense"
     },
     {
-      "day": "2026-08-17",
+      "day": "2026-08-18",
       "level": 3.98,
       "dimension": "net_game"
     },
     {
-      "day": "2026-08-17",
+      "day": "2026-08-18",
       "level": 3.76,
       "dimension": "overheads"
     },
     {
-      "day": "2026-08-17",
+      "day": "2026-08-18",
       "level": 3.82,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-08-17",
+      "day": "2026-08-18",
       "level": 3.57,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-08-20",
+      "day": "2026-08-21",
       "level": 3.94,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-08-20",
+      "day": "2026-08-21",
       "level": 4.03,
       "dimension": "defense"
     },
     {
-      "day": "2026-08-20",
+      "day": "2026-08-21",
       "level": 4.10,
       "dimension": "net_game"
     },
     {
-      "day": "2026-08-20",
+      "day": "2026-08-21",
       "level": 3.88,
       "dimension": "overheads"
     },
     {
-      "day": "2026-08-20",
+      "day": "2026-08-21",
       "level": 3.94,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-08-20",
+      "day": "2026-08-21",
       "level": 3.69,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-08-23",
+      "day": "2026-08-24",
       "level": 3.94,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-08-23",
+      "day": "2026-08-24",
       "level": 4.03,
       "dimension": "defense"
     },
     {
-      "day": "2026-08-23",
+      "day": "2026-08-24",
       "level": 4.10,
       "dimension": "net_game"
     },
     {
-      "day": "2026-08-23",
+      "day": "2026-08-24",
       "level": 3.88,
       "dimension": "overheads"
     },
     {
-      "day": "2026-08-23",
+      "day": "2026-08-24",
       "level": 3.94,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-08-23",
+      "day": "2026-08-24",
       "level": 3.69,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-08-26",
+      "day": "2026-08-27",
       "level": 4.15,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-08-26",
+      "day": "2026-08-27",
       "level": 4.21,
       "dimension": "defense"
     },
     {
-      "day": "2026-08-26",
+      "day": "2026-08-27",
       "level": 4.29,
       "dimension": "net_game"
     },
     {
-      "day": "2026-08-26",
+      "day": "2026-08-27",
       "level": 4.00,
       "dimension": "overheads"
     },
     {
-      "day": "2026-08-26",
+      "day": "2026-08-27",
       "level": 4.11,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-08-26",
+      "day": "2026-08-27",
       "level": 3.86,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-08-29",
+      "day": "2026-08-30",
       "level": 4.34,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-08-29",
+      "day": "2026-08-30",
       "level": 4.36,
       "dimension": "defense"
     },
     {
-      "day": "2026-08-29",
+      "day": "2026-08-30",
       "level": 4.45,
       "dimension": "net_game"
     },
     {
-      "day": "2026-08-29",
+      "day": "2026-08-30",
       "level": 4.16,
       "dimension": "overheads"
     },
     {
-      "day": "2026-08-29",
+      "day": "2026-08-30",
       "level": 4.27,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-08-29",
+      "day": "2026-08-30",
       "level": 4.02,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-09-01",
+      "day": "2026-09-02",
       "level": 4.27,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-09-01",
+      "day": "2026-09-02",
       "level": 4.29,
       "dimension": "defense"
     },
     {
-      "day": "2026-09-01",
+      "day": "2026-09-02",
       "level": 4.37,
       "dimension": "net_game"
     },
     {
-      "day": "2026-09-01",
+      "day": "2026-09-02",
       "level": 4.09,
       "dimension": "overheads"
     },
     {
-      "day": "2026-09-01",
+      "day": "2026-09-02",
       "level": 4.19,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-09-01",
+      "day": "2026-09-02",
       "level": 3.94,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-09-04",
+      "day": "2026-09-05",
       "level": 4.36,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-09-04",
+      "day": "2026-09-05",
       "level": 4.33,
       "dimension": "defense"
     },
     {
-      "day": "2026-09-04",
+      "day": "2026-09-05",
       "level": 4.44,
       "dimension": "net_game"
     },
     {
-      "day": "2026-09-04",
+      "day": "2026-09-05",
       "level": 4.13,
       "dimension": "overheads"
     },
     {
-      "day": "2026-09-04",
+      "day": "2026-09-05",
       "level": 4.29,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-09-04",
+      "day": "2026-09-05",
       "level": 3.98,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-09-10",
+      "day": "2026-09-11",
       "level": 4.36,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-09-10",
+      "day": "2026-09-11",
       "level": 4.33,
       "dimension": "defense"
     },
     {
-      "day": "2026-09-10",
+      "day": "2026-09-11",
       "level": 4.44,
       "dimension": "net_game"
     },
     {
-      "day": "2026-09-10",
+      "day": "2026-09-11",
       "level": 4.13,
       "dimension": "overheads"
     },
     {
-      "day": "2026-09-10",
+      "day": "2026-09-11",
       "level": 4.29,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-09-10",
+      "day": "2026-09-11",
       "level": 3.99,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-09-13",
+      "day": "2026-09-14",
       "level": 4.30,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-09-13",
+      "day": "2026-09-14",
       "level": 4.27,
       "dimension": "defense"
     },
     {
-      "day": "2026-09-13",
+      "day": "2026-09-14",
       "level": 4.38,
       "dimension": "net_game"
     },
     {
-      "day": "2026-09-13",
+      "day": "2026-09-14",
       "level": 4.07,
       "dimension": "overheads"
     },
     {
-      "day": "2026-09-13",
+      "day": "2026-09-14",
       "level": 4.23,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-09-13",
+      "day": "2026-09-14",
       "level": 3.93,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-09-16",
+      "day": "2026-09-17",
       "level": 4.39,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-09-16",
+      "day": "2026-09-17",
       "level": 4.37,
       "dimension": "defense"
     },
     {
-      "day": "2026-09-16",
+      "day": "2026-09-17",
       "level": 4.47,
       "dimension": "net_game"
     },
     {
-      "day": "2026-09-16",
+      "day": "2026-09-17",
       "level": 4.22,
       "dimension": "overheads"
     },
     {
-      "day": "2026-09-16",
+      "day": "2026-09-17",
       "level": 4.32,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-09-16",
+      "day": "2026-09-17",
       "level": 4.00,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-09-19",
+      "day": "2026-09-20",
       "level": 4.51,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-09-19",
+      "day": "2026-09-20",
       "level": 4.47,
       "dimension": "defense"
     },
     {
-      "day": "2026-09-19",
+      "day": "2026-09-20",
       "level": 4.59,
       "dimension": "net_game"
     },
     {
-      "day": "2026-09-19",
+      "day": "2026-09-20",
       "level": 4.31,
       "dimension": "overheads"
     },
     {
-      "day": "2026-09-19",
+      "day": "2026-09-20",
       "level": 4.42,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-09-19",
-      "level": 4.06,
+      "day": "2026-09-20",
+      "level": 4.07,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-09-23",
+      "day": "2026-09-24",
       "level": 4.38,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-09-23",
+      "day": "2026-09-24",
       "level": 4.36,
       "dimension": "defense"
     },
     {
-      "day": "2026-09-23",
+      "day": "2026-09-24",
       "level": 4.49,
       "dimension": "net_game"
     },
     {
-      "day": "2026-09-23",
+      "day": "2026-09-24",
       "level": 4.21,
       "dimension": "overheads"
     },
     {
-      "day": "2026-09-23",
+      "day": "2026-09-24",
       "level": 4.30,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-09-23",
+      "day": "2026-09-24",
       "level": 3.96,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-10-01",
+      "day": "2026-10-02",
       "level": 4.56,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-10-01",
+      "day": "2026-10-02",
       "level": 4.52,
       "dimension": "defense"
     },
     {
-      "day": "2026-10-01",
+      "day": "2026-10-02",
       "level": 4.66,
       "dimension": "net_game"
     },
     {
-      "day": "2026-10-01",
+      "day": "2026-10-02",
       "level": 4.36,
       "dimension": "overheads"
     },
     {
-      "day": "2026-10-01",
+      "day": "2026-10-02",
       "level": 4.50,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-10-01",
+      "day": "2026-10-02",
       "level": 4.09,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-10-05",
+      "day": "2026-10-06",
       "level": 4.61,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-10-05",
+      "day": "2026-10-06",
       "level": 4.59,
       "dimension": "defense"
     },
     {
-      "day": "2026-10-05",
+      "day": "2026-10-06",
       "level": 4.70,
       "dimension": "net_game"
     },
     {
-      "day": "2026-10-05",
+      "day": "2026-10-06",
       "level": 4.40,
       "dimension": "overheads"
     },
     {
-      "day": "2026-10-05",
+      "day": "2026-10-06",
       "level": 4.54,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-10-05",
+      "day": "2026-10-06",
       "level": 4.13,
       "dimension": "transition_lob"
     },
     {
-      "day": "2026-10-08",
+      "day": "2026-10-09",
       "level": 4.71,
       "dimension": "consistency_decisions"
     },
     {
-      "day": "2026-10-08",
+      "day": "2026-10-09",
       "level": 4.58,
       "dimension": "defense"
     },
     {
-      "day": "2026-10-08",
+      "day": "2026-10-09",
       "level": 4.93,
       "dimension": "net_game"
     },
     {
-      "day": "2026-10-08",
-      "level": 4.22,
+      "day": "2026-10-09",
+      "level": 4.23,
       "dimension": "overheads"
     },
     {
-      "day": "2026-10-08",
+      "day": "2026-10-09",
       "level": 4.58,
       "dimension": "serve_return"
     },
     {
-      "day": "2026-10-08",
+      "day": "2026-10-09",
       "level": 3.93,
       "dimension": "transition_lob"
     }
@@ -656,7 +656,7 @@
       "match_signal": false,
       "peer_signals": 3,
       "coach_signals": 1,
-      "coach_verified_at": "2026-10-02T10:30:00+00:00"
+      "coach_verified_at": "2026-10-03T10:30:00+00:00"
     },
     {
       "key": "defense",
@@ -668,7 +668,7 @@
       "match_signal": false,
       "peer_signals": 2,
       "coach_signals": 1,
-      "coach_verified_at": "2026-10-02T10:30:00+00:00"
+      "coach_verified_at": "2026-10-03T10:30:00+00:00"
     },
     {
       "key": "transition_lob",
@@ -680,7 +680,7 @@
       "match_signal": false,
       "peer_signals": 5,
       "coach_signals": 1,
-      "coach_verified_at": "2026-10-02T10:30:00+00:00"
+      "coach_verified_at": "2026-10-03T10:30:00+00:00"
     },
     {
       "key": "net_game",
@@ -692,11 +692,11 @@
       "match_signal": false,
       "peer_signals": 7,
       "coach_signals": 1,
-      "coach_verified_at": "2026-10-02T10:30:00+00:00"
+      "coach_verified_at": "2026-10-03T10:30:00+00:00"
     },
     {
       "key": "overheads",
-      "level": 4.22,
+      "level": 4.23,
       "offset": -0.27,
       "trend_30d": 0.09,
       "confidence": 0.50,
@@ -704,7 +704,7 @@
       "match_signal": false,
       "peer_signals": 2,
       "coach_signals": 1,
-      "coach_verified_at": "2026-10-02T10:30:00+00:00"
+      "coach_verified_at": "2026-10-03T10:30:00+00:00"
     },
     {
       "key": "consistency_decisions",
@@ -716,7 +716,7 @@
       "match_signal": true,
       "peer_signals": 2,
       "coach_signals": 1,
-      "coach_verified_at": "2026-10-02T10:30:00+00:00"
+      "coach_verified_at": "2026-10-03T10:30:00+00:00"
     }
   ]
 }

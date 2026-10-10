@@ -59,7 +59,7 @@
       },
       "response": "confirmed",
       "court_side": "right",
-      "responded_at": "2026-10-05T17:55:00+00:00",
+      "responded_at": "2026-10-06T17:55:00+00:00",
       "rating_change": {
         "delta": 0.046,
         "details": {
@@ -124,7 +124,7 @@
       },
       "response": "confirmed",
       "court_side": "left",
-      "responded_at": "2026-10-05T18:30:00+00:00",
+      "responded_at": "2026-10-06T18:30:00+00:00",
       "rating_change": {
         "delta": 0.047,
         "details": {
@@ -189,7 +189,7 @@
       },
       "response": "confirmed",
       "court_side": "right",
-      "responded_at": "2026-10-05T17:20:00+00:00",
+      "responded_at": "2026-10-06T17:20:00+00:00",
       "rating_change": {
         "delta": -0.054,
         "details": {
@@ -251,7 +251,7 @@
       },
       "response": "confirmed",
       "court_side": "left",
-      "responded_at": "2026-10-05T19:05:00+00:00",
+      "responded_at": "2026-10-06T19:05:00+00:00",
       "rating_change": {
         "delta": -0.045,
         "details": {
@@ -312,18 +312,18 @@
     "projected_change": null,
     "expected_win_team1": 0.862
   },
-  "played_at": "2026-10-05T16:00:00+00:00",
-  "created_at": "2026-10-05T17:20:00+00:00",
+  "played_at": "2026-10-06T16:00:00+00:00",
+  "created_at": "2026-10-06T17:20:00+00:00",
   "created_by": "2becd560-4954-4ad9-ab50-e454ea8f2d73",
   "expires_at": null,
   "match_type": "ranked",
   "team1_sets": 2,
   "team2_sets": 0,
-  "updated_at": "2026-10-05T19:05:00+00:00",
+  "updated_at": "2026-10-06T19:05:00+00:00",
   "team1_games": 13,
   "team2_games": 9,
   "winner_team": 1,
-  "confirmed_at": "2026-10-05T19:05:00+00:00",
+  "confirmed_at": "2026-10-06T19:05:00+00:00",
   "rating_weight": 1,
   "rating_applied": true
 }

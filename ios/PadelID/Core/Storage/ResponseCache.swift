@@ -58,6 +58,18 @@ final class ResponseCache {
         if let url = fileURL(key) { try? fileManager.removeItem(at: url) }
     }
 
+    /// An authoritative access denial invalidates every cached view of a
+    /// player, including periods that are not currently on screen.
+    func removePlayerData(_ playerId: UUID) {
+        remove(CacheKey.player(playerId))
+        remove("\(CacheKey.player(playerId)).matches")
+        remove(CacheKey.dna(playerId))
+        let periods: [Int?] = [30, 90, 365, nil]
+        for days in periods {
+            remove(CacheKey.ratingHistory(playerId, days: days))
+        }
+    }
+
     /// Removes every cached response of every user (sign-out, account deletion).
     func purgeAll() {
         memory.removeAll()

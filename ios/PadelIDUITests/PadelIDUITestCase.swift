@@ -177,10 +177,10 @@ class PadelIDUITestCase: XCTestCase {
         }
     }
 
-    /// Waits for the Padel ID tab with the level hero.
+    /// Waits for the persistent home tab after authentication.
     @discardableResult
     func waitForHome(timeout: TimeInterval = 20, file: StaticString = #filePath, line: UInt = #line) -> XCUIElement {
-        require(element("home.level"), timeout: timeout, "home.level", file: file, line: line)
+        require(app.navigationBars["Главная"], timeout: timeout, "Главная", file: file, line: line)
     }
 
     /// Taps the form's submit button when it can be reached, otherwise the

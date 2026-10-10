@@ -1,0 +1,23 @@
+{
+  "checked_at_utc": "2026-10-10T09:08:17.295Z",
+  "operations": "Read-only GitHub connector GET; no remote mutations.",
+  "main": {
+    "sha": "50d3ca6e4f6e7590f01c27d8172e7964da8c91c7",
+    "url": "https://github.com/emilsvifullin/padel-id/commit/50d3ca6e4f6e7590f01c27d8172e7964da8c91c7"
+  },
+  "latest_release": {
+    "tag": "v1.0.0",
+    "target_commitish": "50d3ca6e4f6e7590f01c27d8172e7964da8c91c7",
+    "published_at": "2026-10-09T15:38:23Z",
+    "url": "https://github.com/emilsvifullin/padel-id/releases/tag/v1.0.0",
+    "assets": [
+      "PadelID.ipa",
+      "PadelID.ipa.sha256"
+    ]
+  },
+  "endpoints": [
+    "https://api.github.com/repos/emilsvifullin/padel-id/branches/main",
+    "https://api.github.com/repos/emilsvifullin/padel-id/releases/latest"
+  ],
+  "candidate_published": false
+}

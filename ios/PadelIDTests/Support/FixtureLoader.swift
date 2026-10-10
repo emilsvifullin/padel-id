@@ -23,6 +23,7 @@ nonisolated enum FixtureLoader {
         "match_action_confirmed", "match_confirmed", "match_created", "player_profile", "player_matches",
         "rating_history", "dna", "search", "recent_players", "cities", "clubs", "preview", "username_check",
         "coach_application", "session", "signup", "new_user_session",
+        "friends", "friendship_status", "upcoming_mine", "upcoming_home", "upcoming_open", "upcoming_match", "upcoming_result_ready", "upcoming_linked_result",
     ]
 
     static func url(_ name: String) -> URL? {

@@ -372,6 +372,44 @@ begin
 end;
 $$;
 
+-- Future-game fixtures pass through the real publication API. Like settle(),
+-- only the generated identity is made deterministic in this disposable DB.
+create function fixtures.future(p_key text, p_creator text, p_starts timestamptz, p_club text)
+returns uuid language plpgsql as $$
+declare
+  v_old uuid; v_new uuid := fixtures.uuid('upcoming:' || p_key);
+  v_city integer := (select id from public.cities where name = 'Москва' and country_code = 'RU');
+  v_club bigint := fixtures.club(p_club);
+begin
+  perform fixtures.act_as(fixtures.pid(p_creator));
+  v_old := (public.create_scheduled_match(jsonb_build_object('client_id', fixtures.uuid('upcoming-client:' || p_key),
+    'starts_at', p_starts, 'city_id', v_city,
+    'club_id', v_club, 'location', 'Корт № 2', 'match_type', 'ranked', 'min_level', 0, 'max_level', 7,
+    'note', 'Открытая парная игра: возьмите ракетку и приходите за десять минут.')) ->> 'id')::uuid;
+  perform fixtures.as_admin();
+  perform set_config('session_replication_role', 'replica', true);
+  update public.scheduled_matches set id = v_new where id = v_old;
+  update public.scheduled_match_players set match_id = v_new where match_id = v_old;
+  perform set_config('session_replication_role', 'origin', true);
+  insert into fixtures.refs (key, id) values (p_key, v_new);
+  return v_new;
+end;
+$$;
+
+create function fixtures.join_future(p_match uuid, p_player text, p_organizer text)
+returns void language plpgsql as $$
+declare v jsonb;
+begin
+  perform fixtures.act_as(fixtures.pid(p_player));
+  v := public.join_scheduled_match(p_match);
+  if v -> 'viewer' ->> 'participation' = 'pending' then
+    perform fixtures.act_as(fixtures.pid(p_organizer));
+    perform public.review_scheduled_application(p_match, fixtures.pid(p_player), 'accepted');
+  end if;
+  perform fixtures.as_admin();
+end;
+$$;
+
 grant select on all tables in schema fixtures to authenticated;
 
 -- ---------------------------------------------------------------------------
@@ -706,6 +744,29 @@ begin
   for v_code in select code from fixtures.players where code <> 'NEW' order by code loop
     perform private.recompute_dna(fixtures.pid(v_code));
   end loop;
+
+  -- Mutual friend, incoming request and outgoing request. Existing recent
+  -- players and scored-match history are kept intact.
+  perform fixtures.act_as(v_orlov);
+  perform public.friendship_action(fixtures.pid('SO'), 'request');
+  perform fixtures.act_as(fixtures.pid('SO'));
+  perform public.friendship_action(v_orlov, 'accept');
+  perform fixtures.act_as(v_novikov);
+  perform public.friendship_action(v_orlov, 'request');
+  perform fixtures.act_as(v_orlov);
+  perform public.friendship_action(fixtures.pid('MO'), 'request');
+  perform fixtures.as_admin();
+
+  -- The nearest accepted upcoming game has three open seats. A separate
+  -- public game belongs to another organizer; the past full game is ready for
+  -- entering a result, without pre-confirming or changing existing statistics.
+  v := fixtures.future('upcoming_main', 'OR', fixtures.at(-1, '16:00'), luzhniki);
+  perform fixtures.future('upcoming_other', 'SO', fixtures.at(-2, '15:00'), corner);
+  v := fixtures.future('upcoming_result_ready', 'OR', fixtures.at(-3, '15:00'), luzhniki);
+  perform fixtures.join_future(v, 'SO', 'OR');
+  perform fixtures.join_future(v, 'NO', 'OR');
+  perform fixtures.join_future(v, 'MO', 'OR');
+  update public.scheduled_matches set starts_at = now() - interval '2 hours' where id = v;
 end;
 $$;
 

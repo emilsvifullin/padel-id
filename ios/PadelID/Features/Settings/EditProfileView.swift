@@ -8,6 +8,7 @@ import UIKit
 struct EditProfileView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// The profile as it was when editing started (the baseline for changes).
     @State private var original: Profile
@@ -31,6 +32,7 @@ struct EditProfileView: View {
     @State private var isConfirmingDiscard = false
 
     @State private var pickerItem: PhotosPickerItem?
+    @State private var isPhotoPickerPresented = false
     @State private var avatarPreview: UIImage?
     @State private var isAvatarBusy = false
     @State private var avatarError: String?
@@ -74,12 +76,12 @@ struct EditProfileView: View {
             }
             .disabled(isSaving)
             .onChange(of: failureCount) {
-                withAnimation(.smooth) {
+                withAnimation(reduceMotion ? nil : .smooth) {
                     proxy.scrollTo(failureAnchor, anchor: .top)
                 }
             }
         }
-        .navigationTitle("Профиль")
+        .navigationTitle("Изменить профиль")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(hasChanges)
         .toolbar {
@@ -99,7 +101,7 @@ struct EditProfileView: View {
             }
         }
         .interactiveDismissDisabled(hasChanges || isSaving || isAvatarBusy)
-        .confirmationDialog("Отменить изменения?", isPresented: $isConfirmingDiscard, titleVisibility: .visible) {
+        .alert("Отменить изменения?", isPresented: $isConfirmingDiscard) {
             Button("Не сохранять", role: .destructive) { dismiss() }
             Button("Продолжить редактирование", role: .cancel) {}
         }
@@ -134,17 +136,31 @@ struct EditProfileView: View {
 
     private var avatarSection: some View {
         Section {
-            avatarImage
+            Button {
+                isPhotoPickerPresented = true
+            } label: {
+                avatarImage
+                    .overlay(alignment: .bottomTrailing) {
+                        Image(systemName: "camera.fill")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .padding(9)
+                            .background(Theme.accent, in: .circle)
+                            .accessibilityHidden(true)
+                    }
+                    .contentShape(.circle)
+            }
+                .buttonStyle(.plain)
+                .photosPicker(isPresented: $isPhotoPickerPresented, selection: $pickerItem, matching: .images)
+                .disabled(!app.isOnline || isAvatarBusy || isSaving)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(hasAvatar ? "Фото профиля" : "Фото профиля не выбрано")
+                .accessibilityLabel(hasAvatar ? "Изменить фото профиля" : "Выбрать фото профиля")
                 .accessibilityValue(isAvatarBusy ? "Загружается" : "")
-            let pickerTitle = hasAvatar ? "Изменить фото" : "Выбрать фото"
-            PhotosPicker(selection: $pickerItem, matching: .images) {
-                Label(pickerTitle, systemImage: "photo")
-            }
-            .disabled(!app.isOnline || isAvatarBusy || isSaving)
+                .accessibilityHint(app.isOnline ? "Открывает выбор фото" : "Нужно подключение к интернету")
+                .accessibilityIdentifier("profile.avatarPicker")
+                .listRowSeparator(.hidden)
             if hasAvatar {
                 Button(role: .destructive) {
                     isConfirmingAvatarRemoval = true
@@ -152,16 +168,16 @@ struct EditProfileView: View {
                     Label("Удалить фото", systemImage: "trash")
                 }
                 .disabled(!app.isOnline || isAvatarBusy || isSaving)
-                .confirmationDialog("Удалить фото профиля?", isPresented: $isConfirmingAvatarRemoval, titleVisibility: .visible) {
-                    Button("Удалить фото", role: .destructive, action: removeAvatar)
-                    Button("Отмена", role: .cancel) {}
-                }
             }
         } footer: {
             if let avatarError {
                 Text(avatarError)
                     .foregroundStyle(Theme.negative)
             }
+        }
+        .alert("Удалить фото профиля?", isPresented: $isConfirmingAvatarRemoval) {
+            Button("Удалить фото", role: .destructive, action: removeAvatar)
+            Button("Отмена", role: .cancel) {}
         }
     }
 
@@ -325,7 +341,7 @@ struct EditProfileView: View {
         } footer: {
             Text(discoverable
                  ? "Вас могут найти все игроки Padel ID."
-                 : "Вас найдут только игроки, с которыми вы уже играли.")
+                 : "В поиске вас нет. Профиль доступен друзьям, участникам ваших игр и получателям ваших заявок в друзья.")
         }
     }
 
@@ -500,12 +516,16 @@ struct EditProfileView: View {
     private func uploadAvatar(_ item: PhotosPickerItem) async {
         guard app.isOnline else {
             avatarError = APIError.offline.message
+            Announce.post(APIError.offline.message)
             return
         }
         let previousPreview = avatarPreview
         isAvatarBusy = true
         avatarError = nil
-        defer { isAvatarBusy = false }
+        defer {
+            isAvatarBusy = false
+            if let avatarError { Announce.post(avatarError) }
+        }
         do {
             // Decoding and encoding run off the main actor (a 48 MP photo
             // would otherwise freeze the sheet).
@@ -520,6 +540,7 @@ struct EditProfileView: View {
             let me = try JSONCoding.decoder.decode(Me.self, from: data)
             applyMe(me, data: data)
             avatarCount += 1
+            Announce.post("Фото профиля обновлено.")
         } catch is CancellationError {
             avatarPreview = previousPreview
         } catch let error as APIError {
@@ -538,6 +559,7 @@ struct EditProfileView: View {
     private func removeAvatar() {
         guard app.isOnline else {
             avatarError = APIError.offline.message
+            Announce.post(APIError.offline.message)
             return
         }
         isAvatarBusy = true
@@ -550,6 +572,7 @@ struct EditProfileView: View {
                 avatarPreview = nil
                 applyMe(me, data: data)
                 avatarCount += 1
+                Announce.post("Фото профиля удалено.")
             } catch is CancellationError {
                 return
             } catch let error as APIError {
@@ -557,6 +580,7 @@ struct EditProfileView: View {
             } catch {
                 avatarError = "Не удалось удалить фото. Попробуйте ещё раз."
             }
+            if let avatarError { Announce.post(avatarError) }
         }
     }
 }

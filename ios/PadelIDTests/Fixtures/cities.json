@@ -55,11 +55,6 @@
     "country_code": "RU"
   },
   {
-    "id": 69,
-    "name": "Великий Новгород",
-    "country_code": "RU"
-  },
-  {
     "id": 26,
     "name": "Владивосток",
     "country_code": "RU"
@@ -137,11 +132,6 @@
   {
     "id": 25,
     "name": "Иркутск",
-    "country_code": "RU"
-  },
-  {
-    "id": 93,
-    "name": "Йошкар-Ола",
     "country_code": "RU"
   },
   {
@@ -245,11 +235,6 @@
     "country_code": "RU"
   },
   {
-    "id": 32,
-    "name": "Набережные Челны",
-    "country_code": "RU"
-  },
-  {
     "id": 86,
     "name": "Нальчик",
     "country_code": "RU"
@@ -257,16 +242,6 @@
   {
     "id": 99,
     "name": "Нижневартовск",
-    "country_code": "RU"
-  },
-  {
-    "id": 6,
-    "name": "Нижний Новгород",
-    "country_code": "RU"
-  },
-  {
-    "id": 55,
-    "name": "Нижний Тагил",
     "country_code": "RU"
   },
   {
@@ -282,11 +257,6 @@
   {
     "id": 3,
     "name": "Новосибирск",
-    "country_code": "RU"
-  },
-  {
-    "id": 100,
-    "name": "Новый Уренгой",
     "country_code": "RU"
   },
   {
@@ -335,11 +305,6 @@
     "country_code": "RU"
   },
   {
-    "id": 90,
-    "name": "Петропавловск-Камчатский",
-    "country_code": "RU"
-  },
-  {
     "id": 61,
     "name": "Подольск",
     "country_code": "RU"
@@ -357,11 +322,6 @@
   {
     "id": 79,
     "name": "Реутов",
-    "country_code": "RU"
-  },
-  {
-    "id": 11,
-    "name": "Ростов-на-Дону",
     "country_code": "RU"
   },
   {
@@ -450,11 +410,6 @@
     "country_code": "RU"
   },
   {
-    "id": 44,
-    "name": "Улан-Удэ",
-    "country_code": "RU"
-  },
-  {
     "id": 24,
     "name": "Ульяновск",
     "country_code": "RU"
@@ -467,11 +422,6 @@
   {
     "id": 23,
     "name": "Хабаровск",
-    "country_code": "RU"
-  },
-  {
-    "id": 67,
-    "name": "Ханты-Мансийск",
     "country_code": "RU"
   },
   {
@@ -495,11 +445,6 @@
     "country_code": "RU"
   },
   {
-    "id": 89,
-    "name": "Южно-Сахалинск",
-    "country_code": "RU"
-  },
-  {
     "id": 50,
     "name": "Якутск",
     "country_code": "RU"
@@ -515,9 +460,59 @@
     "country_code": "RU"
   },
   {
-    "id": 123,
-    "name": "Абу-Даби",
-    "country_code": "AE"
+    "id": 69,
+    "name": "Великий Новгород",
+    "country_code": "RU"
+  },
+  {
+    "id": 32,
+    "name": "Набережные Челны",
+    "country_code": "RU"
+  },
+  {
+    "id": 6,
+    "name": "Нижний Новгород",
+    "country_code": "RU"
+  },
+  {
+    "id": 55,
+    "name": "Нижний Тагил",
+    "country_code": "RU"
+  },
+  {
+    "id": 100,
+    "name": "Новый Уренгой",
+    "country_code": "RU"
+  },
+  {
+    "id": 93,
+    "name": "Йошкар-Ола",
+    "country_code": "RU"
+  },
+  {
+    "id": 90,
+    "name": "Петропавловск-Камчатский",
+    "country_code": "RU"
+  },
+  {
+    "id": 44,
+    "name": "Улан-Удэ",
+    "country_code": "RU"
+  },
+  {
+    "id": 67,
+    "name": "Ханты-Мансийск",
+    "country_code": "RU"
+  },
+  {
+    "id": 89,
+    "name": "Южно-Сахалинск",
+    "country_code": "RU"
+  },
+  {
+    "id": 11,
+    "name": "Ростов-на-Дону",
+    "country_code": "RU"
   },
   {
     "id": 136,
@@ -598,11 +593,6 @@
     "id": 154,
     "name": "Будва",
     "country_code": "ME"
-  },
-  {
-    "id": 156,
-    "name": "Буэнос-Айрес",
-    "country_code": "AR"
   },
   {
     "id": 132,
@@ -803,5 +793,15 @@
     "id": 109,
     "name": "Шымкент",
     "country_code": "KZ"
+  },
+  {
+    "id": 123,
+    "name": "Абу-Даби",
+    "country_code": "AE"
+  },
+  {
+    "id": 156,
+    "name": "Буэнос-Айрес",
+    "country_code": "AR"
   }
 ]

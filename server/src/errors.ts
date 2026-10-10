@@ -69,6 +69,29 @@ const SPECS: Record<string, ErrorSpec> = {
   invalid_image: { status: 400, message: "Поддерживаются только фотографии в формате JPEG." },
   player_not_found: { status: 404, message: "Игрок не найден." },
 
+  // Friendship
+  friendship_action_invalid: { status: 400, message: "Некорректное действие с заявкой в друзья." },
+  friendship_self: { status: 400, message: "Нельзя добавить себя в друзья." },
+  friendship_not_pending: { status: 409, message: "Заявка уже рассмотрена. Обновите список друзей." },
+  friendship_not_incoming: { status: 409, message: "Принимать можно только входящие заявки." },
+  friendship_not_outgoing: { status: 409, message: "Этой исходящей заявки уже нет." },
+  friendship_not_accepted: { status: 409, message: "Вы пока не друзья." },
+
+  // Scheduled games
+  invalid_scheduled_match: { status: 400, message: "Проверьте время, место и диапазон уровня будущей игры." },
+  scheduled_match_not_found: { status: 404, message: "Будущая игра не найдена." },
+  scheduled_match_closed: { status: 409, message: "Игра отменена или для неё уже внесён результат." },
+  scheduled_match_full: { status: 409, message: "Все места уже заняты." },
+  scheduled_match_started: { status: 409, message: "Игра уже началась, состав больше нельзя менять." },
+  scheduled_match_not_started: { status: 409, message: "Внести результат можно после начала игры." },
+  scheduled_match_not_full: { status: 409, message: "Для результата нужны четыре участника." },
+  organizer_required: { status: 403, message: "Это действие доступно организатору игры." },
+  organizer_cannot_leave: { status: 409, message: "Организатор может отменить игру." },
+  level_out_of_range: { status: 403, message: "Ваш подтверждённый уровень вне диапазона этой игры." },
+  application_not_pending: { status: 409, message: "Заявка уже рассмотрена. Обновите состав." },
+  scheduled_lineup_mismatch: { status: 400, message: "Участники результата должны совпадать с составом игры." },
+  scheduled_result_mismatch: { status: 409, message: "Для этой игры уже внесён другой результат. Откройте его для изменения." },
+
   // Matches
   match_not_found: { status: 404, message: "Матч не найден." },
   match_lineup_invalid: { status: 400, message: "В матче должно быть четыре игрока: по двое в каждой паре." },

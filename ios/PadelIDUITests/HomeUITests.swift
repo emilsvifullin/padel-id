@@ -8,6 +8,7 @@ final class HomeUITests: PadelIDUITestCase {
         try launch(.existingUser)
         signIn(screenshot: true)
         waitForHome()
+        selectTab("Анализ")
         require(element("home.rating"), "home.rating")
         snap("home-top")
 
@@ -22,27 +23,27 @@ final class HomeUITests: PadelIDUITestCase {
         open(require(element("home.rating"), "home.rating"), screen: "Рейтинг")
         snap("rating-detail")
         XCTAssertFalse(server.recorded("GET", "v1/players/\(StubServer.currentUserID)/rating-history").isEmpty)
-        goBack(previousTitle: "Padel ID")
-        requireScreen("Padel ID")
+        goBack(previousTitle: "Анализ")
+        requireScreen("Анализ")
 
         // Padel DNA
         open(require(element("home.dna"), "home.dna"), screen: "Padel DNA")
         snap("dna-detail")
         waitForRequest("GET", "v1/players/\(StubServer.currentUserID)/dna")
-        goBack(previousTitle: "Padel ID")
-        requireScreen("Padel ID")
+        goBack(previousTitle: "Анализ")
+        requireScreen("Анализ")
 
         // Insights
-        open(insightsLink(), screen: "Анализ")
+        open(insightsLink(), screen: "Выводы об игре")
         snap("insights")
-        goBack(previousTitle: "Padel ID")
-        requireScreen("Padel ID")
+        goBack(previousTitle: "Анализ")
+        requireScreen("Анализ")
 
         // Statistics
         open(statsLink(), screen: "Статистика")
         snap("stats")
-        goBack(previousTitle: "Padel ID")
-        requireScreen("Padel ID")
+        goBack(previousTitle: "Анализ")
+        requireScreen("Анализ")
     }
 
     func testServerErrorState() throws {
@@ -50,6 +51,8 @@ final class HomeUITests: PadelIDUITestCase {
             server.setOverride("GET", "v1/home", .serviceUnavailable)
         }
         signIn()
+        waitForHome()
+        selectTab("Анализ")
 
         let retry = require(button(label: "Повторить"), timeout: 25, "Повторить in the error state")
         XCTAssertFalse(element("home.level").exists)
@@ -58,7 +61,7 @@ final class HomeUITests: PadelIDUITestCase {
 
         server.removeOverride("GET", "v1/home")
         tap(retry)
-        waitForHome(timeout: 15)
+        require(element("home.level"), timeout: 15, "home.level")
         snap("error-recovered")
     }
 

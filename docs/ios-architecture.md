@@ -50,13 +50,11 @@ re-creating them.
 
 ## Navigation
 
-* `MainTabView` has three tabs: **Padel ID** (`HomeView`), **Матчи**
-  (`MatchesView`), **Игроки** (`PlayersView`, `role: .search`). Each tab root
-  owns a `NavigationStack` and calls `.padelRoutes()` on its root content so
-  every shared destination works from every tab.
+* `MainTabView` has five persistent tabs: **Главная** (`HomeView`), **Матчи** (`MatchesView`, `tennis.racket`), **Анализ** (`AnalysisView`), **Друзья** (`FriendsView`), **Профиль** (`AccountView`). `.tabBarMinimizeBehavior(.never)` keeps labels and controls visible. Each root owns a NavigationStack. The player directory is pushed from Friends as **Найти игроков**; it uses its parent's stack.
+* Home shows only the nearest future accepted participation (server query `scope=mine&accepted_only=true`) or a useful empty state. It continues refreshing scored-match action badges/notifications. Rating, history, DNA, insights and complete statistics live in Analysis; Account retains every setting and admin gating in Profile.
 * Shared push routes (`App/Routes.swift`): `Route.player(UUID)`,
   `.match(UUID)`, `.rating(UUID)`, `.dna(UUID)`, `.playerMatches(UUID)`,
-  `.stats(UUID)`, `.insights`. Navigate with
+  `.stats(UUID)`, `.insights`, `.upcoming(UUID)`, `.findPlayers`. Navigate with
   `NavigationLink(value: Route.match(id)) { … }`.
 * Required view signatures (exact):
   * `PlayerProfileView(playerId: UUID)` — Features/Players
@@ -73,7 +71,8 @@ re-creating them.
   * `app.matchEditor = .blank` or
     `MatchEditorRequest(mode: .create(partner: card, opponents: []))` or
     `MatchEditorRequest(mode: .edit(detail))`.
-  * `app.isAccountPresented = true` (account & settings).
+  * `MatchEditorRequest(mode: .upcoming(game, playerId: meId))` uses only the admitted four participants and the planned type/club, then sends the result through the existing outbox to `v1/upcoming-matches/{id}/result`.
+  * Account is a permanent tab; select `.profile` to open it.
 * Switch tabs with `app.selectedTab = .matches`.
 
 ## Data loading
@@ -83,6 +82,7 @@ re-creating them.
   `connectivity`, `me: Me?`, `dataRevision`, `actionCount`, `isOnline`,
   `refreshMe()`, `dataDidChange()`, `signOut(everywhere:)`,
   `resetLocalState(notice:)`, `flushOutbox()`, `recoveryKeyToShow`.
+* `Resource<T>` ignores superseded/cancelled responses; `replace(with:)` invalidates in-flight loads so a pre-mutation GET cannot roll back the visible value or cache.
 * Screens load data with `Resource<T>` (`Core/Storage/Resource.swift`),
   cache-first:
   ```swift
@@ -160,8 +160,7 @@ the models in `Core/Models/Models.swift` with `JSONCoding.decoder`.
 
 Password-protected account actions answer `429 rate_limited` after 10 password
 attempts per user in 15 minutes (shared by all four) or 20 per client address.
-Player endpoints (`v1/players/{id}…`) answer `404 player_not_found` for a player
-with `discoverable = false` unless the viewer has shared a match with them.
+Player endpoints (`v1/players/{id}…`) answer `404 player_not_found` for a hidden player unless the viewer is the owner/admin, an accepted friend, an accepted game peer, has shared a scored match, or is the recipient of that player’s pending friend request. Voluntary outgoing requests expose the requester to their recipient, not the hidden recipient to unrelated requesters. Public scheduled-game cards mask hidden players for unrelated viewers; organizer can inspect their own applicants. No email or personal settings occur in social responses.
 
 Server rules worth mirroring in the UI (the server stays authoritative):
 * 4 distinct onboarded players, 2 per team, one `right` and one `left` per
@@ -184,7 +183,7 @@ Server rules worth mirroring in the UI (the server stays authoritative):
   `.rounded` design + `.monospacedDigit()`), SF Symbols, `List`/`Form` where
   the content is a list or a form, standard navigation bars and toolbars,
   `.sheet` with detents for short tasks, `.confirmationDialog` for
-  destructive choices, `.alert` for errors of actions.
+  destructive multi-option choices; `.alert` for binary discard/cancel/delete confirmations and errors. The latter avoids iOS26 toolbar-anchored action-sheet popovers without custom presentation.
 * Backgrounds: `Color(.systemGroupedBackground)` for scroll screens with
   `SectionContainer` blocks; `List`/`Form` use `.insetGrouped`.
 * Colors: `Theme.accent` (court blue), `Theme.ball` only for the level hero
@@ -216,7 +215,10 @@ Server rules worth mirroring in the UI (the server stays authoritative):
 
 | Identifier | Element |
 |---|---|
-| `home.account` | toolbar button opening AccountView |
+| `home.upcoming` / `home.empty` | nearest accepted future game / useful empty state |
+| `friends.search` / `friends.row` | global directory entry / relationship rows |
+| `profile.friendship` | relationship state and actions |
+| `matches.upcoming` / `upcoming.create` / `upcoming.publish` / `upcoming.join` / `upcoming.result` | scheduling flow |
 | `home.level` | level hero on HomeView |
 | `home.actions` | banner/row pointing to matches that need action |
 | `home.rating` | rating chart block (navigates to RatingDetailView) |
@@ -234,3 +236,37 @@ Server rules worth mirroring in the UI (the server stays authoritative):
 | `profile.newMatch` | "new match with this player" action |
 | `onboarding.displayName`, `onboarding.username`, `onboarding.city`, `onboarding.next`, `onboarding.finish` | onboarding controls |
 | `account.editProfile`, `account.security`, `account.signOut`, `account.deleteAccount` | AccountView rows |
+
+## Social and scheduling contracts (1.1.0)
+
+| Method & path | Body / query | Response |
+|---|---|---|
+| GET `v1/friends` | | `{accepted,incoming,outgoing}` arrays of `{player:PlayerCard,status,requested_at}` |
+| GET `v1/friends/{id}` | | `{player_id,status:none/incoming/outgoing/accepted}` |
+| POST `v1/friends/{id}/request` | | relationship status |
+| POST `v1/friends/{id}/respond` | `{decision:accepted/rejected}` | relationship status |
+| DELETE `v1/friends/{id}` | | cancel/decline/remove current relationship |
+| GET `v1/upcoming-matches` | `scope=open/mine,accepted_only?,city_id?,limit≤50,offset` | `{items:[UpcomingMatch],next_offset}` |
+| POST `v1/upcoming-matches` | `Idempotency-Key:UUID`; `{client_id?,starts_at,city_id,club_id?,location,match_type,min_level,max_level,note?}` | `UpcomingMatch` |
+| GET `v1/upcoming-matches/{id}` | | `UpcomingMatch` |
+| POST `v1/upcoming-matches/{id}/join` | | accepted seat or pending application, `UpcomingMatch` |
+| POST `v1/upcoming-matches/{id}/requests/{player}/respond` | `{decision:accepted/rejected}` | organizer-only, `UpcomingMatch` |
+| POST `v1/upcoming-matches/{id}/leave` | | withdraw own application/seat before start |
+| POST `v1/upcoming-matches/{id}/cancel` | | organizer-only, before result publication |
+| POST `v1/upcoming-matches/{id}/result` | existing create-match body, `Idempotency-Key:UUID` | existing `MatchDetail` |
+
+`UpcomingMatch` includes organizer, starts_at, city/club/location, type, inclusive min/max level, note, status (`open/full/awaiting_result/result_pending/completed/cancelled`), participants `{player,joined_at}`, applications `{player,status,requested_at}`, spots_left, admission `{min_reliability:70,minimum_ranked_matches:5}`, viewer `{is_organizer,participation,can_join,admission:auto/approval/out_of_range}`, result_match_id/result_status. Application lists are scoped to organizer or the applicant. Dates are UTC ISO8601, displayed in the device timezone.
+
+Admission uses the existing uncertainty-aware rating, including inactivity. ≥5 ranked matches, ≥70% reliability and level within the game interval auto-admits. Reliable ratings outside the interval are rejected; preliminary or insufficiently reliable players can ask the organizer even outside it. No calibration game mode or promised reliability after a fixed match count. Joining requires live connectivity; cache does not reserve a place.
+
+The game row serializes joins/decisions/leaves/result publication. Four seats maximum, one row per player, organizer retains their seat. Any accepted participant can publish a result after starts_at with exactly the admitted four IDs, the game’s type/club and played_at≥starts_at. Existing format/score/date limits still apply. Replays return the linked result; conflicting payloads fail. Subsequent legacy result edits may correct score/format/teams/sides but cannot substitute admitted players/type/club or move the time before the game. Participation approval never confirms score. Cancellation/disputes/expiry preserve the existing scored-match lifecycle.
+
+`PlayerStats.last_ten={matches,wins,losses}` is additive. Older cached responses fall back to their actual ten-element `form`. `form` stays newest-first; UI renders oldest→newest. `streak` now traverses the complete confirmed history, excluding pending/disputed/cancelled/expired results.
+
+`MatchDetail.scheduled_match_id` and `scheduled_starts_at` are optional additive fields. They are null for ordinary played matches. The linked-result editor locks the published type/club/earliest date and admitted IDs during both creation and later score correction; selecting another admitted player swaps positions rather than duplicating them. Result confirmation remains independent of admission.
+
+An uncertain game-publication response retains the original body and idempotency key for retries and temporarily locks those parameters. Definitive validation failures allow corrections. UI fixtures shift upcoming dates relative to the test run while preserving their database-generated content, so a fixed calendar date cannot invalidate the nearest-game test.
+
+An authoritative `player_not_found` response revokes cached profile, DNA, match history and all four rating periods, including in-flight history/pagination responses. Network/transient failures retain cache with its stale notice. This distinction prevents a removed friendship from continuing to reveal analytics after the server has denied access.
+
+Rating periods cache by dataRevision, explicit refresh reloads, and cancelled/older responses cannot replace new ones. Chart preserves every point with vectorized marks; statistics are prepared on load rather than each picker render. Segmented match-type selection uses only the system animation. Physical-device frame pacing remains a separate acceptance check; simulator success does not prove it.

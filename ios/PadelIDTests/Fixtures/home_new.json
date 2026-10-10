@@ -109,6 +109,11 @@
       "wins": 0,
       "matches": 0
     },
+    "last_ten": {
+      "wins": 0,
+      "losses": 0,
+      "matches": 0
+    },
     "partners": [],
     "tiebreaks": {
       "won": 0,
@@ -157,7 +162,7 @@
     "reliability": 7,
     "discoverable": true,
     "display_name": "Илья Громов",
-    "member_since": "2026-10-08T05:52:20.96971+00:00",
+    "member_since": "2026-10-09T20:54:27.615366+00:00",
     "dominant_hand": "right",
     "playing_since": 2025,
     "preferred_side": "right"

@@ -144,7 +144,7 @@ struct BrandMark: View {
     }
 }
 
-struct HexagonShape: Shape {
+nonisolated struct HexagonShape: Shape {
     func path(in rect: CGRect) -> Path {
         let center = CGPoint(x: rect.midX, y: rect.midY)
         let radius = min(rect.width, rect.height) / 2

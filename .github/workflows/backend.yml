@@ -76,6 +76,15 @@ jobs:
           PGDATABASE: postgres
         run: ./scripts/db/run-tests.sh
 
+      - name: Database concurrency regressions (independent connections)
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: "54322"
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: postgres
+        run: python3 scripts/db/run-concurrency-tests.py
+
       - name: Database linter
         run: supabase db lint --level warning --fail-on error
 

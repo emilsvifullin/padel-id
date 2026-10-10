@@ -1,10 +1,12 @@
 import SwiftUI
+import Observation
 
 /// Rating history of any player: chart for a chosen period, summary with
 /// reliability and the list of rating changes.
 struct RatingDetailView: View {
     let playerId: UUID
     @Environment(AppModel.self) private var app
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var range: RatingDetailRange = .quarter
     @State private var histories: RatingDetailHistories
     @State private var player: Resource<PlayerProfileResponse>
@@ -28,6 +30,8 @@ struct RatingDetailView: View {
                 .labelsHidden()
                 .listRowInsets(EdgeInsets())
                 .listRowBackground(Color.clear)
+                .accessibilityIdentifier("rating.period")
+                .transaction { if reduceMotion { $0.animation = nil } }
             }
             content(histories[range])
         }
@@ -36,18 +40,30 @@ struct RatingDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sensoryFeedback(.selection, trigger: range)
         .task(id: RatingDetailLoadKey(range: range, revision: app.dataRevision)) {
-            await histories[range].load(using: app)
+            await histories.load(range, using: app, revision: app.dataRevision)
         }
-        .task(id: app.dataRevision) { await player.load(using: app) }
-        .refreshable { [history = histories[range], player = self.player, app = self.app] in
-            await history.load(using: app)
+        .task(id: app.dataRevision) { await loadPlayer() }
+        .refreshable { [histories = self.histories, range = self.range, player = self.player, app = self.app] in
+            await histories.load(range, using: app, revision: app.dataRevision, force: true)
             await player.load(using: app)
+            if let error = player.error, error.code == "player_not_found" {
+                histories.revokeAccess(error, cache: app.cache)
+            }
         }
     }
 
     @ViewBuilder
-    private func content(_ resource: Resource<RatingHistory>) -> some View {
-        if let history = resource.value {
+    private func content(_ resource: RatingDetailHistory) -> some View {
+        if let error = player.error, error.code == "player_not_found" {
+            Section {
+                ErrorStateView(error: error) {
+                    Task {
+                        await loadPlayer()
+                        await histories.load(range, using: app, revision: app.dataRevision, force: true)
+                    }
+                }
+            }
+        } else if let history = resource.value {
             if resource.isStale, let error = resource.error {
                 Section {
                     StaleDataBanner(error: error)
@@ -55,12 +71,18 @@ struct RatingDetailView: View {
                         .listRowBackground(Color.clear)
                 }
             }
-            RatingDetailSections(history: history, range: range, rating: player.value?.rating,
+            RatingDetailSections(snapshot: history, range: range, rating: player.value?.rating,
                                  isMe: app.me?.userId == playerId)
+                // Periods have different domains and lists of events. They
+                // replace data immediately; only the system picker animates.
+                .transaction { $0.animation = nil }
         } else if let error = resource.error {
             Section {
                 ErrorStateView(error: error) {
-                    Task { await resource.load(using: app) }
+                    Task {
+                        await histories.load(range, using: app, revision: app.dataRevision, force: true)
+                        await loadPlayer()
+                    }
                 }
             }
         } else {
@@ -70,11 +92,18 @@ struct RatingDetailView: View {
             }
         }
     }
+
+    private func loadPlayer() async {
+        await player.load(using: app)
+        if let error = player.error, error.code == "player_not_found" {
+            histories.revokeAccess(error, cache: app.cache)
+        }
+    }
 }
 
 // MARK: - Period
 
-private nonisolated enum RatingDetailRange: String, CaseIterable, Identifiable, Hashable, Sendable {
+nonisolated enum RatingDetailRange: String, CaseIterable, Identifiable, Hashable, Sendable {
     case month, quarter, year, all
 
     var id: String { rawValue }
@@ -115,20 +144,34 @@ private nonisolated struct RatingDetailLoadKey: Hashable, Sendable {
 
 /// One cache-first resource per period, created up front so switching periods
 /// keeps already loaded data.
-private struct RatingDetailHistories {
-    let month: Resource<RatingHistory>
-    let quarter: Resource<RatingHistory>
-    let year: Resource<RatingHistory>
-    let all: Resource<RatingHistory>
+struct RatingDetailHistories {
+    let playerId: UUID
+    let month: RatingDetailHistory
+    let quarter: RatingDetailHistory
+    let year: RatingDetailHistory
+    let all: RatingDetailHistory
 
     init(playerId: UUID) {
-        month = Self.make(playerId, range: .month)
-        quarter = Self.make(playerId, range: .quarter)
-        year = Self.make(playerId, range: .year)
-        all = Self.make(playerId, range: .all)
+        self.playerId = playerId
+        month = RatingDetailHistory(playerId: playerId, range: .month)
+        quarter = RatingDetailHistory(playerId: playerId, range: .quarter)
+        year = RatingDetailHistory(playerId: playerId, range: .year)
+        all = RatingDetailHistory(playerId: playerId, range: .all)
     }
 
-    subscript(range: RatingDetailRange) -> Resource<RatingHistory> {
+    func load(_ range: RatingDetailRange, using app: AppModel, revision: Int, force: Bool = false) async {
+        let history = self[range]
+        if let error = await history.load(using: app, revision: revision, force: force), error.code == "player_not_found" {
+            revokeAccess(error, cache: app.cache)
+        }
+    }
+
+    func revokeAccess(_ error: APIError, cache: ResponseCache) {
+        for range in RatingDetailRange.allCases { self[range].revokeAccess(error) }
+        cache.removePlayerData(playerId)
+    }
+
+    subscript(range: RatingDetailRange) -> RatingDetailHistory {
         switch range {
         case .month: month
         case .quarter: quarter
@@ -137,20 +180,129 @@ private struct RatingDetailHistories {
         }
     }
 
-    private static func make(_ playerId: UUID, range: RatingDetailRange) -> Resource<RatingHistory> {
-        let path = "v1/players/\(playerId.uuidString.lowercased())/rating-history"
-        let days = range.days
-        let query: [URLQueryItem] = days.map { [URLQueryItem(name: "days", value: String($0))] } ?? []
-        return Resource<RatingHistory>(cacheKey: CacheKey.ratingHistory(playerId, days: days)) {
-            .get(path, query: query)
+}
+
+/// A period remains fresh until a domain mutation or explicit refresh. Every
+/// load owns a token, so an older/cancelled response cannot replace a newer
+/// refresh, clear its loading state, or overwrite its cache.
+@Observable
+final class RatingDetailHistory {
+    private(set) var value: RatingDetailSnapshot?
+    private(set) var error: APIError?
+    private(set) var isLoading = false
+    private(set) var isStale = false
+    private let cacheKey: String
+    private let endpoint: Endpoint
+    private let range: RatingDetailRange
+    private var loadedRevision: Int?
+    private var requestToken: UUID?
+
+    init(playerId: UUID, range: RatingDetailRange) {
+        self.range = range
+        cacheKey = CacheKey.ratingHistory(playerId, days: range.days)
+        let query = range.days.map { [URLQueryItem(name: "days", value: String($0))] } ?? []
+        endpoint = .get("v1/players/\(playerId.uuidString.lowercased())/rating-history", query: query)
+    }
+
+    @discardableResult
+    func load(using app: AppModel, revision: Int, force: Bool = false) async -> APIError? {
+        await load(revision: revision, force: force,
+                   cached: { app.cache.data(for: self.cacheKey) },
+                   fetch: { try await app.api.data(self.endpoint) },
+                   store: { app.cache.store($0, for: self.cacheKey) },
+                   remove: { app.cache.remove(self.cacheKey) })
+    }
+
+    // Separate transport from state management to exercise cancellations and
+    // out-of-order replies without a real network or authentication secrets.
+    @discardableResult
+    func load(revision: Int, force: Bool = false, cached: () -> Data?,
+              fetch: () async throws -> Data, store: (Data) -> Void, remove: () -> Void = {}) async -> APIError? {
+        guard force || loadedRevision != revision else { return nil }
+        let token = UUID()
+        requestToken = token
+        isLoading = true
+        defer { if requestToken == token { isLoading = false } }
+        if value == nil, let data = cached(),
+           let snapshot = try? await RatingDetailSnapshot.decode(data, range: range) {
+            guard requestToken == token, !Task.isCancelled else { return nil }
+            value = snapshot
+            isStale = true
         }
+        do {
+            try Task.checkCancellation()
+            let data = try await fetch()
+            let snapshot = try await RatingDetailSnapshot.decode(data, range: range)
+            guard requestToken == token, !Task.isCancelled else { return nil }
+            value = snapshot
+            error = nil
+            isStale = false
+            loadedRevision = revision
+            store(data)
+        } catch is CancellationError {
+            return nil
+        } catch {
+            guard requestToken == token, !Task.isCancelled else { return nil }
+            self.error = error as? APIError ?? APIError(kind: .decoding, code: "decoding", serverMessage: nil)
+            if self.error?.code == "player_not_found" {
+                value = nil
+                isStale = false
+                loadedRevision = nil
+                remove()
+            } else {
+                isStale = value != nil
+            }
+            return self.error
+        }
+        return nil
+    }
+
+    func revokeAccess(_ error: APIError) {
+        requestToken = UUID()
+        value = nil
+        self.error = error
+        isLoading = false
+        isStale = false
+        loadedRevision = nil
+    }
+}
+
+/// Prepared once per response, away from the main actor. All original chart
+/// points are retained, including the server's predecessor before the range;
+/// only the period totals and event list exclude that predecessor.
+nonisolated struct RatingDetailSnapshot: Sendable {
+    let history: RatingHistory
+    let chart: RatingChartData
+    let matchPoints: [RatingPoint]
+    let wins: Int
+    let periodChange: Double
+    let changes: [RatingPoint]
+
+    init(history: RatingHistory, range: RatingDetailRange, now: Date = .now) {
+        self.history = history
+        chart = RatingChartData(points: history.points)
+        let start = range.days.map { now.addingTimeInterval(-Double($0) * 86_400) }
+        let points = history.points.filter { point in
+            guard let start else { return true }
+            return point.at >= start
+        }
+        matchPoints = points.filter { $0.kind == "match" }
+        wins = matchPoints.filter { $0.won == true }.count
+        periodChange = matchPoints.reduce(0) { $0 + ($1.delta ?? 0) }
+        changes = Array(points.reversed())
+    }
+
+    @concurrent
+    static func decode(_ data: Data, range: RatingDetailRange) async throws -> RatingDetailSnapshot {
+        let history = try JSONCoding.decoder.decode(RatingHistory.self, from: data)
+        return RatingDetailSnapshot(history: history, range: range)
     }
 }
 
 // MARK: - Content
 
 private struct RatingDetailSections: View {
-    let history: RatingHistory
+    let snapshot: RatingDetailSnapshot
     let range: RatingDetailRange
     let rating: RatingSummary?
     /// The screen shows the current user's own rating (the copy says «ваша пара»).
@@ -159,7 +311,7 @@ private struct RatingDetailSections: View {
     var body: some View {
         Section {
             if history.points.count >= 2 {
-                RatingChart(points: history.points)
+                RatingChart(data: snapshot.chart)
                     .frame(height: 260)
                     .padding(.vertical, 8)
             } else {
@@ -223,21 +375,11 @@ private struct RatingDetailSections: View {
         }
     }
 
-    /// Points inside the selected period. The server also returns the last
-    /// event before the period as the starting value of the chart.
-    private var pointsInRange: [RatingPoint] {
-        guard let days = range.days else { return history.points }
-        let start = Date.now.addingTimeInterval(-Double(days) * 86_400)
-        return history.points.filter { $0.at >= start }
-    }
-
-    private var matchPoints: [RatingPoint] { pointsInRange.filter { $0.kind == "match" } }
-
-    private var wins: Int { matchPoints.filter { $0.won == true }.count }
-
-    private var periodChange: Double { matchPoints.reduce(0) { $0 + ($1.delta ?? 0) } }
-
-    private var changes: [RatingPoint] { Array(pointsInRange.reversed()) }
+    private var history: RatingHistory { snapshot.history }
+    private var matchPoints: [RatingPoint] { snapshot.matchPoints }
+    private var wins: Int { snapshot.wins }
+    private var periodChange: Double { snapshot.periodChange }
+    private var changes: [RatingPoint] { snapshot.changes }
 
     private var currentLevel: Double? { rating?.mu ?? history.points.last?.mu }
 

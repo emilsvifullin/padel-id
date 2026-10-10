@@ -12,7 +12,7 @@
         "match_signal": false,
         "peer_signals": 3,
         "coach_signals": 1,
-        "coach_verified_at": "2026-10-02T10:30:00+00:00"
+        "coach_verified_at": "2026-10-03T10:30:00+00:00"
       },
       {
         "key": "defense",
@@ -24,7 +24,7 @@
         "match_signal": false,
         "peer_signals": 2,
         "coach_signals": 1,
-        "coach_verified_at": "2026-10-02T10:30:00+00:00"
+        "coach_verified_at": "2026-10-03T10:30:00+00:00"
       },
       {
         "key": "transition_lob",
@@ -36,7 +36,7 @@
         "match_signal": false,
         "peer_signals": 5,
         "coach_signals": 1,
-        "coach_verified_at": "2026-10-02T10:30:00+00:00"
+        "coach_verified_at": "2026-10-03T10:30:00+00:00"
       },
       {
         "key": "net_game",
@@ -48,11 +48,11 @@
         "match_signal": false,
         "peer_signals": 7,
         "coach_signals": 1,
-        "coach_verified_at": "2026-10-02T10:30:00+00:00"
+        "coach_verified_at": "2026-10-03T10:30:00+00:00"
       },
       {
         "key": "overheads",
-        "level": 4.22,
+        "level": 4.23,
         "offset": -0.27,
         "trend_30d": 0.09,
         "confidence": 0.50,
@@ -60,7 +60,7 @@
         "match_signal": false,
         "peer_signals": 2,
         "coach_signals": 1,
-        "coach_verified_at": "2026-10-02T10:30:00+00:00"
+        "coach_verified_at": "2026-10-03T10:30:00+00:00"
       },
       {
         "key": "consistency_decisions",
@@ -72,7 +72,7 @@
         "match_signal": true,
         "peer_signals": 2,
         "coach_signals": 1,
-        "coach_verified_at": "2026-10-02T10:30:00+00:00"
+        "coach_verified_at": "2026-10-03T10:30:00+00:00"
       }
     ]
   },
@@ -190,6 +190,11 @@
       "wins": 3,
       "matches": 3
     },
+    "last_ten": {
+      "wins": 7,
+      "losses": 3,
+      "matches": 10
+    },
     "partners": [
       {
         "wins": 7,
@@ -266,19 +271,19 @@
       "won": 6,
       "lost": 3
     },
-    "last_played_at": "2026-10-05T16:00:00+00:00"
+    "last_played_at": "2026-10-06T16:00:00+00:00"
   },
   "rating": {
     "mu": 4.49,
     "sigma": 0.621,
     "peak_mu": 4.49,
-    "idle_days": 2,
+    "idle_days": 3,
     "trend_30d": 0.24,
     "initial_mu": 3.60,
     "provisional": false,
     "ranked_wins": 11,
     "reliability": 47,
-    "last_ranked_at": "2026-10-05T19:05:00+00:00",
+    "last_ranked_at": "2026-10-06T19:05:00+00:00",
     "ranked_matches": 16
   },
   "viewer": {
@@ -305,7 +310,7 @@
     "reliability": 47,
     "discoverable": true,
     "display_name": "Михаил Орлов",
-    "member_since": "2026-07-08T17:40:00+00:00",
+    "member_since": "2026-07-09T17:40:00+00:00",
     "dominant_hand": "right",
     "playing_since": 2021,
     "preferred_side": "right"
@@ -522,11 +527,11 @@
       ],
       "version": 1,
       "club_name": "Corner Padel Club",
-      "played_at": "2026-10-07T16:30:00+00:00",
-      "expires_at": "2026-10-14T19:00:00+00:00",
+      "played_at": "2026-10-08T16:30:00+00:00",
+      "expires_at": "2026-10-15T19:00:00+00:00",
       "is_creator": false,
       "match_type": "ranked",
-      "updated_at": "2026-10-07T19:00:00+00:00",
+      "updated_at": "2026-10-08T19:00:00+00:00",
       "my_response": "pending",
       "winner_team": 2,
       "needs_action": true,
@@ -655,11 +660,11 @@
       ],
       "version": 1,
       "club_name": "Падел Арена Лужники",
-      "played_at": "2026-10-05T16:00:00+00:00",
+      "played_at": "2026-10-06T16:00:00+00:00",
       "expires_at": null,
       "is_creator": false,
       "match_type": "ranked",
-      "updated_at": "2026-10-05T19:05:00+00:00",
+      "updated_at": "2026-10-06T19:05:00+00:00",
       "my_response": "confirmed",
       "winner_team": 1,
       "needs_action": false,
@@ -797,11 +802,11 @@
       ],
       "version": 1,
       "club_name": "Падел Арена Лужники",
-      "played_at": "2026-10-01T08:00:00+00:00",
+      "played_at": "2026-10-02T08:00:00+00:00",
       "expires_at": null,
       "is_creator": true,
       "match_type": "ranked",
-      "updated_at": "2026-10-01T11:05:00+00:00",
+      "updated_at": "2026-10-02T11:05:00+00:00",
       "my_response": "confirmed",
       "winner_team": 1,
       "needs_action": false,
@@ -936,11 +941,11 @@
       ],
       "version": 1,
       "club_name": "Corner Padel Club",
-      "played_at": "2026-09-23T17:00:00+00:00",
+      "played_at": "2026-09-24T17:00:00+00:00",
       "expires_at": null,
       "is_creator": false,
       "match_type": "ranked",
-      "updated_at": "2026-09-23T20:05:00+00:00",
+      "updated_at": "2026-09-24T20:05:00+00:00",
       "my_response": "confirmed",
       "winner_team": 2,
       "needs_action": false,
@@ -1071,11 +1076,11 @@
       ],
       "version": 1,
       "club_name": "Падел Арена Лужники",
-      "played_at": "2026-09-19T16:00:00+00:00",
+      "played_at": "2026-09-20T16:00:00+00:00",
       "expires_at": null,
       "is_creator": false,
       "match_type": "ranked",
-      "updated_at": "2026-09-19T19:05:00+00:00",
+      "updated_at": "2026-09-20T19:05:00+00:00",
       "my_response": "confirmed",
       "winner_team": 1,
       "needs_action": false,
@@ -1210,11 +1215,11 @@
       ],
       "version": 1,
       "club_name": "Corner Padel Club",
-      "played_at": "2026-09-16T07:00:00+00:00",
+      "played_at": "2026-09-17T07:00:00+00:00",
       "expires_at": null,
       "is_creator": true,
       "match_type": "ranked",
-      "updated_at": "2026-09-16T10:05:00+00:00",
+      "updated_at": "2026-09-17T10:05:00+00:00",
       "my_response": "confirmed",
       "winner_team": 1,
       "needs_action": false,
@@ -1256,7 +1261,7 @@
         "transition_lob": 3,
         "consistency_decisions": 4
       },
-      "created_at": "2026-10-02T10:30:00+00:00"
+      "created_at": "2026-10-03T10:30:00+00:00"
     }
   ],
   "open_matches_count": 3

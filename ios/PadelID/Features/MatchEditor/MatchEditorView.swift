@@ -5,6 +5,7 @@ import SwiftUI
 struct MatchEditorView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .title3) private var pointsFieldWidth: CGFloat = 56
 
@@ -45,7 +46,7 @@ struct MatchEditorView: View {
                 }
                 .scrollDismissesKeyboard(.interactively)
                 .onChange(of: model.failureCount) {
-                    withAnimation(.smooth) {
+                    withAnimation(reduceMotion ? nil : .smooth) {
                         proxy.scrollTo(Self.topAnchor, anchor: .top)
                     }
                     if let error = model.visibleError {
@@ -53,7 +54,7 @@ struct MatchEditorView: View {
                     }
                 }
             }
-            .navigationTitle(model.isEditing ? "Изменить матч" : "Новый матч")
+            .navigationTitle(model.isEditing ? "Изменить матч" : model.upcomingMatch != nil ? "Внести результат" : "Новый матч")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
             .sheet(item: $pickingSlot) { slot in
@@ -62,6 +63,10 @@ struct MatchEditorView: View {
             .sheet(item: $editingSet) { target in
                 scoreSheet(for: target)
             }
+        }
+        .alert(model.isEditing ? "Отменить изменения?" : "Отменить ввод матча?", isPresented: $isConfirmingDiscard) {
+            Button(model.isEditing ? "Не сохранять" : "Отменить ввод", role: .destructive) { dismiss() }
+            Button(model.isEditing ? "Продолжить редактирование" : "Продолжить ввод", role: .cancel) {}
         }
         .interactiveDismissDisabled(model.isDirty || model.isSubmitting)
         .task(id: previewKey) {
@@ -91,13 +96,7 @@ struct MatchEditorView: View {
         ToolbarItem(placement: .cancellationAction) {
             Button("Отмена", action: cancel)
                 .disabled(model.isSubmitting)
-                .confirmationDialog(model.isEditing ? "Отменить изменения?" : "Отменить ввод матча?",
-                                    isPresented: $isConfirmingDiscard, titleVisibility: .visible) {
-                    Button(model.isEditing ? "Не сохранять" : "Отменить ввод", role: .destructive) {
-                        dismiss()
-                    }
-                    Button(model.isEditing ? "Продолжить редактирование" : "Продолжить ввод", role: .cancel) {}
-                }
+
         }
         ToolbarItem(placement: .confirmationAction) {
             Button(action: submit) {
@@ -156,7 +155,7 @@ struct MatchEditorView: View {
 
     private var typeSection: some View {
         Section {
-            typePicker
+            typePicker.disabled(model.isScheduledResult)
         } header: {
             Text("Тип матча")
         } footer: {
@@ -186,7 +185,7 @@ struct MatchEditorView: View {
         Binding(
             get: { model.draft.matchType },
             set: { value in
-                withAnimation(.smooth) { model.setMatchType(value) }
+                model.setMatchType(value)
             })
     }
 
@@ -199,7 +198,7 @@ struct MatchEditorView: View {
                 me: meCard,
                 onSelect: { slot in pickingSlot = slot },
                 onSwap: { team in
-                    withAnimation(.snappy) { model.swapSides(team: team) }
+                    withAnimation(reduceMotion ? nil : .snappy) { model.swapSides(team: team) }
                 })
                 .listRowInsets(EdgeInsets(top: 12, leading: 14, bottom: 14, trailing: 14))
         } header: {
@@ -222,11 +221,13 @@ struct MatchEditorView: View {
 
     private func pickerSheet(for slot: EditorSlot) -> some View {
         var excluded = Set(model.draft.lineupIds)
+        if model.isScheduledResult { excluded.removeAll() }
         if let meId { excluded.insert(meId) }
         return EditorPlayerPicker(
             title: slot.team == 1 ? "Партнёр" : "Соперник",
             current: model.draft.player(at: slot, me: meCard),
             excluded: excluded,
+            allowedPlayers: model.allowedPlayers,
             onSelect: { card in model.setPlayer(card, at: slot) })
     }
 
@@ -373,6 +374,7 @@ struct MatchEditorView: View {
                     LabeledContent("Клуб", value: model.draft.club?.name ?? "Не указан")
                 }
                 .accessibilityIdentifier("editor.club")
+                .disabled(model.isScheduledResult)
             }
         } header: {
             Text("Когда и где")
@@ -392,6 +394,7 @@ struct MatchEditorView: View {
             lower = min(lower, model.initial.playedAt)
             upper = max(upper, model.initial.playedAt)
         }
+        if let start = model.scheduledStartsAt { lower = min(upper, max(lower, start)) }
         return lower...upper
     }
 

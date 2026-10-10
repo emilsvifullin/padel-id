@@ -65,10 +65,13 @@ iPhone (Padel ID) ──HTTPS──▶ Vercel: padel-id-gamma.vercel.app (Hono, 
   The gateway also limits password-protected account actions to 20 per client
   IP per 15 minutes, and sign-in to 30 per IP, 10 per email and IP (10 minutes)
   and 100 per email (hour); email buckets are keyed by a SHA-256 of the address.
-- A player with `discoverable = false` is visible only to themselves, to players
-  who share a match with them and to administrators: search, profile, DNA,
-  rating history, match history, compatibility and coach assessment answer
-  `player_not_found` to anyone else. Line-up cards inside matches stay visible.
+- Hidden profiles are available to owner/admin, shared scored-match peers, accepted friends, accepted scheduled-game peers, and the recipient of the hidden player’s pending friend request. Voluntary requests expose their requester, not a hidden recipient. Search/profile/DNA/rating/matches/compatibility/coach assessment enforce the same predicate. Unrelated viewers of public game cards receive masked hidden cards; organizers inspect their own applicants. Email and personal settings stay owner-only.
+- Mutual friendship uses a canonical UUID pair and a transaction advisory lock. Only the pair’s members may request/accept/reject/cancel/remove; only the recipient accepts. No asymmetric copies. Account anonymization closes relationships and releases future seats.
+- Social mutations hold active-profile locks in UUID order before relationship/game locks. Account deletion cannot complete cleanup and then be followed by a previously waiting join or unconfirmed linked result; confirmed history remains intact.
+- Future games have separate tables and RPCs, one row per applicant/participant, a four-seat constraint and a row lock for every capacity-changing action. Organizer handles applications; reliable in-range users auto-admit. The existing rating engine provides level/reliability (including inactivity); new admission threshold is70% and5 ranked matches, without a guarantee after any count. Reliable out-of-range users are refused; provisional/insufficiently reliable users may apply.
+- Any admitted participant may publish a scored result after starts_at with the exact four IDs/type/club. The existing scored result, validation, disputes, optimistic versions, idempotency and four confirmations remain authoritative. Deferred constraints and the shared legacy validator prevent subsequent admitted-lineup substitution. Replays of the same linked result do not expire with normal create windows; conflicting input is rejected.
+- Scored details add nullable `scheduled_match_id` and `scheduled_starts_at` for the new editor; released clients ignore them. Expired/cancelled/disputed scores expose `result_status` without claiming the planned game itself was cancelled. The existing serializer and its access checks are retained.
+- `player_stats` now computes streak over all confirmed history; ten-result form is separate and additive `last_ten` exposes actual totals.
 
 ## Secrets
 

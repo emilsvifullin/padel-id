@@ -6,6 +6,7 @@ struct EditorPlayerPicker: View {
     let title: String
     let current: PlayerCard?
     let excluded: Set<UUID>
+    var allowedPlayers: [PlayerCard]?
     let onSelect: (PlayerCard?) -> Void
 
     @Environment(AppModel.self) private var app
@@ -14,12 +15,14 @@ struct EditorPlayerPicker: View {
     @State private var recent = Resource<[PlayerCard]>(cacheKey: CacheKey.recentPlayers) {
         .get("v1/players/recent", query: [URLQueryItem(name: "limit", value: "20")])
     }
+    @State private var friends = Resource<FriendsResponse>(cacheKey: CacheKey.friends) { .get("v1/friends") }
     @State private var directory = EditorPlayerDirectory()
 
-    init(title: String, current: PlayerCard?, excluded: Set<UUID>, onSelect: @escaping (PlayerCard?) -> Void) {
+    init(title: String, current: PlayerCard?, excluded: Set<UUID>, allowedPlayers: [PlayerCard]? = nil, onSelect: @escaping (PlayerCard?) -> Void) {
         self.title = title
         self.current = current
         self.excluded = excluded
+        self.allowedPlayers = allowedPlayers
         self.onSelect = onSelect
     }
 
@@ -39,7 +42,13 @@ struct EditorPlayerPicker: View {
                 if current != nil {
                     clearSection
                 }
-                if text.isEmpty {
+                if let allowedPlayers {
+                    Section("Участники игры") {
+                        ForEach(allowedPlayers.filter { !excluded.contains($0.id) && (text.isEmpty || $0.displayName.localizedCaseInsensitiveContains(text)) }) { card in
+                            playerButton(card, subtitle: nil)
+                        }
+                    }
+                } else if text.isEmpty {
                     browseContent
                 } else {
                     searchContent(for: text)
@@ -58,8 +67,10 @@ struct EditorPlayerPicker: View {
                 }
             }
         }
-        .task { await recent.load(using: app) }
+        .task { if allowedPlayers == nil { await recent.load(using: app) } }
+        .task { if allowedPlayers == nil { await friends.load(using: app) } }
         .task(id: text) {
+            guard allowedPlayers == nil else { return }
             if !text.isEmpty {
                 do {
                     try await Task.sleep(for: .milliseconds(300))
@@ -123,11 +134,16 @@ struct EditorPlayerPicker: View {
     /// Empty query: recent partners and opponents, then everyone else A–Z.
     @ViewBuilder
     private var browseContent: some View {
-        let recents = (recent.value ?? []).filter { !excluded.contains($0.id) }
+        let accepted = (friends.value?.accepted ?? []).map(\.player).filter { !excluded.contains($0.id) }
+        let friendIds = Set(accepted.map(\.id))
+        let recents = (recent.value ?? []).filter { !excluded.contains($0.id) && !friendIds.contains($0.id) }
         let recentIds = Set(recents.map(\.id))
         let others = directory.loadedQuery == ""
-            ? directory.items.filter { !excluded.contains($0.id) && !recentIds.contains($0.id) }
+            ? directory.items.filter { !excluded.contains($0.id) && !recentIds.contains($0.id) && !friendIds.contains($0.id) }
             : []
+        if !accepted.isEmpty {
+            Section("Друзья") { ForEach(accepted) { card in playerButton(card, subtitle: nil) } }
+        }
         if !recents.isEmpty {
             Section("Недавние") {
                 ForEach(recents) { card in
@@ -146,7 +162,7 @@ struct EditorPlayerPicker: View {
                 loadMoreRow
             }
         }
-        if recents.isEmpty && others.isEmpty {
+        if accepted.isEmpty && recents.isEmpty && others.isEmpty {
             browseStatus
         }
     }

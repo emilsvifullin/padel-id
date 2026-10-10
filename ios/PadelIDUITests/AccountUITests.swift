@@ -9,50 +9,36 @@ final class AccountUITests: PadelIDUITestCase {
         signIn()
         waitForHome()
 
-        // Right after sign-in the toolbar button can still be settling (or
-        // under the save-password sheet), and the tap misses; tap again
-        // until the screen opens.
-        let account = find("home.account")
-        for _ in 0..<3 {
-            declineSavePasswordIfShown()
-            _ = waitUntil(timeout: 5) { account.isHittable }
-            account.tap()
-            if waitUntil(timeout: 5, { isScreenShown("Аккаунт") }) {
-                break
-            }
-        }
-        requireScreen("Аккаунт")
+        selectTab("Профиль")
+        requireScreen("Профиль")
         let editProfile = require(element("account.editProfile"), "account.editProfile")
         snap("account")
 
         // Profile
-        open(editProfile, screen: "Профиль")
+        open(editProfile, screen: "Изменить профиль")
         snap("edit-profile")
-        goBack(previousTitle: "Аккаунт")
-        requireScreen("Аккаунт")
+        goBack(previousTitle: "Профиль")
+        requireScreen("Профиль")
 
         // Security
         open(element("account.security"), screen: "Безопасность")
         snap("security")
-        goBack(previousTitle: "Аккаунт")
-        requireScreen("Аккаунт")
+        goBack(previousTitle: "Профиль")
+        requireScreen("Профиль")
 
         // How the rating works
         open(aboutRatingRow(), screen: "Рейтинг и Padel DNA")
         snap("about-rating")
-        goBack(previousTitle: "Аккаунт")
-        requireScreen("Аккаунт")
+        goBack(previousTitle: "Профиль")
+        requireScreen("Профиль")
 
         // Account deletion (only opened, never confirmed)
         open(element("account.deleteAccount"), screen: "Удаление аккаунта")
         snap("delete-account")
-        goBack(previousTitle: "Аккаунт")
-        requireScreen("Аккаунт")
+        goBack(previousTitle: "Профиль")
+        requireScreen("Профиль")
 
-        let done = try XCTUnwrap(firstHittable(app.buttons.matching(NSPredicate(format: "label == %@", "Готово"))),
-                                 "Готово is not reachable in the account sheet")
-        done.tap()
-        waitForDisappearance(done, "account sheet")
+        selectTab("Главная")
         waitForHome()
 
         XCTAssertTrue(server.recorded("PATCH", "v1/me").isEmpty, "Opening the profile must not save it")

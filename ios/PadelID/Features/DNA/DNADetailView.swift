@@ -116,13 +116,31 @@ struct DNADetailView: View {
 
 private struct DNADetailHero: View {
     let dna: PadelDNA
+    @State private var presentation: DNADetailPresentation = .chart
 
     var body: some View {
         SectionContainer(padding: 20) {
             VStack(alignment: .leading, spacing: 16) {
-                DNAHexagon(dimensions: dna.dimensions)
-                    .frame(maxWidth: 320)
-                    .frame(maxWidth: .infinity)
+                Picker("Вид Padel DNA", selection: $presentation) {
+                    Text("Диаграмма").tag(DNADetailPresentation.chart)
+                    Text("Показатели").tag(DNADetailPresentation.values)
+                }
+                .pickerStyle(.segmented)
+                .accessibilityIdentifier("dna.presentation")
+                if presentation == .chart {
+                    DNAHexagon(dimensions: dna.dimensions)
+                        .frame(maxWidth: 320)
+                        .frame(maxWidth: .infinity)
+                } else {
+                    VStack(alignment: .leading, spacing: 16) {
+                        ForEach(DNADimension.allCases) { dimension in
+                            if let state = dna.dimensions.first(where: { $0.dimension == dimension }) {
+                                DNADetailLevelBar(dimension: dimension, state: state)
+                            }
+                        }
+                    }
+                    .accessibilityIdentifier("dna.values")
+                }
                 VStack(alignment: .leading, spacing: 6) {
                     Text(archetype.title)
                         .font(.title2.bold())
@@ -145,7 +163,9 @@ private struct DNADetailHero: View {
                     }
                     .accessibilityElement(children: .combine)
                 }
-                Text("Пунктир на диаграмме — общий уровень, вершины показывают направления выше или ниже него. Закрашенные точки — направления, по которым уже достаточно данных.")
+                Text(presentation == .chart
+                     ? "Пунктир на диаграмме — общий уровень, вершины показывают направления выше или ниже него. Закрашенные точки — направления, по которым уже достаточно данных."
+                     : "Уровень по шкале 0–7. Это тот же Padel DNA, что на диаграмме: оценка направления относительно общего уровня, а не отдельное измерение навыка. Достоверность и источники — ниже.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -154,6 +174,36 @@ private struct DNADetailHero: View {
     }
 
     private var archetype: DNAArchetype { DNAArchetype(rawValue: dna.archetype) ?? .forming }
+}
+
+private nonisolated enum DNADetailPresentation: Hashable, Sendable {
+    case chart, values
+}
+
+private struct DNADetailLevelBar: View {
+    let dimension: DNADimension
+    let state: DNADimensionState
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Text(dimension.title)
+                    .font(.subheadline.weight(.medium))
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+                Text(Format.level(state.level))
+                    .font(.headline)
+                    .fontDesign(.rounded)
+                    .monospacedDigit()
+                    .fixedSize()
+            }
+            ProgressView(value: min(7, max(0, state.level)), total: 7)
+                .tint(Theme.accent)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(dimension.title)
+        .accessibilityValue("Уровень \(Format.level(state.level)) из 7; \(Confidence(state.confidence).title)")
+    }
 }
 
 // MARK: - Dimension

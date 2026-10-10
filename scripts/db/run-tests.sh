@@ -11,7 +11,12 @@ for f in "$ROOT"/supabase/tests/*.sql; do
   "${PSQL[@]}" -f "$f" >/dev/null || { echo "failed to load $f"; exit 1; }
 done
 
-mapfile -t TESTS < <("${PSQL[@]}" -At -c "select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'tests' and p.proname like 'test\_%' order by 1")
+# macOS ships Bash 3.2, which does not provide mapfile. Keep this runner usable
+# there as well as in the Linux Supabase CI stack.
+TESTS=()
+while IFS= read -r test_name; do
+  TESTS+=("$test_name")
+done < <("${PSQL[@]}" -At -c "select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'tests' and p.proname like 'test\_%' order by 1")
 pass=0; fail=0
 for t in "${TESTS[@]}"; do
   # `set constraints all immediate` fires deferred constraint triggers that would
