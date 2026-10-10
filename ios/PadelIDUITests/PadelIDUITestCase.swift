@@ -526,15 +526,22 @@ class PadelIDUITestCase: XCTestCase {
                 app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", label)),
             ]
         }
-        // The native save-password prompt can arrive after the home screen
-        // exists. Keep dismissing it while waiting for a tappable tab rather
-        // than treating a temporarily covered button as a missing tab.
+        // The native save-password prompt can arrive between the hittability
+        // check and the tap. A delivered tap alone does not prove selection:
+        // confirm its visible effect and retry after dismissing an interruption.
         if waitUntil(timeout: 15, {
             declineSavePasswordIfShown()
             for query in queries {
                 if let candidate = firstHittable(query) {
+                    if candidate.isSelected { return true }
                     candidate.tap()
-                    return true
+                    if waitUntil(timeout: 2, {
+                        declineSavePasswordIfShown()
+                        return candidate.exists && (candidate.isSelected || isScreenShown(title))
+                    }) {
+                        return true
+                    }
+                    return false
                 }
             }
             return false
@@ -542,7 +549,7 @@ class PadelIDUITestCase: XCTestCase {
             return
         }
         snap("missing-tab-\(title)")
-        XCTFail("Tab «\(title)» not found", file: file, line: line)
+        XCTFail("Tab «\(title)» could not be selected", file: file, line: line)
     }
 
     /// Returns to the previous screen of a navigation stack.
