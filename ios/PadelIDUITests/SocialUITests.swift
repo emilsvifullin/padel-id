@@ -19,7 +19,11 @@ final class SocialUITests: PadelIDUITestCase {
         waitForRequest("POST", "v1/friends/72b11bd9-f270-4ae2-b104-25a132d48204/respond")
         let sent = try XCTUnwrap(server.recorded("POST", "v1/friends/72b11bd9-f270-4ae2-b104-25a132d48204/respond").last)
         XCTAssertEqual(sent.jsonObject?["decision"] as? String, "accepted")
-        open(element("friends.search"), screen: "Найти игроков")
+        // Accepting a request can move the current lazy-list position below
+        // the search row, which must be brought back from above.
+        let search = element("friends.search")
+        scrollIntoView(search, searchBelow: false)
+        open(search, screen: "Найти игроков")
         require(element("playerRow"), "player search preserved")
     }
 

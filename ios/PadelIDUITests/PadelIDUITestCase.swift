@@ -601,12 +601,21 @@ class PadelIDUITestCase: XCTestCase {
         return CGRect(x: screen.minX, y: top, width: screen.width, height: max(bottom - top, 1))
     }
 
-    /// Whether the element is on screen: hittable, or (for non-interactive
-    /// blocks) inside the visible band.
+    /// Whether the element is on screen. XCTest can report a clipped scroll
+    /// target as hittable while its tap lands behind the navigation bar.
+    /// Keep identified scroll targets inside the visible band; fixed controls
+    /// such as navigation buttons only need the usual hittability check.
     func isOnScreen(_ element: XCUIElement, hittable: Bool = true) -> Bool {
         guard element.exists else { return false }
         if hittable {
-            return element.isHittable
+            guard element.isHittable else { return false }
+            let identifier = element.identifier
+            guard !identifier.isEmpty,
+                  app.scrollViews.containing(.any, identifier: identifier).firstMatch.exists else {
+                return true
+            }
+            let frame = element.frame
+            return !frame.isEmpty && visibleBand().contains(CGPoint(x: frame.midX, y: frame.midY))
         }
         let frame = element.frame
         guard !frame.isEmpty else { return false }
@@ -617,9 +626,11 @@ class PadelIDUITestCase: XCTestCase {
     }
 
     /// Scrolls with short, momentum-free drags until the element is on screen.
-    /// Elements that are not created yet (lazy lists) are looked for below.
+    /// Elements that are not created yet (lazy lists) are looked for below by
+    /// default; callers returning to an earlier row can search above instead.
     @discardableResult
     func scrollIntoView(_ element: XCUIElement, hittable: Bool = true, maxDrags: Int = 15,
+                        searchBelow: Bool = true,
                         file: StaticString = #filePath, line: UInt = #line) -> XCUIElement {
         declineSavePasswordIfShown()
         if isOnScreen(element, hittable: hittable) {
@@ -635,9 +646,9 @@ class PadelIDUITestCase: XCTestCase {
                     && waitUntil(timeout: 1, { isOnScreen(element, hittable: hittable) }) {
                     return element
                 }
-                drag(upwards: frame.isEmpty || frame.midY > band.midY)
+                drag(upwards: frame.isEmpty ? searchBelow : frame.midY > band.midY)
             } else {
-                drag(upwards: true)
+                drag(upwards: searchBelow)
             }
             if isOnScreen(element, hittable: hittable) {
                 return element
