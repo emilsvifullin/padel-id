@@ -517,27 +517,31 @@ class PadelIDUITestCase: XCTestCase {
 
     /// Selects a tab of the tab bar by its title.
     func selectTab(_ title: String, alternatives: [String] = [], file: StaticString = #filePath, line: UInt = #line) {
-        declineSavePasswordIfShown()
-        let inTabBar = app.tabBars.buttons[title]
-        if inTabBar.waitForExistence(timeout: 5) && inTabBar.isHittable {
-            inTabBar.tap()
-            return
-        }
         // A badge can extend the label ("Матчи, 1 …"); the search tab can sit
         // outside the tab bar group.
-        for label in [title] + alternatives {
-            let queries = [
+        let queries = ([title] + alternatives).flatMap { label in
+            [
                 app.tabBars.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", label)),
                 app.buttons.matching(NSPredicate(format: "label == %@", label)),
                 app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", label)),
             ]
+        }
+        // The native save-password prompt can arrive after the home screen
+        // exists. Keep dismissing it while waiting for a tappable tab rather
+        // than treating a temporarily covered button as a missing tab.
+        if waitUntil(timeout: 15, {
+            declineSavePasswordIfShown()
             for query in queries {
                 if let candidate = firstHittable(query) {
                     candidate.tap()
-                    return
+                    return true
                 }
             }
+            return false
+        }) {
+            return
         }
+        snap("missing-tab-\(title)")
         XCTFail("Tab «\(title)» not found", file: file, line: line)
     }
 
