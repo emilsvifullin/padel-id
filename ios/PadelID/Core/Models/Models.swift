@@ -164,6 +164,14 @@ nonisolated struct PlayerStats: Codable, Hashable, Sendable {
     let streak: Streak?
     let partners: [PartnerStat]
     let rivals: [PartnerStat]
+    var lastTen: RecentRecord?
+
+    var recentRecord: RecentRecord {
+        if let lastTen { return lastTen }
+        let recent = form.prefix(10)
+        let wins = recent.filter { $0 == "W" }.count
+        return RecentRecord(matches: recent.count, wins: wins, losses: recent.count - wins)
+    }
 }
 
 // MARK: - Matches
@@ -341,6 +349,8 @@ nonisolated struct MatchClub: Codable, Hashable, Sendable {
 
 nonisolated struct MatchDetail: Codable, Hashable, Sendable, Identifiable {
     let id: UUID
+    var scheduledMatchId: UUID?
+    var scheduledStartsAt: Date?
     let matchType: MatchType
     let format: MatchFormat
     let status: MatchStatus

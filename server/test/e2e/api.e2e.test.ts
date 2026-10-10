@@ -2,14 +2,17 @@
 //
 //   E2E_API_URL   base URL of a running gateway (required, otherwise skipped)
 //   E2E_MODE      "full" (default; local disposable stack) or "smoke"
-//                 (production: creates one temporary account without a
-//                 profile and deletes it, leaving no data behind)
+//                 (production: creates one temporary hidden profile, reads
+//                 the deployed social APIs and deletes it in a finally block)
 
 import { describe, expect, it } from "vitest";
 
 const BASE = process.env.E2E_API_URL?.replace(/\/+$/, "");
 const MODE = process.env.E2E_MODE ?? "full";
 const RUN = Boolean(BASE);
+if (BASE && MODE === "full" && !["localhost", "127.0.0.1", "[::1]"].includes(new URL(BASE).hostname)) {
+  throw new Error("Full API tests require a disposable loopback Supabase gateway; use E2E_MODE=smoke for a deployed API.");
+}
 const STAMP = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 interface Res<T = any> {
@@ -88,21 +91,44 @@ describe.runIf(RUN && MODE === "smoke")("production smoke", () => {
 
   it("runs the account lifecycle without leaving data", async () => {
     const a = await signup("smoke");
-    let me = await call("GET", "/v1/me", { token: a.token });
-    expect(me.status).toBe(200);
-    expect(me.body.needs_onboarding).toBe(true);
-    expect(me.body.email).toBe(a.email);
-    const refreshed = await call("POST", "/v1/auth/refresh", { body: { refresh_token: a.refresh } });
-    expect(refreshed.status).toBe(200);
-    const login = await call("POST", "/v1/auth/login", { body: { email: a.email, password: PASSWORD } });
-    expect(login.status).toBe(200);
-    const cities = await call("GET", "/v1/cities", { token: login.body.access_token });
-    expect(cities.body[0].name).toBe("Москва");
-    const del = await call("DELETE", "/v1/account", { token: login.body.access_token, body: { password: PASSWORD } });
-    expect(del.status).toBe(204);
+    let token = a.token;
+    let refreshedToken = a.token;
+    try {
+      const me = await call("GET", "/v1/me", { token });
+      expect(me.status).toBe(200);
+      expect(me.body.needs_onboarding).toBe(true);
+      expect(me.body.email).toBe(a.email);
+      const refreshed = await call("POST", "/v1/auth/refresh", { body: { refresh_token: a.refresh } });
+      expect(refreshed.status).toBe(200);
+      refreshedToken = refreshed.body.access_token;
+      const login = await call("POST", "/v1/auth/login", { body: { email: a.email, password: PASSWORD } });
+      expect(login.status).toBe(200);
+      token = login.body.access_token;
+      const cities = await call("GET", "/v1/cities", { token });
+      expect(cities.body[0].name).toBe("Москва");
+      const onboarded = await call("POST", "/v1/me/onboarding", {
+        token, body: onboardingPayload(`smk_${STAMP.slice(0, 12)}`, "Проверка API"),
+      });
+      expect(onboarded.status, JSON.stringify(onboarded.body)).toBe(200);
+      const hidden = await call("PATCH", "/v1/me", { token, body: { discoverable: false } });
+      expect(hidden.status, JSON.stringify(hidden.body)).toBe(200);
+      expect(hidden.body.profile.discoverable).toBe(false);
+      const friends = await call("GET", "/v1/friends", { token });
+      expect(friends.status).toBe(200);
+      expect(friends.body).toEqual({ accepted: [], incoming: [], outgoing: [] });
+      const open = await call("GET", "/v1/upcoming-matches?scope=open&limit=1", { token });
+      expect(open.status).toBe(200);
+      expect(Array.isArray(open.body.items)).toBe(true);
+      const mine = await call("GET", "/v1/upcoming-matches?scope=mine&accepted_only=true&limit=1", { token });
+      expect(mine.status).toBe(200);
+      expect(mine.body).toEqual({ items: [], next_offset: null });
+    } finally {
+      const del = await call("DELETE", "/v1/account", { token, body: { password: PASSWORD } });
+      expect(del.status, JSON.stringify(del.body)).toBe(204);
+    }
     const again = await call("POST", "/v1/auth/login", { body: { email: a.email, password: PASSWORD } });
     expect(again.status).toBe(401);
-    me = await call("GET", "/v1/me", { token: refreshed.body.access_token });
+    const me = await call("GET", "/v1/me", { token: refreshedToken });
     expect([401, 403, 404]).toContain(me.status);
   });
 });
@@ -182,6 +208,8 @@ describe.runIf(RUN && MODE === "full")("full API flow", () => {
     expect(r1.body.id).toBe(r2.body.id);
     matchId = r1.body.id;
     expect(r1.body.status).toBe("pending");
+    expect(r1.body.scheduled_match_id ?? null).toBeNull();
+    expect(r1.body.scheduled_starts_at ?? null).toBeNull();
 
     const dupPlayer = await call("POST", "/v1/matches", {
       token: players[0]!.token,

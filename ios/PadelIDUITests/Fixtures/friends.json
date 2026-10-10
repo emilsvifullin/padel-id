@@ -1,0 +1,77 @@
+{
+  "accepted": [
+    {
+      "player": {
+        "id": "d8b58bd9-8f8c-4732-a129-148692946aed",
+        "city": {
+          "id": 1,
+          "name": "Москва"
+        },
+        "club": {
+          "id": 1,
+          "name": "Падел Арена Лужники"
+        },
+        "level": 4.89,
+        "deleted": false,
+        "is_coach": false,
+        "username": "d_sokolov",
+        "avatar_path": null,
+        "reliability": 25,
+        "display_name": "Дмитрий Соколов",
+        "preferred_side": "left"
+      },
+      "status": "accepted",
+      "requested_at": "2026-10-09T20:54:27.24066+00:00"
+    }
+  ],
+  "incoming": [
+    {
+      "player": {
+        "id": "72b11bd9-f270-4ae2-b104-25a132d48204",
+        "city": {
+          "id": 1,
+          "name": "Москва"
+        },
+        "club": {
+          "id": 1,
+          "name": "Падел Арена Лужники"
+        },
+        "level": 4.61,
+        "deleted": false,
+        "is_coach": true,
+        "username": "coach_novikov",
+        "avatar_path": null,
+        "reliability": 17,
+        "display_name": "Андрей Новиков",
+        "preferred_side": "both"
+      },
+      "status": "incoming",
+      "requested_at": "2026-10-09T20:54:27.24066+00:00"
+    }
+  ],
+  "outgoing": [
+    {
+      "player": {
+        "id": "2becd560-4954-4ad9-ab50-e454ea8f2d73",
+        "city": {
+          "id": 1,
+          "name": "Москва"
+        },
+        "club": {
+          "id": 2,
+          "name": "Corner Padel Club"
+        },
+        "level": 3.18,
+        "deleted": false,
+        "is_coach": false,
+        "username": "s_morozov",
+        "avatar_path": null,
+        "reliability": 40,
+        "display_name": "Сергей Морозов",
+        "preferred_side": "left"
+      },
+      "status": "outgoing",
+      "requested_at": "2026-10-09T20:54:27.24066+00:00"
+    }
+  ]
+}

@@ -8,6 +8,9 @@ enum Route: Hashable {
     case dna(UUID)
     case playerMatches(UUID)
     case stats(UUID)
+    case upcoming(UUID)
+    case upcomingGames
+    case findPlayers
     case insights
 }
 
@@ -22,6 +25,9 @@ extension View {
             case .dna(let id): DNADetailView(playerId: id)
             case .playerMatches(let id): PlayerMatchesView(playerId: id)
             case .stats(let id): StatsDetailView(playerId: id)
+            case .upcoming(let id): UpcomingDetailView(matchId: id)
+            case .upcomingGames: UpcomingListView()
+            case .findPlayers: PlayersView()
             case .insights: InsightsView()
             }
         }
@@ -35,6 +41,7 @@ struct MatchEditorRequest: Identifiable {
         case create(partner: PlayerCard?, opponents: [PlayerCard])
         /// Edit an existing pending/disputed match created by the current user.
         case edit(MatchDetail)
+        case upcoming(UpcomingMatch, playerId: UUID)
     }
 
     let id = UUID()

@@ -1,0 +1,204 @@
+{
+  "implementation_commit": "ad4e49a8141e58b50abebea62cfc861c5def8355",
+  "base_commit": "50d3ca6e4f6e7590f01c27d8172e7964da8c91c7",
+  "recorded_at_utc": "2026-10-10T09:06:49.741927+00:00",
+  "scope": "Earlier local checks in Developer/padel-id-codex; source files preserved byte-for-byte in the current workspace. No new CI or device claims.",
+  "checks": [
+    {
+      "check": "database",
+      "original_log": "/tmp/padel-id-checks/db-tests-pg17-final.log",
+      "sha256": "6ee1338da62439134e218147bd439631c1d94e83fb84dea2d3832947f093cfea",
+      "bytes": 1741,
+      "log_modified_at_utc": "2026-10-10T00:41:16.339711+00:00",
+      "excerpt": [
+        "ok   test_account_anonymization",
+        "ok   test_anti_farming_weight",
+        "ok   test_calibration",
+        "ok   test_coach_flow",
+        "ok   test_compatibility_and_insights",
+        "ok   test_complete_streak_and_last_ten",
+        "ok   test_duplicate_match_detection",
+        "ok   test_engine_probabilities",
+        "ok   test_engine_update_properties",
+        "ok   test_feedback_and_dna",
+        "ok   test_friendly_does_not_change_rating",
+        "ok   test_friendship_lifecycle_and_privacy",
+        "ok   test_gateway_rate_limit",
+        "ok   test_hidden_player_profile_reads",
+        "ok   test_history_pagination_ties",
+        "ok   test_match_confirmation_flow",
+        "ok   test_match_creation_validation",
+        "ok   test_match_dispute_edit_cancel",
+        "ok   test_match_expiry",
+        "ok   test_match_idempotency_and_duplicates",
+        "ok   test_match_privacy",
+        "ok   test_onboarding",
+        "ok   test_password_attempts_are_counted",
+        "ok   test_preview_and_history",
+        "ok   test_profile_update",
+        "ok   test_ranked_daily_limit",
+        "ok   test_recovery_keys_and_passwords",
+        "ok   test_revoked_session_is_rejected",
+        "ok   test_scheduled_admission_boundaries",
+        "ok   test_scheduled_applications_and_hidden_roster",
+        "ok   test_scheduled_closed_result_is_not_cancelled_game",
+        "ok   test_scheduled_lifecycle_permissions_and_retry",
+        "ok   test_scheduled_mine_accepted_filter_and_order",
+        "ok   test_scheduled_result_link_and_confirmations",
+        "ok   test_scheduled_result_replay_after_time_and_deletion",
+        "ok   test_scheduled_validation_security_and_lifecycle",
+        "ok   test_score_invalid_cases",
+        "ok   test_score_valid_cases",
+        "ok   test_search_and_filters",
+        "ok   test_search_compatibility_matches_profile",
+        "ok   test_table_access_denied",
+        "ok   test_unauthenticated_calls_fail",
+        "ok   test_users_require_account_service_origin",
+        "database tests: 43 passed, 0 failed"
+      ]
+    },
+    {
+      "check": "concurrency",
+      "original_log": "/tmp/padel-id-checks/db-concurrency-pg17-final.log",
+      "sha256": "dda27cbbb509534f0d7e70936615e93413e4cbc0867f2f093ca128fc85690fdc",
+      "bytes": 594,
+      "log_modified_at_utc": "2026-10-10T00:41:26.897192+00:00",
+      "excerpt": [
+        "ok   simultaneous automatic joins cannot overfill last seat",
+        "ok   simultaneous approvals cannot overfill last seat",
+        "ok   opposing friend requests keep one pending canonical relation",
+        "ok   simultaneous create retries return one game",
+        "ok   simultaneous result submissions atomically share one unconfirmed result",
+        "ok   account deletion cannot leave a waiting join in an admitted seat",
+        "ok   account deletion closes an unconfirmed result submitted while cleanup was waiting"
+      ]
+    },
+    {
+      "check": "gateway_unit",
+      "original_log": "/tmp/padel-id-checks/backend-final-unit-node22.log",
+      "sha256": "48312c3912a1dbc53da368da7bc253651922e7b1da4fbdd5d3a681c205b8cb69",
+      "bytes": 202,
+      "log_modified_at_utc": "2026-10-10T00:32:04.822882+00:00",
+      "excerpt": [
+        "Test Files  1 passed (1)",
+        "Tests  46 passed (46)",
+        "Start at  03:32:03",
+        "Duration  1.60s (tests 90%, transform 6%, import 4%)"
+      ]
+    },
+    {
+      "check": "gateway_full_e2e",
+      "original_log": "/tmp/padel-id-checks/backend-local-e2e-final.log",
+      "sha256": "8922f5de54cbba98550a74225aff0e558877aa5f928b527094745711ba57a793",
+      "bytes": 203,
+      "log_modified_at_utc": "2026-10-10T00:41:36.932590+00:00",
+      "excerpt": [
+        "Test Files  2 passed (2)",
+        "Tests  17 passed | 2 skipped (19)",
+        "Start at  03:41:33",
+        "Duration  3.35s (tests 98%, transform 1%)"
+      ]
+    },
+    {
+      "check": "gateway_smoke",
+      "original_log": "/tmp/padel-id-checks/backend-local-smoke-final.log",
+      "sha256": "4ae6a24ddca21b0f9a3beca5df9cc619760970200c0fda0a8c4af755de076c80",
+      "bytes": 214,
+      "log_modified_at_utc": "2026-10-10T00:41:40.048824+00:00",
+      "excerpt": [
+        "Test Files  1 passed (1)",
+        "Tests  2 passed | 13 skipped (15)",
+        "Start at  03:41:39",
+        "Duration  580ms (tests 94%, transform 4%, import 1%)"
+      ]
+    },
+    {
+      "check": "ios_unit",
+      "original_log": "/tmp/padel-id-checks/ios-unit-verified.log",
+      "sha256": "a07268733552b4c4c3092c037413f04b4e7d87941a2bed88d6dad56d3d617d1a",
+      "bytes": 23805,
+      "log_modified_at_utc": "2026-10-10T00:47:54.472225+00:00",
+      "excerpt": [
+        "✔ Test run with 106 tests in 11 suites passed after 0.952 seconds."
+      ]
+    },
+    {
+      "check": "ios_social_ui",
+      "original_log": "/tmp/padel-id-checks/ios-ui-routes.log",
+      "sha256": "bf188884e44581006c5ee30811ba77817dce346b9b589408c1ca99d32c4ecaf9",
+      "bytes": 79761,
+      "log_modified_at_utc": "2026-10-10T00:58:55.946771+00:00",
+      "excerpt": [
+        "Test Case '-[PadelIDUITests.SocialUITests testGamePublicationPreservesProfileClubAndIdempotency]' passed (48.795 seconds).",
+        "Test Case '-[PadelIDUITests.SocialUITests testPersistentTabsFriendRequestsAndSearch]' passed (31.149 seconds).",
+        "Test Case '-[PadelIDUITests.SocialUITests testScheduledGameEntersResultWithAdmittedLineup]' passed (55.883 seconds).",
+        "Test Case '-[PadelIDUITests.SocialUITests testUpcomingCancellationSendsCancelAndNeverLeave]' passed (28.490 seconds).",
+        "Test Suite 'SocialUITests' passed at 2026-10-10 03:58:55.303.",
+        "Executed 4 tests, with 0 failures (0 unexpected) in 164.317 (164.320) seconds",
+        "Executed 4 tests, with 0 failures (0 unexpected) in 164.317 (164.322) seconds",
+        "Executed 4 tests, with 0 failures (0 unexpected) in 164.317 (164.324) seconds"
+      ]
+    },
+    {
+      "check": "ios_home_players_ui",
+      "original_log": "/tmp/padel-id-checks/ios-ui-verified-booted.log",
+      "sha256": "f6cc777af50290ec984d17f06f65e41418e3c60e50f2106340076e8a8d791ab6",
+      "bytes": 151288,
+      "log_modified_at_utc": "2026-10-10T00:54:31.356061+00:00",
+      "excerpt": [
+        "Test Case '-[PadelIDUITests.HomeUITests testHomeRatingDnaInsights]' passed (65.399 seconds).",
+        "Test Case '-[PadelIDUITests.HomeUITests testServerErrorState]' passed (29.704 seconds).",
+        "Test Suite 'HomeUITests' passed at 2026-10-10 03:51:00.744.",
+        "Test Case '-[PadelIDUITests.PlayersUITests testPlayersSearchAndProfile]' passed (51.858 seconds).",
+        "Test Suite 'PlayersUITests' passed at 2026-10-10 03:51:52.605."
+      ]
+    },
+    {
+      "check": "ios_build_for_testing",
+      "original_log": "/tmp/padel-id-checks/ios-build-routes.log",
+      "sha256": "2a0a307d7b4ad305e12543bec806f37d0fce42fade1d9d399daf1a02e8962896",
+      "bytes": 106309,
+      "log_modified_at_utc": "2026-10-10T00:56:08.767692+00:00",
+      "excerpt": [
+        "** TEST BUILD SUCCEEDED **"
+      ]
+    },
+    {
+      "check": "ios_release_archive_failed",
+      "original_log": "/tmp/padel-id-checks/ios-archive-candidate.log",
+      "sha256": "fd95d24d07b658d9d347a88f8670ae368063ae254a2dfce4afe4708e38dd9b0d",
+      "bytes": 1443150,
+      "log_modified_at_utc": "2026-10-10T08:59:04.220595+00:00",
+      "excerpt": [
+        "sandbox-exec: sandbox_apply: Operation not permitted"
+      ]
+    }
+  ],
+  "ios_unit_result_bundle_summary": {
+    "source": "/tmp/padel-id-checks/unit-verified.xcresult",
+    "result": "Passed",
+    "passedTests": 106,
+    "totalTestCount": 106,
+    "failedTests": 0,
+    "skippedTests": 0,
+    "parameterizedInvocations": 137,
+    "device": {
+      "name": "iPhone 17 Pro",
+      "platform": "iOS Simulator",
+      "osVersion": "26.5",
+      "osBuild": "23F77"
+    },
+    "startTime": 1791593253.28,
+    "finishTime": 1791593271.115,
+    "extraction": "xcrun xcresulttool get test-results summary --path /tmp/padel-id-checks/unit-verified.xcresult"
+  },
+  "unverified": [
+    "GitHub Actions four-configuration matrix",
+    "Production migrations and new API smoke",
+    "Release IPA",
+    "Physical iPhone frame pacing",
+    "SideStore/iLoader installation",
+    "Wi-Fi/LTE with and without real VPN",
+    "Real Wi-Fi to LTE switching and network recovery"
+  ]
+}

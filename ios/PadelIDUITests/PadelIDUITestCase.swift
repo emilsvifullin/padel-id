@@ -177,10 +177,10 @@ class PadelIDUITestCase: XCTestCase {
         }
     }
 
-    /// Waits for the Padel ID tab with the level hero.
+    /// Waits for the persistent home tab after authentication.
     @discardableResult
     func waitForHome(timeout: TimeInterval = 20, file: StaticString = #filePath, line: UInt = #line) -> XCUIElement {
-        require(element("home.level"), timeout: timeout, "home.level", file: file, line: line)
+        require(app.navigationBars["Главная"], timeout: timeout, "Главная", file: file, line: line)
     }
 
     /// Taps the form's submit button when it can be reached, otherwise the
@@ -517,28 +517,39 @@ class PadelIDUITestCase: XCTestCase {
 
     /// Selects a tab of the tab bar by its title.
     func selectTab(_ title: String, alternatives: [String] = [], file: StaticString = #filePath, line: UInt = #line) {
-        declineSavePasswordIfShown()
-        let inTabBar = app.tabBars.buttons[title]
-        if inTabBar.waitForExistence(timeout: 5) && inTabBar.isHittable {
-            inTabBar.tap()
-            return
-        }
         // A badge can extend the label ("Матчи, 1 …"); the search tab can sit
         // outside the tab bar group.
-        for label in [title] + alternatives {
-            let queries = [
+        let queries = ([title] + alternatives).flatMap { label in
+            [
                 app.tabBars.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", label)),
                 app.buttons.matching(NSPredicate(format: "label == %@", label)),
                 app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", label)),
             ]
+        }
+        // The native save-password prompt can arrive between the hittability
+        // check and the tap. A delivered tap alone does not prove selection:
+        // confirm its visible effect and retry after dismissing an interruption.
+        if waitUntil(timeout: 15, {
+            declineSavePasswordIfShown()
             for query in queries {
                 if let candidate = firstHittable(query) {
+                    if candidate.isSelected { return true }
                     candidate.tap()
-                    return
+                    if waitUntil(timeout: 2, {
+                        declineSavePasswordIfShown()
+                        return candidate.exists && (candidate.isSelected || isScreenShown(title))
+                    }) {
+                        return true
+                    }
+                    return false
                 }
             }
+            return false
+        }) {
+            return
         }
-        XCTFail("Tab «\(title)» not found", file: file, line: line)
+        snap("missing-tab-\(title)")
+        XCTFail("Tab «\(title)» could not be selected", file: file, line: line)
     }
 
     /// Returns to the previous screen of a navigation stack.
@@ -597,12 +608,21 @@ class PadelIDUITestCase: XCTestCase {
         return CGRect(x: screen.minX, y: top, width: screen.width, height: max(bottom - top, 1))
     }
 
-    /// Whether the element is on screen: hittable, or (for non-interactive
-    /// blocks) inside the visible band.
+    /// Whether the element is on screen. XCTest can report a clipped scroll
+    /// target as hittable while its tap lands behind the navigation bar.
+    /// Keep identified scroll targets inside the visible band; fixed controls
+    /// such as navigation buttons only need the usual hittability check.
     func isOnScreen(_ element: XCUIElement, hittable: Bool = true) -> Bool {
         guard element.exists else { return false }
         if hittable {
-            return element.isHittable
+            guard element.isHittable else { return false }
+            let identifier = element.identifier
+            guard !identifier.isEmpty,
+                  app.scrollViews.containing(.any, identifier: identifier).firstMatch.exists else {
+                return true
+            }
+            let frame = element.frame
+            return !frame.isEmpty && visibleBand().contains(CGPoint(x: frame.midX, y: frame.midY))
         }
         let frame = element.frame
         guard !frame.isEmpty else { return false }
@@ -613,9 +633,11 @@ class PadelIDUITestCase: XCTestCase {
     }
 
     /// Scrolls with short, momentum-free drags until the element is on screen.
-    /// Elements that are not created yet (lazy lists) are looked for below.
+    /// Elements that are not created yet (lazy lists) are looked for below by
+    /// default; callers returning to an earlier row can search above instead.
     @discardableResult
     func scrollIntoView(_ element: XCUIElement, hittable: Bool = true, maxDrags: Int = 15,
+                        searchBelow: Bool = true,
                         file: StaticString = #filePath, line: UInt = #line) -> XCUIElement {
         declineSavePasswordIfShown()
         if isOnScreen(element, hittable: hittable) {
@@ -631,9 +653,9 @@ class PadelIDUITestCase: XCTestCase {
                     && waitUntil(timeout: 1, { isOnScreen(element, hittable: hittable) }) {
                     return element
                 }
-                drag(upwards: frame.isEmpty || frame.midY > band.midY)
+                drag(upwards: frame.isEmpty ? searchBelow : frame.midY > band.midY)
             } else {
-                drag(upwards: true)
+                drag(upwards: searchBelow)
             }
             if isOnScreen(element, hittable: hittable) {
                 return element

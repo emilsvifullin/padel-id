@@ -70,7 +70,7 @@ struct MatchDetailView: View {
                 }
             }
         }
-        .confirmationDialog("Отменить матч?", isPresented: $isCancelConfirmationPresented, titleVisibility: .visible) {
+        .alert("Отменить матч?", isPresented: $isCancelConfirmationPresented) {
             Button("Отменить матч", role: .destructive) {
                 Task { await cancelMatch() }
             }

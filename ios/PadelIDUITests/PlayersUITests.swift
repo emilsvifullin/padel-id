@@ -7,7 +7,8 @@ final class PlayersUITests: PadelIDUITestCase {
         try launch(.existingUser)
         signIn()
         waitForHome()
-        selectTab("Игроки", alternatives: ["Поиск", "Search"])
+        selectTab("Друзья")
+        open(element("friends.search"), screen: "Найти игроков")
 
         require(element("playerRow"), timeout: 15, "playerRow")
         waitForRequest("GET", "v1/players/recent")

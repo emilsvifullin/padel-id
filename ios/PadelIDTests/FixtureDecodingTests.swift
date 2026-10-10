@@ -348,6 +348,50 @@ struct FixtureDecodingTests {
 
     // MARK: Players
 
+    @Test("Social fixtures preserve relationship categories and complete upcoming-game contracts")
+    func socialContracts() throws {
+        let friends = try FixtureLoader.decode(FriendsResponse.self, "friends")
+        #expect(!friends.accepted.isEmpty && !friends.incoming.isEmpty && !friends.outgoing.isEmpty)
+        #expect(friends.accepted.allSatisfy { $0.status == .accepted })
+        #expect(friends.incoming.allSatisfy { $0.status == .incoming })
+        #expect(friends.outgoing.allSatisfy { $0.status == .outgoing })
+        let ids = (friends.accepted + friends.incoming + friends.outgoing).map(\.id)
+        #expect(Set(ids).count == ids.count)
+        _ = try FixtureLoader.decode(FriendshipStatus.self, "friendship_status")
+        for name in ["upcoming_home", "upcoming_mine", "upcoming_open"] {
+            let page = try FixtureLoader.decode(UpcomingPage.self, name)
+            #expect(!page.items.isEmpty)
+            for game in page.items {
+                #expect(game.participants.count + game.spotsLeft == 4)
+                #expect(game.participants.contains { $0.id == game.organizer.id })
+                #expect(game.minLevel <= game.maxLevel)
+                #expect(game.resultMatchId == nil)
+            }
+        }
+        let game = try FixtureLoader.decode(UpcomingMatch.self, "upcoming_match")
+        #expect(game.viewer.isOrganizer && game.viewer.participation == "accepted")
+        let ready = try FixtureLoader.decode(UpcomingMatch.self, "upcoming_result_ready")
+        #expect(ready.status == .awaitingResult && ready.participants.count == 4)
+        #expect(!ready.isClosed)
+    }
+
+    @Test("The recent record matches the actual confirmed form; older cached payloads remain compatible")
+    func recentRecord() throws {
+        let home = try FixtureLoader.decode(HomeResponse.self, "home")
+        let stats = try #require(home.stats)
+        #expect(stats.lastTen != nil)
+        #expect(stats.recentRecord.matches == stats.form.count)
+        #expect(stats.recentRecord.wins == stats.form.filter { $0 == "W" }.count)
+        #expect(stats.recentRecord.losses == stats.form.filter { $0 == "L" }.count)
+        var object = try #require(JSONSerialization.jsonObject(with: FixtureLoader.data("home")) as? [String: Any])
+        var legacy = try #require(object["stats"] as? [String: Any])
+        legacy.removeValue(forKey: "last_ten")
+        object["stats"] = legacy
+        let cached = try JSONCoding.decoder.decode(HomeResponse.self, from: JSONSerialization.data(withJSONObject: object))
+        #expect(cached.stats?.lastTen == nil)
+        #expect(cached.stats?.recentRecord == stats.recentRecord)
+    }
+
     @Test("player_profile.json: most frequent partner with compatibility")
     func playerProfile() throws {
         let response = try FixtureLoader.decode(PlayerProfileResponse.self, "player_profile")

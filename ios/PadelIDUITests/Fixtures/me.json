@@ -4,13 +4,13 @@
     "mu": 4.49,
     "sigma": 0.621,
     "peak_mu": 4.49,
-    "idle_days": 2,
+    "idle_days": 3,
     "trend_30d": 0.24,
     "initial_mu": 3.60,
     "provisional": false,
     "ranked_wins": 11,
     "reliability": 47,
-    "last_ranked_at": "2026-10-05T19:05:00+00:00",
+    "last_ranked_at": "2026-10-06T19:05:00+00:00",
     "ranked_matches": 16
   },
   "profile": {
@@ -32,7 +32,7 @@
     "reliability": 47,
     "discoverable": true,
     "display_name": "Михаил Орлов",
-    "member_since": "2026-07-08T17:40:00+00:00",
+    "member_since": "2026-07-09T17:40:00+00:00",
     "dominant_hand": "right",
     "playing_since": 2021,
     "preferred_side": "right"
@@ -49,5 +49,5 @@
   "is_admin": false,
   "coach_status": null,
   "needs_onboarding": false,
-  "recovery_key_created_at": "2026-07-08T17:34:00+00:00"
+  "recovery_key_created_at": "2026-07-09T17:34:00+00:00"
 }

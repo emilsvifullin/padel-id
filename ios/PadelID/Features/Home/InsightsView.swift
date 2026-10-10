@@ -19,7 +19,7 @@ struct InsightsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemGroupedBackground))
-        .navigationTitle("Анализ")
+        .navigationTitle("Выводы об игре")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: app.dataRevision) { await home.load(using: app) }
     }

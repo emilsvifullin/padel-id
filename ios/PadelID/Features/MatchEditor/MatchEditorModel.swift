@@ -383,6 +383,8 @@ nonisolated struct EditorDraft: Equatable, Sendable {
 @Observable
 final class MatchEditorModel {
     let isEditing: Bool
+    let upcomingMatch: UpcomingMatch?
+    let scheduledStartsAt: Date?
     let matchId: UUID?
     /// The creator of an edited match (the current user).
     let editorId: UUID?
@@ -415,6 +417,8 @@ final class MatchEditorModel {
         switch request.mode {
         case .create(partner: let partner, opponents: let opponents):
             isEditing = false
+            upcomingMatch = nil
+            scheduledStartsAt = nil
             matchId = nil
             editorId = nil
             editorCard = nil
@@ -422,17 +426,42 @@ final class MatchEditorModel {
             start = EditorDraft.create(partner: partner, opponents: opponents, now: .now)
         case .edit(let detail):
             isEditing = true
+            upcomingMatch = nil
+            scheduledStartsAt = detail.scheduledStartsAt
             matchId = detail.id
             editorId = detail.createdBy
             editorCard = detail.players.first(where: { $0.player.id == detail.createdBy })?.player
             version = detail.version
             start = EditorDraft.edit(detail)
+        case .upcoming(let game, playerId: let playerId):
+            isEditing = false
+            upcomingMatch = game
+            scheduledStartsAt = game.startsAt
+            matchId = nil
+            editorId = playerId
+            editorCard = game.participants.first { $0.id == playerId }?.player
+            version = 0
+            let others = game.participants.map(\.player).filter { $0.id != playerId }
+            var resultDraft = EditorDraft.create(partner: others.first, opponents: Array(others.dropFirst()), now: .now)
+            resultDraft.matchType = game.matchType
+            resultDraft.playedAt = game.startsAt
+            resultDraft.club = game.club
+            start = resultDraft
         }
         draft = start
         initial = start
     }
 
     var isDirty: Bool { draft != initial }
+    var isScheduledResult: Bool { scheduledStartsAt != nil }
+    var allowedPlayers: [PlayerCard]? {
+        guard isScheduledResult else { return nil }
+        return upcomingMatch?.participants.map(\.player) ?? [initial.partner, initial.opponentLeft, initial.opponentRight].compactMap { $0 }
+    }
+    var createPath: String {
+        if let upcomingMatch { return "v1/upcoming-matches/" + upcomingMatch.id.uuidString.lowercased() + "/result" }
+        return "v1/matches"
+    }
 
     /// The error of the last submission while the form still shows the
     /// submitted values.
@@ -453,6 +482,13 @@ final class MatchEditorModel {
     // MARK: Editing
 
     func setPlayer(_ card: PlayerCard?, at slot: EditorSlot) {
+        if isScheduledResult, let card, !draft.isMySlot(slot),
+           let previousSlot = EditorSlot.allCases.first(where: {
+               $0 != slot && !draft.isMySlot($0) && draft.player(at: $0, me: nil)?.id == card.id
+           }) {
+            let previousPlayer = draft.player(at: slot, me: nil)
+            draft.setPlayer(previousPlayer, at: previousSlot)
+        }
         draft.setPlayer(card, at: slot)
     }
 
@@ -484,6 +520,12 @@ final class MatchEditorModel {
               let players = draft.playersBody(meId: meId),
               Set(players.map(\.playerId)).count == 4,
               let sets = draft.validSets else { return nil }
+        if let scheduledStartsAt {
+            let admitted = upcomingMatch?.participants.map(\.id) ?? ([editorId].compactMap { $0 } + initial.lineupIds)
+            guard meId == editorId, draft.matchType == initial.matchType, draft.playedAt >= scheduledStartsAt,
+                  draft.club?.id == initial.club?.id,
+                  Set(players.map(\.playerId)) == Set(admitted.map { $0.uuidString.lowercased() }) else { return nil }
+        }
         return EditorMatchBody(
             matchType: draft.matchType,
             format: draft.format,
@@ -513,7 +555,7 @@ final class MatchEditorModel {
             return .queued
         }
         do {
-            _ = try await app.api.data(.json(.post, "v1/matches", body, idempotencyKey: idempotencyKey))
+            _ = try await app.api.data(.json(.post, createPath, body, idempotencyKey: idempotencyKey))
             isFinished = true
             app.dataDidChange()
             return .saved
@@ -581,7 +623,7 @@ final class MatchEditorModel {
             id: UUID(),
             kind: .createMatch,
             method: "POST",
-            path: "v1/matches",
+            path: createPath,
             body: data,
             idempotencyKey: idempotencyKey,
             matchId: nil,

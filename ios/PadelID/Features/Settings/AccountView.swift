@@ -26,14 +26,10 @@ struct AccountView: View {
                 deleteSection
             }
             .listStyle(.insetGrouped)
-            .navigationTitle("Аккаунт")
+            .navigationTitle("Профиль")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Готово") { dismiss() }
-                }
-            }
-            .confirmationDialog("Выйти из аккаунта?", isPresented: $isConfirmingSignOut, titleVisibility: .visible) {
+            .padelRoutes()
+            .alert("Выйти из аккаунта?", isPresented: $isConfirmingSignOut) {
                 Button("Выйти", role: .destructive, action: signOut)
                 Button("Отмена", role: .cancel) {}
             } message: {
@@ -201,6 +197,9 @@ private struct AccountHeaderRow: View {
                 Text(profile.displayName)
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(.primary)
+                if let username = profile.username {
+                    Text("@" + username).font(.subheadline).foregroundStyle(.secondary)
+                }
                 if let email, !email.isEmpty {
                     Text(email)
                         .font(.subheadline)

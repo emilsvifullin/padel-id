@@ -75,6 +75,10 @@ struct MatchesView: View {
 
     private var list: some View {
         List {
+            Section {
+                NavigationLink(value: Route.upcomingGames) { Label("Предстоящие игры", systemImage: "tennis.racket") }
+                    .accessibilityIdentifier("matches.upcoming")
+            }
             if let error = staleError {
                 StaleDataBanner(error: error)
                     .listRowInsets(EdgeInsets())
@@ -112,13 +116,10 @@ struct MatchesView: View {
             if !isEverythingEmpty {
                 historySection
             }
-        }
-        .listStyle(.insetGrouped)
-        .refreshable { await reload() }
-        .overlay {
+
             if isEverythingEmpty {
                 ContentUnavailableView {
-                    Label("Пока нет матчей", systemImage: "sportscourt")
+                    Label("Пока нет матчей", systemImage: "tennis.racket")
                 } description: {
                     Text("Внесите первый матч — после подтверждения всеми игроками он появится в истории.")
                 } actions: {
@@ -128,7 +129,11 @@ struct MatchesView: View {
                     .buttonStyle(.borderedProminent)
                 }
             }
+
         }
+        .listStyle(.insetGrouped)
+        .refreshable { await reload() }
+
     }
 
     @ToolbarContentBuilder

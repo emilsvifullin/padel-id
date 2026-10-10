@@ -3,48 +3,50 @@ import SwiftUI
 
 /// Rating over time with its uncertainty band (μ ± σ).
 struct RatingChart: View {
-    let points: [RatingPoint]
-    var compact = false
+    let data: RatingChartData
+    let compact: Bool
+
+    init(points: [RatingPoint], compact: Bool = false) {
+        self.init(data: RatingChartData(points: points), compact: compact)
+    }
+
+    init(data: RatingChartData, compact: Bool = false) {
+        self.data = data
+        self.compact = compact
+    }
 
     var body: some View {
         Chart {
-            ForEach(points) { point in
-                AreaMark(
-                    x: .value("Дата", point.at),
-                    yStart: .value("Нижняя граница", max(0, point.mu - point.sigma)),
-                    yEnd: .value("Верхняя граница", min(7, point.mu + point.sigma))
-                )
+            // Each homogeneous series is one vectorized plot rather than a
+            // separate SwiftUI mark per point. All original samples remain.
+            AreaPlot(data.samples,
+                     x: .value("Дата", \.at),
+                     yStart: .value("Нижняя граница", \.lower),
+                     yEnd: .value("Верхняя граница", \.upper))
                 .foregroundStyle(Theme.accent.opacity(0.12))
                 .interpolationMethod(.monotone)
-            }
-            ForEach(points) { point in
-                LineMark(x: .value("Дата", point.at), y: .value("Уровень", point.mu))
-                    .foregroundStyle(Theme.accent)
-                    .lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
-                    .interpolationMethod(.monotone)
-            }
+            LinePlot(data.samples, x: .value("Дата", \.at), y: .value("Уровень", \.level))
+                .foregroundStyle(Theme.accent)
+                .lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
+                .interpolationMethod(.monotone)
             if !compact {
                 // Wins and losses differ by shape as well as colour.
-                ForEach(points.filter { $0.kind == "match" && $0.won == true }) { point in
-                    PointMark(x: .value("Дата", point.at), y: .value("Уровень", point.mu))
+                PointPlot(data.wins, x: .value("Дата", \.at), y: .value("Уровень", \.mu))
                         .foregroundStyle(Theme.positive)
                         .symbol(.circle)
                         .symbolSize(28)
-                }
-                ForEach(points.filter { $0.kind == "match" && $0.won != true }) { point in
-                    PointMark(x: .value("Дата", point.at), y: .value("Уровень", point.mu))
+                PointPlot(data.losses, x: .value("Дата", \.at), y: .value("Уровень", \.mu))
                         .foregroundStyle(Theme.negative)
                         .symbol(.cross)
                         .symbolSize(36)
-                }
             }
-            if let last = points.last {
-                PointMark(x: .value("Дата", last.at), y: .value("Уровень", last.mu))
+            if let last = data.samples.last {
+                PointMark(x: .value("Дата", last.at), y: .value("Уровень", last.level))
                     .foregroundStyle(Theme.accent)
                     .symbolSize(compact ? 50 : 70)
             }
         }
-        .chartYScale(domain: yDomain)
+        .chartYScale(domain: data.yDomain)
         .chartXAxis {
             AxisMarks(values: .automatic(desiredCount: compact ? 3 : 4)) { _ in
                 AxisGridLine().foregroundStyle(.secondary.opacity(0.15))
@@ -65,20 +67,43 @@ struct RatingChart: View {
         .accessibilityValue(accessibilitySummary)
     }
 
-    private var yDomain: ClosedRange<Double> {
-        let lows = points.map { $0.mu - $0.sigma }
-        let highs = points.map { $0.mu + $0.sigma }
-        let low = max(0, (lows.min() ?? 0) - 0.1)
-        let high = min(7, (highs.max() ?? 7) + 0.1)
+    private var accessibilitySummary: String {
+        guard let first = data.samples.first, let last = data.samples.last else { return "Нет данных" }
+        return "От \(Format.level(first.level)) до \(Format.level(last.level)), \(Format.matches(data.matchCount))"
+    }
+}
+
+/// Stored key paths let Swift Charts read the complete collection efficiently;
+/// domain and outcome grouping are computed when data arrives, not in `body`.
+nonisolated struct RatingChartData: Sendable {
+    let samples: [RatingChartSample]
+    let wins: [RatingPoint]
+    let losses: [RatingPoint]
+    let yDomain: ClosedRange<Double>
+    let matchCount: Int
+
+    init(points: [RatingPoint]) {
+        samples = points.map {
+            RatingChartSample(at: $0.at, level: $0.mu,
+                              lower: max(0, $0.mu - $0.sigma), upper: min(7, $0.mu + $0.sigma))
+        }
+        wins = points.filter { $0.kind == "match" && $0.won == true }
+        losses = points.filter { $0.kind == "match" && $0.won != true }
+        matchCount = wins.count + losses.count
+        let low = max(0, (samples.map(\.lower).min() ?? 0) - 0.1)
+        let high = min(7, (samples.map(\.upper).max() ?? 7) + 0.1)
         if high - low < 0.6 {
             let mid = (high + low) / 2
-            return max(0, mid - 0.3)...min(7, mid + 0.3)
+            yDomain = max(0, mid - 0.3)...min(7, mid + 0.3)
+        } else {
+            yDomain = low...high
         }
-        return low...high
     }
+}
 
-    private var accessibilitySummary: String {
-        guard let first = points.first, let last = points.last else { return "Нет данных" }
-        return "От \(Format.level(first.mu)) до \(Format.level(last.mu)), \(Format.matches(points.filter { $0.kind == "match" }.count))"
-    }
+nonisolated struct RatingChartSample: Sendable {
+    let at: Date
+    let level: Double
+    let lower: Double
+    let upper: Double
 }

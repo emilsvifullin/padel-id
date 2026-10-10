@@ -138,7 +138,9 @@ private struct StatsDetailSections: View {
             }
         }
 
-        Section("Форма и серия") {
+        Section("Последние \(stats.recentRecord.matches) подтверждённых матчей") {
+            StatsDetailRow(title: "Победы", value: String(stats.recentRecord.wins), valueColor: Theme.positive)
+            StatsDetailRow(title: "Поражения", value: String(stats.recentRecord.losses), valueColor: Theme.negative)
             if !stats.form.isEmpty {
                 StatsDetailFormRow(form: stats.form)
             }

@@ -83,6 +83,7 @@ struct PlayerProfileView: View {
                 }
                 PlayerProfileHeader(profile: value.profile)
                 levelBlock(value)
+                if !isMe(value) { SectionContainer { FriendshipControls(playerId: playerId) } }
                 if !isMe(value), let compatibility = value.compatibility {
                     compatibilityBlock(compatibility, name: value.profile.displayName)
                 }
@@ -131,6 +132,10 @@ struct PlayerProfileView: View {
                             levelSummary(level)
                             reliabilitySummary(reliability)
                         }
+                    }
+                    if let side = value.profile.preferredSide {
+                        Label("Предпочитает: " + Narratives.sideName(side).lowercased(), systemImage: "arrow.left.and.right")
+                            .font(.subheadline).foregroundStyle(.secondary)
                     }
                     if let rating = value.rating {
                         if rating.provisional {
@@ -346,10 +351,7 @@ struct PlayerProfileView: View {
                         }
                         if !stats.form.isEmpty {
                             VStack(alignment: .leading, spacing: 6) {
-                                Text("Форма")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                PlayerProfileFormRow(form: stats.form)
+                                RecentFormSummary(stats: stats)
                             }
                         }
                     }

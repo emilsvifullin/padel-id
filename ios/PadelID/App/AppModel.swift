@@ -15,7 +15,7 @@ final class AppModel {
     }
 
     enum Tab: Hashable {
-        case padelID, matches, players
+        case padelID, matches, analysis, friends, profile
     }
 
     private(set) var phase: Phase = .launching
@@ -218,6 +218,11 @@ enum CacheKey {
     static let home = "home"
     static let openMatches = "matches.open"
     static let history = "matches.history"
+    static let friends = "friends"
+    static let upcomingHome = "upcoming.home"
+    static let upcomingMine = "upcoming.mine"
+    static let upcomingOpen = "upcoming.open"
+    static func upcoming(_ id: UUID) -> String { "upcoming.\(id.uuidString.lowercased())" }
     static let recentPlayers = "players.recent"
     static let cities = "cities"
     static func match(_ id: UUID) -> String { "match.\(id.uuidString.lowercased())" }

@@ -34,6 +34,17 @@ const newPassword = z.string().refine(isStrongPassword, { message: "weak_passwor
 const anyPassword = z.string().min(1).max(200);
 const uuid = z.string().regex(UUID_RE);
 const version = z.number().int().min(1);
+const scheduledMatch = z.strictObject({
+  client_id: uuid.optional(),
+  starts_at: z.iso.datetime({ offset: true }),
+  city_id: z.number().int().positive().max(1_000_000),
+  club_id: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).nullish(),
+  location: z.string().trim().refine((v) => [...v].length >= 2 && [...v].length <= 160),
+  match_type: z.enum(["ranked", "friendly"]),
+  min_level: z.number().min(0).max(7),
+  max_level: z.number().min(0).max(7),
+  note: z.string().trim().refine((v) => [...v].length <= 500).nullish(),
+}).refine((v) => v.min_level <= v.max_level);
 
 const schemas = {
   signup: z.object({ email, password: newPassword }),
@@ -58,6 +69,8 @@ const schemas = {
     // 300 code points in the database (see the dispute comment above).
     note: z.string().max(600).nullish(),
   }),
+  scheduledMatch,
+  participationDecision: z.strictObject({ decision: z.enum(["accepted", "rejected"]) }),
   object: z.record(z.string(), z.unknown()),
 };
 
@@ -137,6 +150,13 @@ function numberQuery(c: Context<Env>, name: string, min: number, max: number): n
   const value = Number(raw);
   if (!Number.isFinite(value) || value < min || value > max) throw apiError("invalid_request");
   return value;
+}
+
+function boolQuery(c: Context<Env>, name: string): boolean | undefined {
+  const raw = c.req.query(name);
+  if (raw === undefined || raw === "") return undefined;
+  if (raw !== "true" && raw !== "false") throw apiError("invalid_request");
+  return raw === "true";
 }
 
 function isoQuery(c: Context<Env>, name: string): string | undefined {
@@ -505,6 +525,92 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
     const token = bearer(c);
     const body = await parseJson(c, schemas.object);
     return c.json(await up().rpc("submit_coach_assessment", { p_player: pathUuid(c, "id"), p: body }, token));
+  });
+
+  // ---------------------------------------------------------------------
+  // Mutual friendship. The database owns relationship direction and rights.
+  // ---------------------------------------------------------------------
+
+  app.get("/v1/friends", async (c) => c.json(await up().rpc("friendships", {}, bearer(c))));
+
+  app.get("/v1/friends/:id", async (c) => {
+    const token = bearer(c);
+    return c.json(await up().rpc("friendship_status", { p_player: pathUuid(c, "id") }, token));
+  });
+
+  app.post("/v1/friends/:id/request", async (c) => {
+    const token = bearer(c);
+    return c.json(await up().rpc("friendship_action", { p_player: pathUuid(c, "id"), p_action: "request" }, token));
+  });
+
+  app.post("/v1/friends/:id/respond", async (c) => {
+    const token = bearer(c);
+    const body = await parseJson(c, schemas.participationDecision);
+    return c.json(await up().rpc("friendship_action", {
+      p_player: pathUuid(c, "id"), p_action: body.decision === "accepted" ? "accept" : "reject",
+    }, token));
+  });
+
+  app.delete("/v1/friends/:id", async (c) => {
+    const token = bearer(c);
+    return c.json(await up().rpc("friendship_action", { p_player: pathUuid(c, "id"), p_action: "remove" }, token));
+  });
+
+  // ---------------------------------------------------------------------
+  // Scheduled games are separate from played results and confirmations.
+  // ---------------------------------------------------------------------
+
+  app.get("/v1/upcoming-matches", async (c) => {
+    const token = bearer(c);
+    const scope = c.req.query("scope") ?? "open";
+    if (scope !== "open" && scope !== "mine") throw apiError("invalid_request");
+    const acceptedOnly = boolQuery(c, "accepted_only");
+    if (acceptedOnly === true && scope !== "mine") throw apiError("invalid_request");
+    const p = {
+      scope,
+      accepted_only: acceptedOnly,
+      city_id: intQuery(c, "city_id", 1, 1_000_000),
+      limit: intQuery(c, "limit", 1, 50) ?? 30,
+      offset: intQuery(c, "offset", 0, 1000) ?? 0,
+    };
+    return c.json(await up().rpc("scheduled_matches", { p }, token));
+  });
+
+  app.post("/v1/upcoming-matches", async (c) => {
+    const token = bearer(c);
+    const key = idempotencyKey(c);
+    const body = await parseJson(c, schemas.scheduledMatch);
+    if (body.client_id && body.client_id.toLowerCase() !== key) throw apiError("invalid_request");
+    return c.json(await up().rpc("create_scheduled_match", { p: { ...body, client_id: key } }, token), 201);
+  });
+
+  app.get("/v1/upcoming-matches/:id", async (c) => {
+    const token = bearer(c);
+    return c.json(await up().rpc("scheduled_match", { p_match: pathUuid(c, "id") }, token));
+  });
+
+  for (const action of ["join", "leave", "cancel"] as const) {
+    app.post(`/v1/upcoming-matches/:id/${action}`, async (c) => {
+      const token = bearer(c);
+      return c.json(await up().rpc(`${action}_scheduled_match`, { p_match: pathUuid(c, "id") }, token));
+    });
+  }
+
+  app.post("/v1/upcoming-matches/:id/requests/:player/respond", async (c) => {
+    const token = bearer(c);
+    const body = await parseJson(c, schemas.participationDecision);
+    return c.json(await up().rpc("review_scheduled_application", {
+      p_match: pathUuid(c, "id"), p_player: pathUuid(c, "player"), p_decision: body.decision,
+    }, token));
+  });
+
+  app.post("/v1/upcoming-matches/:id/result", async (c) => {
+    const token = bearer(c);
+    const key = idempotencyKey(c);
+    const body = await parseJson(c, schemas.object);
+    return c.json(await up().rpc("submit_scheduled_result", {
+      p_match: pathUuid(c, "id"), p: body, p_idempotency_key: key,
+    }, token), 201);
   });
 
   // ---------------------------------------------------------------------
