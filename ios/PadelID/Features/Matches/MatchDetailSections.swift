@@ -366,6 +366,7 @@ struct MatchDetailRatingSection: View {
     let match: MatchDetail
     let viewerId: UUID?
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isExplanationExpanded = false
 
     init(match: MatchDetail, viewerId: UUID?) {
@@ -429,7 +430,7 @@ struct MatchDetailRatingSection: View {
     private func explanation(_ lines: [String]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Button {
-                withAnimation(.snappy) {
+                withAnimation(reduceMotion ? nil : .snappy) {
                     isExplanationExpanded.toggle()
                 }
             } label: {

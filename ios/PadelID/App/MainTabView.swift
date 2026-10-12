@@ -9,11 +9,19 @@ struct MainTabView: View {
             Tab("Главная", systemImage: "house", value: AppModel.Tab.padelID) { HomeView() }
             Tab("Матчи", systemImage: "tennis.racket", value: AppModel.Tab.matches) { MatchesView() }
                 .badge(app.actionCount)
-            Tab("Анализ", systemImage: "chart.xyaxis.line", value: AppModel.Tab.analysis) { AnalysisView() }
-            Tab("Друзья", systemImage: "person.2", value: AppModel.Tab.friends) { FriendsView() }
+            Tab("Клубы", systemImage: "sportscourt", value: AppModel.Tab.clubs) { ClubsView() }
+            Tab("Сообщество", systemImage: "person.3", value: AppModel.Tab.community) { CommunityView() }
             Tab("Профиль", systemImage: "person.crop.circle", value: AppModel.Tab.profile) { AccountView() }
         }
         .tabBarMinimizeBehavior(.never)
         .sheet(item: $app.matchEditor) { request in MatchEditorView(request: request) }
+        .sheet(isPresented: $app.isAccountPresented) {
+            AccountView()
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Готово") { app.isAccountPresented = false }
+                    }
+                }
+        }
     }
 }

@@ -259,7 +259,7 @@ struct MatchEditorView: View {
         Binding(
             get: { model.draft.format },
             set: { value in
-                withAnimation(.smooth) { model.setFormat(value) }
+                withAnimation(reduceMotion ? nil : .smooth) { model.setFormat(value) }
             })
     }
 

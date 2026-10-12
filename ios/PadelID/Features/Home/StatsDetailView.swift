@@ -25,7 +25,7 @@ struct StatsDetailView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemGroupedBackground))
+        .background(Theme.background)
         .navigationTitle("Статистика")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: app.dataRevision) { await player.load(using: app) }
@@ -53,6 +53,7 @@ struct StatsDetailView: View {
                 StatsDetailSections(stats: stats, isMe: isMe)
             }
             .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
             .refreshable { [player = self.player, app = self.app] in
                 await player.load(using: app)
             }
@@ -84,10 +85,7 @@ private struct StatsDetailSections: View {
 
     var body: some View {
         Section("Итоги") {
-            StatsDetailRow(title: "Матчи", value: "\(stats.matches)")
-            StatsDetailRow(title: "Победы", value: "\(stats.wins)")
-            StatsDetailRow(title: "Поражения", value: "\(stats.losses)")
-            StatsDetailRow(title: "Процент побед", value: StatsDetailFormat.share(stats.wins, of: stats.matches))
+            MatchBalanceSummary(stats: stats).padding(.vertical, 8)
         }
 
         Section("Рейтинговые и товарищеские") {

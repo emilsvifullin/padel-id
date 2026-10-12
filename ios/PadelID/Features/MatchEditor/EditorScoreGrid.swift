@@ -20,6 +20,7 @@ struct EditorScoreGrid: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var selection: EditorScoreOption?
     @State private var tiebreakEnabled: Bool
@@ -71,7 +72,7 @@ struct EditorScoreGrid: View {
                 .onChange(of: selection) { _, newValue in
                     guard newValue?.isTiebreakSet == true else { return }
                     detent = .large
-                    withAnimation(.smooth) {
+                    withAnimation(reduceMotion ? nil : .smooth) {
                         proxy.scrollTo(Self.tiebreakAnchor, anchor: .bottom)
                     }
                 }
@@ -156,7 +157,7 @@ struct EditorScoreGrid: View {
     private func tiebreakEditor(for option: EditorScoreOption) -> some View {
         SectionContainer {
             VStack(alignment: .leading, spacing: 12) {
-                Toggle("Указать счёт тай-брейка", isOn: $tiebreakEnabled.animation(.smooth))
+                Toggle("Указать счёт тай-брейка", isOn: $tiebreakEnabled.animation(reduceMotion ? nil : .smooth))
                     .accessibilityIdentifier("score.tiebreak")
                 if tiebreakEnabled {
                     Stepper(value: $tiebreak1, in: 0...40) {

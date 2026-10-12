@@ -7,3 +7,5 @@ server/dist/
 server/.vercel/
 supabase/.temp/
 .DS_Store
+__pycache__/
+supabase/functions/gateway/_shared/

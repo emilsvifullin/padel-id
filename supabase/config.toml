@@ -425,3 +425,8 @@ enabled = true
 
 [functions.account]
 verify_jwt = false
+
+# Public health/login/signup and authenticated API routes share this entrypoint.
+# Route auth remains in the API and RPC/session validation, as on Vercel.
+[functions.gateway]
+verify_jwt = false

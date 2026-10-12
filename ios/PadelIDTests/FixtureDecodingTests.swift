@@ -534,4 +534,18 @@ struct FixtureDecodingTests {
             #expect(player.withEnteredScore != nil)
         }
     }
+    @Test("Professional coach profile decodes existing qualifications without breaking legacy profiles")
+    func publicCoachProfile() throws {
+        let data = try FixtureLoader.data("player_profile")
+        var object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        object["coach"] = ["experience_years": 8, "certification": "Сертификат федерации",
+                            "about": "Техника и групповые занятия", "club": ["id": 1, "name": "Клуб"]]
+        let value = try JSONCoding.decoder.decode(PlayerProfileResponse.self, from: JSONSerialization.data(withJSONObject: object))
+        #expect(value.coach?.experienceYears == 8)
+        #expect(value.coach?.certification == "Сертификат федерации")
+        #expect(value.coach?.club?.id == 1)
+        object["coach"] = NSNull()
+        #expect(try JSONCoding.decoder.decode(PlayerProfileResponse.self, from: JSONSerialization.data(withJSONObject: object)).coach == nil)
+    }
+
 }

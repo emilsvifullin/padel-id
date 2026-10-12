@@ -3,10 +3,12 @@ import SwiftUI
 struct UpcomingDetailView: View {
     let matchId: UUID
     @Environment(AppModel.self) private var app
+    @Environment(\.dismiss) private var dismiss
     @State private var detail: Resource<UpcomingMatch>
     @State private var isWorking = false
     @State private var error: String?
     @State private var confirmation: String?
+    @State private var isInviting = false
 
     init(matchId: UUID) {
         self.matchId = matchId
@@ -22,9 +24,10 @@ struct UpcomingDetailView: View {
                 ErrorStateView(error: error) { Task { await detail.load(using: app) } }
             } else { LoadingView() }
         }
-        .navigationTitle("Открытая игра")
+        .navigationTitle(detail.value?.visibility == "private" ? "Закрытая игра" : "Открытая игра")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: app.dataRevision) { await detail.load(using: app) }
+        .sheet(isPresented: $isInviting) { UpcomingInviteView(matchId: matchId) }
         .alert(confirmation == "cancel" ? "Отменить игру?" : "Отменить участие?", isPresented: Binding(
             get: { confirmation != nil }, set: { if !$0 { confirmation = nil } }), presenting: confirmation) { action in
             Button(action == "cancel" ? "Отменить игру" : "Отменить участие", role: .destructive) {
@@ -58,6 +61,13 @@ struct UpcomingDetailView: View {
                         }
                     }
                 }
+                if match.viewer.canInvite == true {
+                    Button("Пригласить друзей", systemImage: "person.badge.plus") { isInviting = true }
+                        .disabled(!app.isOnline || isWorking)
+                }
+                if match.viewer.participation == "accepted" {
+                    GameChatButton(gameId: match.id)
+                }
             }
             Section {
                 participationActions(match)
@@ -65,7 +75,7 @@ struct UpcomingDetailView: View {
                 if !app.isOnline { SettingsOfflineNotice(message: "Для участия и изменения состава нужно подключение.") }
             } footer: { Text(admissionText(match)) }
             if match.viewer.isOrganizer {
-                let pending = match.applications.filter { $0.status == "pending" }
+                let pending = match.applications.filter { $0.status == "pending" || $0.status == "waitlisted" || $0.status == "invited" }
                 if !pending.isEmpty {
                     Section("Заявки на участие") {
                         ForEach(pending) { application in
@@ -75,9 +85,13 @@ struct UpcomingDetailView: View {
                                         LevelChip(level: application.player.level, reliability: application.player.reliability)
                                     }
                                 }
+                                Text(application.status == "waitlisted" ? "Лист ожидания" : application.status == "invited" ? "Приглашение отправлено" : "Заявка")
+                                    .font(.caption).foregroundStyle(.secondary)
                                 HStack {
-                                    Button("Принять") { review(application.id, accepted: true) }
-                                        .buttonStyle(.borderedProminent).disabled(match.spotsLeft == 0)
+                                    if application.status != "invited" {
+                                        Button("Принять") { review(application.id, accepted: true) }
+                                            .buttonStyle(.borderedProminent).disabled(match.spotsLeft == 0)
+                                    }
                                     Button("Отклонить") { review(application.id, accepted: false) }.buttonStyle(.bordered)
                                 }.disabled(isWorking || !app.isOnline || match.isClosed || match.startsAt <= .now)
                             }
@@ -113,12 +127,31 @@ struct UpcomingDetailView: View {
             Button(match.viewer.participation == "pending" ? "Отозвать заявку" : "Отменить участие", role: .destructive) {
                 if match.viewer.participation == "pending" { perform("leave") } else { confirmation = "leave" }
             }.disabled(!app.isOnline || isWorking || match.startsAt <= .now)
+        } else if match.viewer.participation == "invited" {
+            Label("Вас пригласили", systemImage: "envelope.open")
+            Button("Принять приглашение") { perform("invitations/respond", body: ["decision":"accepted"]) }
+                .disabled(match.spotsLeft == 0 || !app.isOnline || isWorking)
+            Button("Отклонить", role: .destructive) { perform("invitations/respond", body: ["decision":"declined"]) }
+                .disabled(!app.isOnline || isWorking)
+            if match.viewer.canWaitlist == true {
+                Button("Ждать свободного места") { perform("waitlist") }.disabled(!app.isOnline || isWorking)
+            }
+        } else if match.viewer.participation == "waitlisted" {
+            Label("Вы в листе ожидания", systemImage: "clock")
+            Text("Место не зарезервировано. Когда оно освободится, появится уведомление; подтвердите участие отдельно.")
+                .font(.footnote).foregroundStyle(.secondary)
+            if match.spotsLeft > 0 {
+                Button("Присоединиться") { perform("join") }.disabled(!app.isOnline || isWorking)
+            }
+            Button("Выйти из листа ожидания", role: .destructive) { perform("leave") }.disabled(!app.isOnline || isWorking)
         } else if match.viewer.canJoin {
             Button(match.viewer.admission == "auto" ? "Занять место" : "Подать заявку") { perform("join") }
                 .buttonStyle(.borderedProminent).disabled(!app.isOnline || isWorking)
                 .accessibilityIdentifier("upcoming.join")
         } else if match.viewer.admission == "out_of_range" {
             Text("Ваш подтверждённый уровень вне диапазона этой игры.").foregroundStyle(.secondary)
+        } else if match.viewer.canWaitlist == true {
+            Button("Ждать свободного места") { perform("waitlist") }.disabled(!app.isOnline || isWorking)
         } else { Text(match.spotsLeft == 0 ? "Все места заняты" : "Набор завершён").foregroundStyle(.secondary) }
     }
 
@@ -138,6 +171,12 @@ struct UpcomingDetailView: View {
             do {
                 let data = try await app.api.data(.json(.post, path + "/" + action, body, retryable: true))
                 let fresh = try JSONCoding.decoder.decode(UpcomingMatch.self, from: data)
+                if fresh.visibility == "private", !fresh.viewer.isOrganizer,
+                   ["leave", "invitations/respond"].contains(action),
+                   ["withdrawn", "rejected", "none"].contains(fresh.viewer.participation) {
+                    app.cache.remove(CacheKey.upcoming(matchId))
+                    app.dataDidChange(); dismiss(); return
+                }
                 detail.replace(with: fresh, data: data, app: app)
                 app.dataDidChange()
                 Announce.post(action == "join" && fresh.viewer.participation == "pending" ? "Заявка отправлена организатору" : "Игра обновлена")

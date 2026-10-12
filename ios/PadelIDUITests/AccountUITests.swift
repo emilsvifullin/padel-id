@@ -11,6 +11,18 @@ final class AccountUITests: PadelIDUITestCase {
 
         selectTab("Профиль")
         requireScreen("Профиль")
+
+        open(element("account.myEvents"), screen: "Тренировки и турниры")
+        XCTAssertTrue(waitUntil(timeout: 10) {
+            server.recorded("GET", "v1/events").contains { $0.query["scope"] == "mine" && $0.query["kind"] == "training" }
+        }, "Profile opens the current user's persisted event history")
+        XCTAssertTrue(app.segmentedControls.buttons["Мои"].isSelected)
+        tap(app.segmentedControls.buttons["Турниры"])
+        XCTAssertTrue(waitUntil(timeout: 10) {
+            server.recorded("GET", "v1/events").contains { $0.query["scope"] == "mine" && $0.query["kind"] == "tournament" }
+        })
+        goBack(previousTitle: "Профиль")
+        requireScreen("Профиль")
         let editProfile = require(element("account.editProfile"), "account.editProfile")
         snap("account")
 

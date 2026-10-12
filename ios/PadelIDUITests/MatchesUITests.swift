@@ -137,6 +137,7 @@ final class MatchesUITests: PadelIDUITestCase {
                           file: StaticString = #filePath, line: UInt = #line) {
         let setRow = element("editor.set.\(number)")
         tap(setRow, file: file, line: line)
+        requireScreen("Сет \(number)", file: file, line: line)
         let option = require(element("score.\(score)"), "score.\(score)", file: file, line: line)
         if screenshot {
             snap("score-grid")

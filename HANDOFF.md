@@ -1,4 +1,419 @@
-# Передача Padel ID 1.1.0
+# Текущая работа: Padel ID 1.2.0
+
+Обновлено 12.10.2026. Рабочая копия `/Users/emilsvifullin/Developer/Padel ID`.
+Пользователь подтвердил весь релиз 1.2.0, включая три подготовленные настоящие
+Home Screen icons с Лайм по умолчанию. Shift Register изучали только read-only;
+его проект, DNS, конфигурация и данные не изменены.
+Локальные Release units 164 / 164 и focused icons/chat 3 / 3 прошли на обеих OS.
+Все failed UI cases покрыты успешными focused retries; нового полного 32 / 32
+нет. IPA d56bc актуален и unsigned; production доставка и физическая приёмка
+остаются незавершёнными.
+
+## Разрешения и сохранность
+
+Последнее явное поручение пользователя: завершить production-релиз 1.2.0 сейчас.
+Разрешены необходимые Git/release/deployment операции и production migrations/API
+после резервирования и CI. Доступность через МегаФон без VPN пользователь вынес
+за текущий scope; это отдельная незавершённая задача, а не gate этой публикации.
+Production операции ещё не выполнены. PADELID_GATEWAY_SECRET не менять;
+Shift Register, его конфигурацию и данные не трогать. Владелец явно согласовал выпуск 1.2.0 с уведомлениями внутри приложения.
+APNs отложен на отдельный этап; shipping push NO — согласованное ограничение
+этого релиза, а не ожидающее решение или gate публикации.
+Ранее отдельно разрешены и выполнены только Supabase gateway verification
+и isolated Netlify health probe. Новый production release ещё не опубликован;
+исторические разрешения 1.1.0 не используются вместо нового поручения 1.2.0.
+
+## Сеть и действующий API
+
+Production revision `b93723db3c71e9a3f28187c38ffd5d84c4f63a74`. На iPhone пользователя
+без VPN существующий Vercel API и `api-padel.shiftregister.ru` не открываются через
+Алмател/Megafon; `vercel.com` работает. Конкретный механизм DNS/IP/SNI не доказан.
+
+Supabase gateway ACTIVE version 4 — fixed-origin relay к прежнему API, без
+копирования секрета. Strict TLS shallow/deep health 200, anonymous me 401;
+production revision сохранена. Пользователь подтвердил Wi-Fi без VPN, но Megafon
+не работает, включая официальный functions.supabase.co hostname. Production
+fallback iOS пустой; новый путь не принят как сетевое исправление.
+
+Согласованность Vercel/account/SQL secret проверена запросом recovery случайного
+несуществующего адреса с неверным recovery key: ожидаемый invalid_recovery 403
+после secret guard, без изменения аккаунтов. Account ACTIVE version 4 проверена
+read-only, не развёртывалась. Fail-open health сам по себе не доказывал бы secret.
+
+Пользователь подтвердил, что оба API Shift Register тоже не открываются через
+Megafon без VPN. Доступность GitHub Pages страницы не доказывает свежий backend
+запрос; кеш/маршрут браузера не установлен. Не закреплять CDN IP в клиенте/DNS.
+
+Node/Caddy full API и relay подготовлены локально, Docker relay build/health
+проверены. Внешнего сервера нет: у пользователя только домен; платный сервер он явно отклонил, VPS не покупали.
+Relay агрегирует upstream IP budgets; нельзя доверять пользовательскому XFF или
+ослаблять rate limits. Новый ingress требует доступного хостинга, проверенной
+границы caller IP и физической приёмки. См. `server/deploy/README.md`.
+
+Отдельный Netlify read-only probe опубликован по явному разрешению:
+[health/deep](https://padel-id-network-probe.netlify.app/v1/health?deep=1).
+Пользователь зарегистрировался и разрешил CLI auth; Free $0 подтверждён в UI,
+платный сервер он отклонил. Site `2df11cca-1f71-4826-9a84-5c5977cd086f`, deploy
+`6acbf908b35357bcd95b784d`. Public доступ открыт только этому новому probe,
+previews остаются private. Bundle содержит только health и два pure helpers,
+без app API/mutations/учётных данных. Production API/DNS/Supabase/Vercel/secrets
+не изменены; это проверочный endpoint, не рабочая замена API приложения.
+
+Локально 4 probe + 22 relay regressions и offline bundling passed; hosted strict-TLS
+проверки 6/6 passed без redirects/cookies, `netlify-probe-hosted-verification.json`:
+GET health shallow/deep 200, configuration_required/network_verification,
+upstream_status: ok / существующий b93723; deep database: ok, shallow database not_checked.
+POST health, me, default function URL и arbitrary query 404.
+Пользователь подтвердил на физическом iPhone без VPN: Алмател Wi-Fi работает,
+МегаФон mobile data URL не загружает. Probe не решил мобильную доступность,
+production fallback остаётся пустым. Точный сетевой механизм не доказан; этот
+результат не доказывает отказ всех сервисов Netlify. Яндекс и apple.com на том же
+iPhone через МегаФон без Wi-Fi/VPN открываются: общий мобильный интернет работает.
+
+## Реализация
+
+Native SwiftUI пять вкладок, общие темы и настоящие alternate icons; социальные
+чаты/группы/лента/подписки/privacy/reports; закрытые игры, приглашения, waitlist,
+weekly timezone series; тренировки и четыре формата турниров; реальный каталог
+клубов/кортов/карты/фото/admin и verified external booking. Рейтинг и outbox
+обычных результатов сохранены. Private feed/comments/events не кешируются на
+диск; списки обновляют bounded canonical visited window. Inbox и Conversations
+теперь сохраняют посещённое окно до 150 строк при автообновлении/polling, вместо
+возврата к первой странице. after_id=0 больше не отклоняется числовой валидацией;
+route regression сначала воспроизвёл 400, затем прошёл после исправления. APNs client/private
+queue/HTTP2 provider/worker/build gates реализованы, flag NO до настоящего Apple
+provisioning/key/worker/device acceptance.
+
+Последние дополнения:
+
+- Десять безусловных анимаций в шести файлах теперь учитывают Reduce Motion;
+  физический VoiceOver/Reduce Motion acceptance остаётся незавершённым.
+
+- Публичные qualifications/about только подтверждённого тренера, реальное
+  расписание и запись; свои события/история, ближайшая принятая будущая
+  тренировка/турнир на Главной.
+- Редактирование времени/условий открытого события сохраняет участников,
+  использует metadata_version, защищает от stale overwrite и уведомляет
+  участников. Score409 перезагружает канонический счёт/версию перед исправлением.
+- Исправление публикации после определённого 4xx меняет idempotency key только
+  при изменении payload; неопределённый retry сохраняет payload/key.
+- Moderation показывает только актуальное содержимое конкретной жалобы, без
+  доступа ко всей чужой переписке; удалённое содержимое не удерживается.
+- Avatar Storage теперь private с live-session/visibility/owner operation guards;
+  API передаёт bearer в authenticated Storage. Signed links/copy/move/list
+  запрещены. Клиент очищает прежний image cache; gateway avatar path не дублируется.
+  Старый клиент использовал anonymous API image URL и persistent cache, прежний
+  сервер public Storage; нужен согласованный порядок обновления и cache audit.
+
+## Текущие результаты после устранения трёх пробелов
+
+`EventEditDraft` сохраняет локальные правки при HTTP 409. Пользователь явно
+выбирает keepDraft/useLatest; серверная версия обновляется без молчаливой потери
+черновика. Профиль открывает `Route.myEvents`. Новости клуба используют прежние
+posts с фильтром club_id, атрибуцией клуба и проверкой актуальных прав администратора.
+Добавлена миграция `20261012073216_club_news_feed.sql`: локальная цепочка теперь
+содержит 24 миграции, десять новых для 1.2.0. Hosted база не изменена.
+
+| Проверка | Фактический результат | Доказательство |
+|---|---|---|
+| Полный backend unit | 107 / 107 passed | club-news-backend-full-unit.log |
+| SQL в rollback/savepoint изоляции | 83 / 83 passed; данные 78 таблиц и fingerprint секрета сохранены | club-news-backend-full-sql-isolated.log, club-news-backend-* |
+| Реальные Node и Edge E2E | Каждый: 23 passed, 5 skipped | club-news-backend-node-e2e.log, club-news-backend-edge-e2e.log |
+| Current Release unit26 / unit27 | Каждый: 164 / 164 PASS, 0 failed / 0 skipped, exit 0 | unit-chat-feedback-current-{26,27}-summary.json, .xcresult/log |
+| Release unit26 / unit27 до ChatView fix | Каждый: 163 / 163 passed; historical | unit-draft-club-news-current-{26,27}-summary.json |
+| Первый targeted UI27 новых требований | 4 passed, 1 failed из 5; отказ при первом вводе title до 409 | ui-draft-club-news-current-27-summary.json |
+| Предыдущий event409 UI27 после wait helper fix | 0 passed / 1 failed; второй title edit после keepDraft, поле вне viewport | ui-event-draft-observed-27.xcresult/log |
+| Прежний event409 UI27 после scroll helper fix | 1 / 1 PASS, 0 failed / 0 skipped, 158.180 s; historical | ui-event-draft-scroll-27-summary.json, ui-event-draft-scroll-27.xcresult/log |
+| Current event409 UI27 с native button query | 1 / 1 PASS, 0 failed / 0 skipped; TEST SUCCEEDED, exit 0, 128.801 s | ui-event-draft-button-27-summary.json, ui-event-draft-button-27.xcresult/log |
+| Прежний event409 UI26 после scroll helper fix | FAILED: isEnabled прочитан у Other wrapper вместо кнопки | ui-event-draft-scroll-26.xcresult/log |
+| Current event409 UI26 с button query | 1 / 1 PASS, 0 failed / 0 skipped; TEST SUCCEEDED, exit 0, 108.138 s | ui-event-draft-button-26-summary.json, ui-event-draft-button-26.xcresult/log |
+| Current build gates | API URL: 4 / 4 PASS; push/profile: 5 / 5 PASS | *-gates-current.log |
+| Последний full UI26 | 32 total: 31 passed / 1 failed / 0 skipped, exit 65; wrapper query defect; corrected focused case PASS, whole bundle remains failed | ui-draft-club-news-full-26-summary.json, ui-draft-club-news-full-26.xcresult/log |
+| Последний full UI27 после трёх дополнений | 32 total: 29 passed / 3 failed / 0 skipped, exit 65; historical до ChatView fix; все три failed cases затем покрыты focused PASS | ui-draft-club-news-full-27-summary.json, ui-draft-club-news-full-27.xcresult/log, ui-draft-club-news-full-27-devices.json, ui-draft-club-news-full-27-content-size.json |
+| Players27 без сна Mac | 1 / 1 PASS, 0 failed / 0 skipped, exit 0, 167.885 s | ui-players-awake-27-summary.json, ui-players-awake-27.xcresult/log |
+| Chat poll/send regression | RED 13 / 14 → GREEN 14 / 14, Release27; 16 case invocations / 14 declarations | unit-chat-send-poll-{red,fixed}-27-summary.json, .xcresult/log |
+| Current focused icons/chat26 / 27 | Каждый: 3 / 3 PASS, 0 failed / 0 skipped, exit 0 | ui-chat-icons-completion-{26,27}-summary.json, .xcresult/log |
+| Иконки 24pt и HomeAX26 / 27 | Каждый: 2 / 2 PASS; визуально обе OS без наложения, SpringBoard показывает три реальных дизайна | ui-icon-native-size-final-{26,27}.xcresult/log |
+| Прежний full UI27 retry | TEST INTERRUPTED, exit 75 после новых требований; не PASS | ui-final-current-full-27.xcresult/log |
+
+Первоначальный SQL run: 77 passed, 6 failed — исторический отказ изоляции.
+Корректный rollback/savepoint run 83 / 83 сохранил исходные данные 78 таблиц и
+fingerprint локального секрета. В targeted UI27 прошли Account, две news и score409.
+Event-edit остановился до 409: видео подтвердило задержку наблюдения введённого
+текста, правильный фокус и отсутствие autocorrect. Исправлен только test helper:
+после typeText он ждёт до 15 секунд точного contains, затем выполняет прежний
+строгий assert; повторного ввода нет. Этот `ui-event-draft-observed-27` завершился
+0 passed / 1 failed на втором title edit после keepDraft: lazy Form уже прокручен
+примерно на 71%, title расположен выше viewport. AX evidence подтвердил, что
+черновик не потерян. Helper теперь вызывает
+scrollIntoView(element(eventEdit.title), searchBelow:false) перед require, сохраняя
+wait 15s и точные assertions. `ui-event-draft-scroll-27` завершился TEST SUCCEEDED,
+exit 0: 1 passed / 0 failed / 0 skipped, 158.180 s. Проверены сохранённый видимый
+title после 409, явный review, повторная корректировка и точные две PUT операции
+с version/title/location assertions. Прежний независимый
+`ui-event-draft-scroll-26` FAILED по wrapper query; текущий button-query target
+прошёл, подробнее ниже. Current API build
+gates 4 / 4 и push/profile gates 5 / 5 PASS (`*-gates-current.log`).
+Full26 `ui-draft-club-news-full-26` завершился exit 65: 32 total, 31 passed / 1 failed / 0 skipped.
+Единственный отказ — XCTAssertFalse «Review is required before a rebased submission»
+для eventEdit.save.isEnabled. Видео `event-edit-review-enabled-full-26-68-frame.png`
+подтвердило: настоящий Save серый/disabled, review виден, локальный draft сохранён.
+Лог показал Any query, разрешённый как Other wrapper вместо кнопки. Это test-only
+query defect: три обращения к Save теперь используют app.buttons[eventEdit.save].
+Строгий disabled assert и exact две PUT assertions сохранены. Старый target
+`ui-event-draft-scroll-26` failed по той же wrapper query. Corrected focused test
+`ui-event-draft-button-26` TEST SUCCEEDED, exit 0: 1 passed / 0 failed / 0 skipped,
+108.138 s. Он покрывает единственный failure, но прежний full26 bundle остаётся
+31 passed / 1 failed; нового полного 32 / 32 PASS пока нет.
+
+Последний full UI27 `ui-draft-club-news-full-27` завершился exit 65:
+32 total, 29 passed / 3 failed / 0 skipped. Отказы:
+
+- `testAppearanceOffersThemesAndAllPreparedIcons`: кнопка «Графит» disabled
+  после alert; отказ на ожидании selected, line 177, UIKit ещё pending.
+- `testChatRequiresServerConfirmationAndRetriesSameSubmission`: элемент не найден
+  за 10 секунд; воспроизведён poll/send feedback defect; исправление прошло текущий UI retry.
+- `testPlayersSearchAndProfile`: timeout синтеза drag. Журнал питания показывает
+  Clamshell Sleep в 11:36:18, DarkWake в 11:51:36 и Wake в 11:52:42;
+  drag начался в 11:36:20.100 и timeout зарегистрирован в 11:51:36.205
+  (ошибка 11:53:33.83). Это конкретное свидетельство влияния сна Mac;
+  повтор `ui-players-awake-27` с предотвращением сна прошёл без изменения assertions:
+  1 / 1 PASS, exit 0, 167.885 s.
+
+Доказательства: `ui-full-27-host-power.log`, `ui-full-27-players-activities.json`.
+Players repeat принят как 1 / 1 PASS; полный исторический bundle остаётся 29 / 32.
+Chat feedback исправлен: poll обновляет loadError, а не очищает sendError;
+неподтверждённая 503 отправка сохраняет feedback и retry identity. Scoped Release27
+regression прошёл RED 13 / 14 → GREEN 14 / 14; privacy test имеет три аргумента
+401 / 403 / 404, поэтому 14 declarations соответствуют 16 case invocations.
+Артефакты: `unit-chat-send-poll-red-27` и `unit-chat-send-poll-fixed-27`.
+Текущие полные optimized Release units26 / 27: каждый 164 / 164 PASS,
+0 failed / 0 skipped, exit 0 (`unit-chat-feedback-current-{26,27}-summary.json`).
+
+Icon failure в старом full27 произошёл на ожидании charcoal selected (line 177),
+а не при tap: UIKit ещё завершал смену после alert, test ждал 10 секунд и не
+проверял enabled. Исправлен только test: до перехода Home он до 30 секунд ждёт
+selected && enabled и обрабатывает поздний SpringBoard alert. Продуктовый код
+иконок не изменён. Focused runs `ui-chat-icons-completion-{26,27}` завершились каждый 3 / 3 PASS,
+0 failed / 0 skipped, exit 0. Проверены настоящая смена иконки и три дизайна Home
+Screen, возврат к Лайм по умолчанию и cold relaunch; chat 503 retry с тем же key
+и подтверждённым сообщением; chat member profile context. Длительности (s):
+
+| Runtime | Icons | Chat 503 retry | Member context |
+|---|---:|---:|---:|
+| iOS26 | 284.104 | 140.598 | 62.900 |
+| iOS27 | 360.415 | 161.186 | 88.249 |
+
+Доказательства: `ui-chat-icons-completion-{26,27}-summary.json`, `.xcresult/log`.
+Все ранее упавшие отдельные UI cases покрыты успешными focused проверками:
+event button26, icons/chat обеих OS, Players27 без сна. Исторические full26
+31 / 32 и full27 29 / 32 остаются failed; свежий full 32 / 32 с текущим
+ChatModel не выполнялся. Полные Release units и targeted UI подтверждены.
+Visual review27 подтверждён: свежие SpringBoard screenshots показывают
+Лайм → Графит → Мяч → Лайм; настройки с AX-extra-large читаемы без перекрытий.
+Доказательство: `ui-chat-icons-completion-27-visual/manifest.json`.
+Физическая приёмка установленной production-сборки остаётся отдельной.
+Последние focused button-query targets 26 / 27 прошли каждый 1 / 1;
+UI27 `ui-event-draft-button-27`: 128.801 s, exit 0, 0 failed / 0 skipped.
+Snapshot `event-edit-button-27-attachments/EDA6D4CB-0DF5-4E34-B804-8FAE0C310C06.png`
+проверен основным и visual агентом: review при AX-extra-large читаем,
+кнопки переносятся без наложения, Save серый и disabled. Точный draft и строгие
+assertions подтверждены тестом. Последний full27 был скомпилирован до этих
+test-only button query/snapshot additions; это доказательство относится к исходникам до нового ChatView fix.
+Две actual clones: iOS 27.0, accessibility-extra-large, доказательства
+`ui-draft-club-news-full-27-devices.json` и `ui-draft-club-news-full-27-content-size.json`.
+IPA 69667 и его manifest исторические; текущий shipping artifact указан ниже.
+Полная текущая UI matrix ещё не принята.
+
+Исторический unsigned archive до ChatView fix: `archive-draft-club-news-local.log`, ARCHIVE SUCCEEDED.
+IPA `ios/build/verification/PadelID-1.2.0-draft-club-news-local-unsigned.ipa`, 3734938 bytes,
+SHA256 `69667ee2ec70bd95d88c290e531ec3938c5490c8b5f5a7b69247e1c49a6c5fca`.
+`ipa-draft-club-news-local-verification.log`: IPA OK 1.2.0(3).
+`ipa-draft-club-news-local-source.json`: 127 app source hashes совпадали с исходниками до ChatView fix;
+signed=false, published=false; этот IPA исторический.
+Текущий shipping archive `PadelID-chat-feedback-local.xcarchive`:
+`archive-chat-feedback-local.log`, ARCHIVE SUCCEEDED, ENABLE_TESTABILITY=NO.
+Unsigned IPA `ios/build/verification/PadelID-1.2.0-chat-feedback-local-unsigned.ipa`,
+3739714 bytes, SHA256
+`d56bc2f36c93dc5c3cf724c0d1094c9f27de111a1c3b714aa0758377a017c148`.
+`ipa-chat-feedback-local-verification.log`: verify-ipa exit 0, IPA OK 1.2.0(3).
+`ipa-chat-feedback-local-source.json`: 127 app source hashes; относительно 69667
+изменён только ChatView. Signed=false, published=false. Предыдущие IPA исторические.
+Shipping push NO, fallback empty. Полная текущая UI matrix, signed physical
+acceptance и production publication пока не выполнены. APNs delivery отложена
+по явному решению владельца; уведомления внутри приложения входят в выпуск.
+МегаФон без VPN исключён владельцем из текущей поставки; исправление отложено.
+
+## История подтверждённых проверок до последних требований
+
+Ignored evidence: `ios/build/verification/`.
+
+- Текущий полный Node 22 unit run: 104 tests / 7 files passed,
+  `server-cursor-final-unit.log`; включает 62 gateway tests с after_id=0 regression.
+  TypeScript build и generated Edge build (12 modules) passed,
+  `server-edge-cursor-final-build.log`; Deno check + 6 runtime tests passed,
+  `edge-cursor-final-check.log`, `edge-cursor-final-test.log`.
+- Чистая actual local Supabase цепочка 23 migrations и 79 SQL tests passed:
+  `stack-final-reset.log`, `stack-final-sql.log`. Девять новых migrations 1.2.0
+  применены только локально. Новые qualified event_update variables проверены
+  именно этим clean reset, не только ручным обновлением функции.
+- 27 независимых races passed: 7 base + 5 social + 6 events + 3 clubs + 6 push,
+  `stack-final-races.log`; включает конфликт двух переносов события/состав/notify.
+- Actual local security advisors: 0 issues, `stack-final-security.log`. Последний
+  scoped read-only `candidate_security_review` новых avatar/moderation/event-edit
+  SQL/server boundaries также без конкретных findings; не hosted integration. Последний
+  lint 72 warning + 15 warning-extra / errors 0, `stack-final-lint.log`; не warning-free audit.
+- Финальный actual Edge/Auth/Storage E2E и Node E2E: каждый 23 passed + 5 skipped
+  суммой независимых файлов, exit 0. `stack-final-edge-isolated-e2e.log`,
+  `stack-final-node-isolated-e2e-fixed.log`. Cleanup новых runs прошёл.
+  Первоначальные combined Edge и Node runs 23 cases passed, но cleanup 429 от shared
+  IP budgets оставил whole suite failed. Local-only runner выполняет файлы
+  последовательно и сбрасывает только shared IP password/login/signup/recover/
+  refresh между suites, сохраняя user/email budgets и реальные in-suite assertions.
+  Guards: local API/DB 54322/postgres; production limits не менялись.
+  CI test:e2e использует `server/scripts/test-e2e.mjs`.
+- Прежний Release iOS26 unit 158 / 17 suites passed после event/Home/edit changes,
+  до последних Appearance/Home AX layout changes,
+  `unit-release-events-final-26.xcresult/log` (TEST SUCCEEDED).
+- Последние Home/Appearance accessibility targeted tests passed на26 и27, но
+  полная текущая matrix/physical accessibility acceptance не выполнена. Исправлены реальный Home AX overflow
+  x−52/507→0/402, слабый контраст трёх Home подписей (теперь 6.18–9.52) и
+  наследование foreground styles Appearance через явный Color.primary.
+  Appearance имеет native scroll content margin 24 pt. Последний завершённый27 bundle до финальной title правки
+  `ui-appearance-icons-final-27` TEST SUCCEEDED 2/2: реальные icons 115.366s,
+  Home/Appearance audit 121.751s. AX26 `ui-appearance-scroll-local-26` failed 105.659s
+  только по четырём textClipped reports pending-result title (frame 20.3pt, glyph
+  crop полный); icon/footercontrast исправлен. Новый waiver не добавлен.
+  Финальная минимальная Home title layout correction (flexible width/layoutPriority
+  вместо unused Spacer) исправила26 reports: `ui-home-flexible-title-26`
+  TEST SUCCEEDED 1/1, 99.440s, 0 failures. Latest27 title regression также passed
+  131.807s, TEST SUCCEEDED (`ui-home-flexible-title-27`). Все прежние reports
+  закрыты latest targeted audits без clipping/unknown waiver; matrix/physical pending.
+  Handler в Home и Appearance исключает и логирует только contrast scroll
+  StaticText/Button за native bar viewport (ScrollView/CollectionView); fully visible
+  text и остальные категории strict. DynamicType/textClipped отдельно от contrast,
+  перед которым viewport проверяется; footer минимум 16pt выше tabbar.
+- Coach schedule/enrollment и score 409 canonical correction затем passed,
+  `ui-event-flows-27.xcresult`; этот bundle всё ещё failed из-за lazy Home Cancel
+  selector. После scrollIntoView Home canonical next-training test passed,
+  `ui-event-edit-final-27.xcresult`: первоначально event-edit conflict failed по
+  неполной team_id fixture. Valid fixture run дошёл до title assertion с оставшимся
+  суффиксом; Select All attempt не нашёл menu. После валидного ввода
+  `ui-event-edit-canonical-draft-27.xcresult/log` passed 94.755s, TEST SUCCEEDED:
+  version 1→2, current location и title == visible corrected draft, no POST/DELETE.
+  Полный UI26 `ui-full-events-final-26` завершился: 30 tests, 28 passed / 2 failed
+  (Home audit и MatchCreate), `ui-full-events-final-26-summary.json`; whole suite failed.
+  Исправлен тестовый scroll helper: Form/List представлены также CollectionView/Table.
+  Последующий isolated MatchCreate прошёл на iOS26 за 86.469s и на iOS27 за 116.614s:
+  `ui-home-match-corrections-current-26` (whole bundle failed по Home) и
+  `ui-match-scroll-debug-27` (TEST SUCCEEDED). Это не полный повтор UI matrix.
+- Новый full UI26 `ui-release-candidate-full-26` завершился: 30 total,
+  29 passed / 1 failed / 0 skipped, TEST FAILED;
+  `ui-release-candidate-full-26-summary.json`. Единственный отказ:
+  `CommunityReleaseUITests.testRejectedPublicationCanBeCorrectedAndUncertainRetryKeepsIdentity`,
+  line 36 raw body 91 bytes !=91bytes при повторе; idempotency-key assertion прошёл.
+  Причина — недетерминированный порядок JSON keys при новом encoding одинакового
+  payload. Exact-wire unit regression сначала воспроизвёл дефект: APIClient 11 tests /
+  1failed, unique captured bodies > 1 (`unit-rebuilt-submission-red-27`, line 221).
+  JSONCoding.encoder.outputFormatting=[.sortedKeys] применён без waiver.
+  Первый wrong-method selector запустил 0 tests, это UNKNOWN, не verification PASS.
+  Первый optimized unit27 `unit-stable-submission-final-27` BUILD FAILED до tests:
+  отсутствовал ENABLE_TESTABILITY, module не built with-enable-testing, 0 tests;
+  это setup failure, не product failure и не PASS. Corrected optimized Release
+  `unit-stable-submission-verified-27` passed 159/159, 0 fail / 0 skip, TEST SUCCEEDED.
+  Optimized unit26 до preview correction также passed 159/159, 0 fail / 0 skip:
+  `unit-stable-submission-verified-26-summary.json`. Publication UI27
+  `ui-stable-submission-verified-27` passed 1/1, 91.632s, TEST SUCCEEDED; summary.json.
+  Full UI26 до preview correction `ui-stable-submission-final-26` TEST SUCCEEDED: 30 total,
+  30 passed / 0 failed / 0 skipped; summary.json, включая HomeAX/publication/MatchCreate.
+  Последний full UI27 `ui-stable-submission-full-27` завершился 29/30 PASS,
+  1 failed / 0 skipped: `SocialUITests.testTournamentScoreConflictReloadsVersionBeforeCorrection`,
+  «Could not scroll element into view». Exactvideo показал setup/helper defect:
+  Save был fullyvisible в modal без tabbar ниже искусственной границы 769.12;
+  score-conflict flow ещё не начался. visibleBand теперь использует actual
+  navigation/tab bars вместо hardcoded fractions, assertions не ослаблены.
+  `ui-scroll-actual-bars-final-26` critical 2 tests (MatchCreate и score409 actual version)
+  passed 2/2. Последующий retry full27 `ui-final-current-full-27` был TEST INTERRUPTED,
+  exit 75 после появления новых требований; это не PASS. Его218file manifest
+  относится к прежним исходникам.
+  Обе runtime27 clones фактически AX-extra-large (evidence
+  `ui-stable-submission-full-27-content-size.json`). Full26 30/30 и units 159 каждой OS
+  проверяют binary до новой Appearance preview правки, не всю current matrix.
+- Visual QA обнаружил реальное наложение 64pt icon previews на подписи, несмотря
+  на прежний AXpass. Preview в AppearanceSettingsView локально уменьшен 64→24pt;
+  `ui-icon-native-size-final-{26,27}` каждый 2/2 PASS (HomeAX + realicons). Visual26
+  overlapresolved; visual review обеOS затем подтвердил отсутствие наложения.
+  Прежний full26/units159 до layout fix
+  сохраняются историческими. Unit26Release159 `unit-icon-native-size-final-26`
+  завершён exit 0 до следующих требований; позднее unit26 прошёл 163 / 163 до ChatView fix.
+- Прежний UI26 full 23/24; ошибочный AX selector admin 409 затем исправлен и
+  targeted test passed. UI26 dark/AX-extra-large10/10 passed. Это прежние
+  ограниченные прогоны, не полная текущая matrix.
+- Настоящие UIKit icons 27: Лайм→Графит→Мяч→Лайм, OS state/alerts/Home Screen и
+  cold relaunch passed, `ui-icons-final-27.xcresult`, `icons-home-screens/`.
+  Подписанный physical production iPhone ещё нужен.
+- Build gates 4 API URL + 5 push/profile passed. Прежний generated Edge check
+  После shared gateway-url helper extraction (с сохранением reexport) config
+  Deno check exit 0 + 6 runtime passed: `netlify-isolation-deno-config-check.log`,
+  `netlify-isolation-deno-config-test.log`. Начальная попытка неверного config
+  path failed и сохранена, не является актуальным успешным результатом.
+
+Исторический unsigned arm64 archive после icon preview 24pt correction succeeded:
+`archive-icon-native-size-local.log`; IPA
+`ios/build/verification/PadelID-1.2.0-icon-native-size-local-unsigned.ipa`, 3727144 bytes,
+SHA256 **bc023bab52911e53d485d31d3465f681d33d1cb0c70cdd037c9371bd12a656e6**.
+`ipa-icon-native-size-local-source.json`: 127 hashes совпадали с исходниками до трёх новых дополнений,
+signed=false, published=false. Static verify IPA OK 1.2.0(3):
+`ipa-icon-native-size-local-verification.log`. Shipping ENABLE_TESTABILITY=NO,
+push NO / fallback empty. Прежние IPA 06bf/818d/220ed/0ff448 исторические и устарели.
+Read-only signing/device check: valid signing identities 0, team empty; paired
+physical device доступен, но actual signed installation не подтверждён.
+До preview fix unit26/27 каждый 159 PASS, full26 30/30 passed. Исторический unit26 Release `unit-icon-native-size-final-26` завершён;
+full27 `ui-final-current-full-27` позднее прерван (exit 75).
+Signed physical production/network/APNs acceptance не выполнены.
+
+## Локальная среда и продолжение
+
+Colima existing profile padel-id, `DOCKER_HOST=unix:///Users/emilsvifullin/.colima/padel-id/docker.sock`
+задавать только per-command. Actual Supabase API 54321/PG 54322 (PG17.6/Auth/Storage),
+Node API8787. Перед local reset fixture backup сохранён 0600 в
+`/tmp/padel-local-stack-before-reset.dump`; hosted reset не выполнялся.
+Локальные `/tmp/padel-local-stack.env`, `/tmp/padel-local-node-env.json` 0600,
+значения не печатать. После SQL/races восстановить прежний local secret для E2E;
+не путать это с изменением hosted конфигурации. Auth E2E чистит свои аккаунты.
+
+Xcode с `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`; UI Debug
+(test hooks), unit Release, shipping hooks запрещены. Node 22
+`/opt/homebrew/opt/node@22/bin/node`, Deno `/tmp/padel-deno-runtime/deno`2.9.7,
+SupabaseCLI2.116.0. 26sim C36E0EFC-A2A7-480B-809F-4ECF72FA9912;
+27sim 1611E4ED-EB3B-457D-B634-B65FE950B7A6.
+
+Три отдельных отказа исторического full UI27 (29 / 32) закрыты локальными
+focused проверками; старый bundle остаётся failed. Players repeat `ui-players-awake-27` прошёл с предотвращением сна Mac:
+1 / 1 PASS, 167.885 s, exit 0. Chat poll/send regression воспроизведён RED;
+loadError/sendError fix прошёл GREEN 14 / 14. Focused icons/chat26 / 27 каждый
+3 / 3 PASS, 0 fail / skip, exit 0. Visual review27 подтверждён: три настоящие иконки и читаемые настройки AX-extra-large.
+Current event409 UI27 с final native button query прошёл: 1 / 1 PASS, 128.801 s, exit 0;
+прежний scroll target 158.180 s исторический.
+Full26 завершён: 31 passed / 1 failed. Причина подтверждена как test-only wrapper
+query defect; corrected focused26 прошёл 1 / 1 за 108.138 s. Это не новый full 32 / 32,
+полная текущая matrix ещё не принята.
+Текущие Release units26 / 27: каждый 164 / 164 PASS, 0 fail / skip, exit 0.
+Backend 107, SQL 83 и реальные Node/Edge E2E 23/5 прошли. Новый shipping archive
+и IPA d56bc прошли static verification; 127 app hashes, только ChatView изменён
+относительно 69667. Units163 и IPA69667 исторические. Полные UI bundles
+31 / 32 и 29 / 32 остаются историческими failed, новый полный UI не принят.
+Исторические failed/interrupted bundles и старые IPA сохраняются. CI/UI/physical
+проверки требуют фактических результатов. Production поставка разрешена новым
+поручением; выполнить backup → CI → migrations/API → проверенный Release.
+Signing/install и физическая приёмка не выполнены; это явно сообщить при публикации.
+Выпуск с уведомлениями внутри приложения и без APNs явно согласован. МегаФон без VPN
+отложен и не должен останавливать разрешённую поставку.
+Полный журнал: `docs/verification/1.2.0-acceptance.md`.
+
+---
+
+# Историческая передача Padel ID 1.1.0
 
 Сверено 10 октября 2026. Production release пока не опубликована.
 

@@ -1,10 +1,15 @@
 import { createHash } from "node:crypto";
+import { Buffer } from "node:buffer";
 import { Hono, type Context } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { z } from "zod";
 import type { Config } from "./config.js";
 import { ApiError, apiError, errorBody } from "./errors.js";
 import { Upstream, type Session } from "./upstream.js";
+import { registerSocialRoutes } from "./social.js";
+import { registerEventsRoutes } from "./events.js";
+import { registerClubsRoutes } from "./clubs.js";
+import { registerPushRoutes } from "./push.js";
 
 export interface Deps {
   config: Config;
@@ -34,7 +39,7 @@ const newPassword = z.string().refine(isStrongPassword, { message: "weak_passwor
 const anyPassword = z.string().min(1).max(200);
 const uuid = z.string().regex(UUID_RE);
 const version = z.number().int().min(1);
-const scheduledMatch = z.strictObject({
+const scheduledShape = {
   client_id: uuid.optional(),
   starts_at: z.iso.datetime({ offset: true }),
   city_id: z.number().int().positive().max(1_000_000),
@@ -44,7 +49,18 @@ const scheduledMatch = z.strictObject({
   min_level: z.number().min(0).max(7),
   max_level: z.number().min(0).max(7),
   note: z.string().trim().refine((v) => [...v].length <= 500).nullish(),
-}).refine((v) => v.min_level <= v.max_level);
+  visibility: z.enum(["public", "private"]).optional(),
+};
+const scheduledMatch = z.strictObject(scheduledShape).refine((v) => v.min_level <= v.max_level);
+const timeZone = z.string().min(1).max(80).refine((value) => {
+  try { new Intl.DateTimeFormat("en", { timeZone: value }); return true; } catch { return false; }
+});
+const scheduledSeries = z.strictObject({
+  match: z.strictObject(scheduledShape).omit({ client_id: true }).refine((v) => v.min_level <= v.max_level),
+  occurrences: z.number().int().min(2).max(12),
+  interval_weeks: z.number().int().min(1).max(4),
+  time_zone: timeZone.default("Europe/Moscow"),
+});
 
 const schemas = {
   signup: z.object({ email, password: newPassword }),
@@ -259,9 +275,15 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
   // ---------------------------------------------------------------------
 
   app.get("/v1/health", async (c) => {
-    const commit = process.env.VERCEL_GIT_COMMIT_SHA ?? null;
+    const commit = resolveDeps().config.releaseCommit ?? null;
     if (c.req.query("deep") !== "1") return c.json({ status: "ok", commit });
-    const database = await up().rateLimit("health", 1_000_000, 60);
+    // Health must report upstream failure. The authentication limiter's
+    // deliberate fail-open policy must never become a false database:ok.
+    const database = await up().rpc<boolean>("bff_rate_limit", {
+      p_bucket: "health", p_limit: 1_000_000, p_window_seconds: 60,
+      p_secret: resolveDeps().config.gatewaySecret,
+    });
+    if (typeof database !== "boolean") throw apiError("service_unavailable");
     return c.json({ status: "ok", commit, database: database ? "ok" : "degraded" });
   });
 
@@ -570,6 +592,7 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
       scope,
       accepted_only: acceptedOnly,
       city_id: intQuery(c, "city_id", 1, 1_000_000),
+      club_id: intQuery(c, "club_id", 1, Number.MAX_SAFE_INTEGER),
       limit: intQuery(c, "limit", 1, 50) ?? 30,
       offset: intQuery(c, "offset", 0, 1000) ?? 0,
     };
@@ -587,6 +610,34 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
   app.get("/v1/upcoming-matches/:id", async (c) => {
     const token = bearer(c);
     return c.json(await up().rpc("scheduled_match", { p_match: pathUuid(c, "id") }, token));
+  });
+
+  app.post("/v1/upcoming-matches/series", async (c) => {
+    const token = bearer(c);
+    const key = idempotencyKey(c);
+    const body = await parseJson(c, scheduledSeries);
+    return c.json(await up().rpc("create_scheduled_series", { p: body, p_client_id: key }, token), 201);
+  });
+
+  app.post("/v1/upcoming-matches/:id/invitations", async (c) => {
+    const token = bearer(c);
+    const body = await parseJson(c, z.strictObject({ player_id: uuid }));
+    return c.json(await up().rpc("invite_scheduled_player", {
+      p_match: pathUuid(c, "id"), p_player: body.player_id.toLowerCase(),
+    }, token));
+  });
+
+  app.post("/v1/upcoming-matches/:id/invitations/respond", async (c) => {
+    const token = bearer(c);
+    const body = await parseJson(c, z.strictObject({ decision: z.enum(["accepted", "declined"]) }));
+    return c.json(await up().rpc("respond_scheduled_invitation", {
+      p_match: pathUuid(c, "id"), p_decision: body.decision,
+    }, token));
+  });
+
+  app.post("/v1/upcoming-matches/:id/waitlist", async (c) => {
+    const token = bearer(c);
+    return c.json(await up().rpc("waitlist_scheduled_match", { p_match: pathUuid(c, "id") }, token));
   });
 
   for (const action of ["join", "leave", "cancel"] as const) {
@@ -742,25 +793,31 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
   });
 
   // ---------------------------------------------------------------------
-  // Avatars (public, immutable objects)
+  // Avatars: authorize every read so blocks and profile privacy also cover photos.
   // ---------------------------------------------------------------------
 
   app.get("/v1/avatars/:owner/:file", async (c) => {
+    const token = bearer(c);
     const owner = c.req.param("owner");
     const file = c.req.param("file");
     if (!UUID_RE.test(owner) || !AVATAR_FILE_RE.test(file)) throw apiError("not_found");
-    const res = await up().fetchAvatar(`${owner.toLowerCase()}/${file}`);
+    await up().rpc("player_profile", { p_player: owner.toLowerCase() }, token);
+    const res = await up().fetchAvatar(`${owner.toLowerCase()}/${file}`, token);
     if (res.status === 404 || res.status === 400) throw apiError("not_found");
     if (!res.ok || !res.body) throw apiError("service_unavailable");
     return new Response(res.body, {
       status: 200,
       headers: {
         "content-type": "image/jpeg",
-        "cache-control": "public, max-age=31536000, immutable",
+        "cache-control": "private, no-store",
         "x-content-type-options": "nosniff",
       },
     });
   });
 
+  registerSocialRoutes(app, { up, bearer, parseJson, pathUuid, idempotencyKey });
+  registerEventsRoutes(app, { up, bearer, parseJson, pathUuid, idempotencyKey });
+  registerClubsRoutes(app, { up, bearer, parseJson, pathUuid });
+  registerPushRoutes(app, { up, bearer, parseJson, pathUuid });
   return app;
 }

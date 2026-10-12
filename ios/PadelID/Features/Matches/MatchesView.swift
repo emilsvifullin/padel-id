@@ -35,7 +35,7 @@ struct MatchesView: View {
     @State private var filter: MatchesHistoryFilter = .all
 
     var body: some View {
-        NavigationStack {
+        PadelNavigationStack {
             content
                 .navigationTitle("Матчи")
                 .toolbar { toolbarContent }
@@ -78,6 +78,8 @@ struct MatchesView: View {
             Section {
                 NavigationLink(value: Route.upcomingGames) { Label("Предстоящие игры", systemImage: "tennis.racket") }
                     .accessibilityIdentifier("matches.upcoming")
+                NavigationLink(value: Route.sportsEvents) { Label("Тренировки и турниры", systemImage: "trophy") }
+                    .accessibilityIdentifier("matches.events")
             }
             if let error = staleError {
                 StaleDataBanner(error: error)

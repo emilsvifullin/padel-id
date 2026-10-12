@@ -11,6 +11,8 @@ export interface Config {
   upstreamTimeoutMs: number;
   /** Account registrations allowed per client IP per hour. */
   signupsPerHour: number;
+  /** Deployment revision supplied by the host, never a client header. */
+  releaseCommit?: string;
 }
 
 export function loadConfig(env: Record<string, string | undefined> = process.env): Config {
@@ -30,5 +32,6 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     minClientBuild: Number.parseInt(env.PADELID_MIN_CLIENT_BUILD ?? "1", 10) || 1,
     upstreamTimeoutMs: Number.parseInt(env.PADELID_UPSTREAM_TIMEOUT_MS ?? "12000", 10) || 12000,
     signupsPerHour: Number.parseInt(env.PADELID_SIGNUPS_PER_HOUR ?? "5", 10) || 5,
+    releaseCommit: env.PADELID_RELEASE_COMMIT ?? env.VERCEL_GIT_COMMIT_SHA,
   };
 }

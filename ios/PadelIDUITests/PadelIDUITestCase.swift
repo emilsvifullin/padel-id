@@ -183,6 +183,16 @@ class PadelIDUITestCase: XCTestCase {
         require(app.navigationBars["Главная"], timeout: timeout, "Главная", file: file, line: line)
     }
 
+    func openAnalysis() {
+        selectTab("Профиль")
+        open(element("account.analysis"), screen: "Анализ")
+    }
+
+    func openFriends() {
+        selectTab("Сообщество")
+        open(element("community.friends"), screen: "Друзья")
+    }
+
     /// Taps the form's submit button when it can be reached, otherwise the
     /// return key of the focused field (the forms submit on return).
     func submit(_ button: XCUIElement, orReturnIn field: XCUIElement) {
@@ -596,8 +606,17 @@ class PadelIDUITestCase: XCTestCase {
     /// navigation bar, above the tab bar and above the keyboard.
     private func visibleBand() -> CGRect {
         let screen = app.frame
-        let top = screen.minY + screen.height * 0.14
-        var bottom = screen.maxY - screen.height * 0.12
+        // A modal Form has no tab bar. Reserving a fixed fraction of the
+        // display for one rejects fully visible bottom rows at large text sizes.
+        // Underlying bars remain in the hierarchy, so use only active bars.
+        var top = screen.minY + 8
+        var bottom = screen.maxY - 8
+        for bar in app.navigationBars.allElementsBoundByIndex where bar.isHittable && !bar.frame.isEmpty {
+            top = max(top, bar.frame.maxY)
+        }
+        for bar in app.tabBars.allElementsBoundByIndex where bar.isHittable && !bar.frame.isEmpty {
+            bottom = min(bottom, bar.frame.minY)
+        }
         let keyboard = app.keyboards.firstMatch
         if keyboard.exists {
             let keyboardTop = keyboard.frame.minY
@@ -617,10 +636,11 @@ class PadelIDUITestCase: XCTestCase {
         if hittable {
             guard element.isHittable else { return false }
             let identifier = element.identifier
-            guard !identifier.isEmpty,
-                  app.scrollViews.containing(.any, identifier: identifier).firstMatch.exists else {
-                return true
-            }
+            guard !identifier.isEmpty else { return true }
+            let isScrollableTarget = app.scrollViews.containing(.any, identifier: identifier).firstMatch.exists
+                || app.collectionViews.containing(.any, identifier: identifier).firstMatch.exists
+                || app.tables.containing(.any, identifier: identifier).firstMatch.exists
+            guard isScrollableTarget else { return true }
             let frame = element.frame
             return !frame.isEmpty && visibleBand().contains(CGPoint(x: frame.midX, y: frame.midY))
         }

@@ -9,6 +9,41 @@ import Testing
 struct APIClientTests {
     private let userId = UUID()
 
+    @Test("Protected avatar requests preserve a gateway base-path prefix exactly once")
+    func protectedAvatarGatewayPath() throws {
+        let path = "v1/avatars/00000000-0000-4000-8000-000000000001/photo1234.jpg"
+        let base = try #require(URL(string: "https://api.example.test/functions/v1/gateway"))
+        let url = base.appending(path: path)
+        #expect(AvatarLoader.requestPath(for: url, baseURL: base) == path)
+        #expect(AvatarLoader.requestPath(for: URL(string: "https://api.example.test/functions/v1/gateway-other/" + path)!, baseURL: base) == nil)
+        #expect(AvatarLoader.requestPath(for: URL(string: "https://foreign.example.test/" + path)!, baseURL: base) == nil)
+        #expect(AvatarLoader.requestPath(for: base.appending(path: "v1/me"), baseURL: base) == nil)
+        let root = try #require(URL(string: "https://api.example.test"))
+        #expect(AvatarLoader.requestPath(for: root.appending(path: path), baseURL: root) == path)
+    }
+
+    @Test("A refresh response cannot restore a session cleared while the request was in flight")
+    func logoutDuringRefresh() async throws {
+        let baseURL = StubURLProtocol.makeBaseURL()
+        let current = makeSession(access: "access-token-before-logout", refresh: "refresh-token-before-logout", expiresIn: -120)
+        let renewed = makeSession(access: "access-token-delayed-renewal", refresh: "refresh-token-delayed-renewal", expiresIn: 3600)
+        let body = try sessionJSON(renewed)
+        let entered = StubCounter()
+        let (api, store) = makeClient(baseURL, session: current)
+        defer { finish(baseURL, store) }
+        StubURLProtocol.register(baseURL) { _ in
+            entered.increment()
+            Thread.sleep(forTimeInterval: 0.3)
+            return .data(200, body)
+        }
+        let refresh = Task { try await api.refreshSession(force: true) }
+        while entered.value == 0 { try await Task.sleep(for: .milliseconds(5)) }
+        store.clear()
+        do { _ = try await refresh.value; Issue.record("Expected discarded old refresh") }
+        catch is CancellationError {}
+        #expect(store.session == nil)
+    }
+
     private func makeSession(access: String, refresh: String, expiresIn seconds: TimeInterval) -> Session {
         Session(accessToken: access, refreshToken: refresh, expiresIn: 3600,
                 expiresAt: Int(Date().timeIntervalSince1970 + seconds),
@@ -103,7 +138,7 @@ struct APIClientTests {
             #expect(error.status == 409)
             #expect(error.code == "version_conflict")
             #expect(error.serverMessage == "Матч изменён.")
-            #expect(error.message == "Матч только что изменили. Проверьте актуальный счёт.")
+            #expect(error.message == "Данные изменились. Обновите их перед повторным действием.")
             #expect(!error.isNetwork)
             #expect(!error.isTransient)
         }
@@ -153,6 +188,39 @@ struct APIClientTests {
     }
 
     // MARK: Retries
+
+    @Test("Rebuilding an uncertain submission preserves its exact wire body and key")
+    func rebuiltSubmissionPreservesBody() async throws {
+        let baseURL = StubURLProtocol.makeBaseURL()
+        let session = makeSession(access: "access-token-stable-submission", refresh: "refresh-token-stable-submission", expiresIn: 3600)
+        let (client, store) = makeClient(baseURL, session: session)
+        defer { finish(baseURL, store) }
+        let attempts = StubCounter()
+        StubURLProtocol.register(baseURL) { _ in
+            attempts.next() <= 3
+                ? StubResponse.error(503, code: "service_unavailable", message: "Попробуйте позже.")
+                : StubResponse.json(201, "{}")
+        }
+        let key = UUID()
+        let payload = ["body": "Исправленная публикация", "visibility": "public", "group_id": "group-123"]
+        do {
+            _ = try await client.data(.json(.post, "v1/social/posts", payload, idempotencyKey: key))
+            Issue.record("Expected an uncertain submission after exhausted transient attempts")
+        } catch let error as APIError {
+            #expect(error.status == 503)
+        }
+        // The view reconstructs an endpoint from its frozen draft on each
+        // manual retry. Automatic retries alone reuse already encoded Data.
+        for _ in 0..<32 {
+            _ = try await client.data(.json(.post, "v1/social/posts", payload, idempotencyKey: key))
+        }
+        let requests = StubURLProtocol.requests(baseURL)
+        #expect(requests.count == 35)
+        let original = try #require(requests.first)
+        #expect(original.jsonBody()["body"] == payload["body"])
+        #expect(Set(requests.compactMap(\.body)).count == 1)
+        #expect(requests.allSatisfy { $0.header("Idempotency-Key") == key.uuidString.lowercased() })
+    }
 
     @Test("A GET is retried after 503 and then succeeds")
     func retriesTransientGet() async throws {

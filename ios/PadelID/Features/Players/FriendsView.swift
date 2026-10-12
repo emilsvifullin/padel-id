@@ -1,11 +1,19 @@
 import SwiftUI
 
 struct FriendsView: View {
+    var embedded = false
     @Environment(AppModel.self) private var app
     @State private var friends = Resource<FriendsResponse>(cacheKey: CacheKey.friends) { .get("v1/friends") }
 
     var body: some View {
-        NavigationStack {
+        Group {
+            if embedded { list }
+            else { PadelNavigationStack { list.padelRoutes() } }
+        }
+        .task(id: app.dataRevision) { await friends.load(using: app) }
+    }
+
+    private var list: some View {
             List {
                 Section {
                     NavigationLink(value: Route.findPlayers) {
@@ -26,10 +34,7 @@ struct FriendsView: View {
             }
             .listStyle(.insetGrouped)
             .navigationTitle("Друзья")
-            .padelRoutes()
             .refreshable { await friends.load(using: app) }
-        }
-        .task(id: app.dataRevision) { await friends.load(using: app) }
     }
 
     @ViewBuilder

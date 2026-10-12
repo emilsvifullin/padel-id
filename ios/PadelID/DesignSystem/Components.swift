@@ -5,13 +5,19 @@ import SwiftUI
 /// The player's level as the primary numeral of the product.
 struct LevelNumeral: View {
     let level: Double?
-    var size: CGFloat = 56
+    @ScaledMetric private var size: CGFloat
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    init(level: Double?, size: CGFloat = 56) {
+        self.level = level
+        _size = ScaledMetric(wrappedValue: size, relativeTo: .largeTitle)
+    }
 
     var body: some View {
         Text(Format.level(level))
             .font(.system(size: size, weight: .semibold, design: .rounded))
             .monospacedDigit()
-            .contentTransition(.numericText(value: level ?? 0))
+            .contentTransition(reduceMotion ? .identity : .numericText(value: level ?? 0))
             .lineLimit(1)
             .minimumScaleFactor(0.6)
             .accessibilityLabel("Уровень \(Format.level(level))")
@@ -53,6 +59,7 @@ struct DeltaText: View {
         Text(Format.delta(delta, digits: digits))
             .font(font)
             .monospacedDigit()
+            .fixedSize()
             .foregroundStyle(Theme.deltaColor(delta))
             .accessibilityLabel(accessibility)
     }
@@ -68,7 +75,12 @@ struct DeltaText: View {
 /// Circular reliability indicator.
 struct ReliabilityRing: View {
     let reliability: Int
-    var size: CGFloat = 44
+    @ScaledMetric private var size: CGFloat
+
+    init(reliability: Int, size: CGFloat = 44) {
+        self.reliability = reliability
+        _size = ScaledMetric(wrappedValue: size, relativeTo: .body)
+    }
 
     var body: some View {
         ZStack {
@@ -94,8 +106,16 @@ struct AvatarView: View {
     let id: UUID
     let name: String
     let path: String?
-    var size: CGFloat = 40
-    var deleted = false
+    @ScaledMetric private var size: CGFloat
+    let deleted: Bool
+
+    init(id: UUID, name: String, path: String?, size: CGFloat = 40, deleted: Bool = false) {
+        self.id = id
+        self.name = name
+        self.path = path
+        self.deleted = deleted
+        _size = ScaledMetric(wrappedValue: size, relativeTo: .body)
+    }
 
     var body: some View {
         ZStack {
@@ -122,7 +142,7 @@ struct AvatarView: View {
             } else {
                 Text(initials)
                     .font(.system(size: size * 0.38, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Theme.monogramTint(for: id))
+                    .foregroundStyle(.primary)
             }
         }
     }
@@ -144,26 +164,37 @@ extension AvatarView {
     }
 }
 
-/// Loads immutable images through a dedicated, persistent URL cache.
+/// Avatar access follows live profile visibility; old public-cache entries
+/// are removed before the first protected fetch.
 enum AvatarLoader {
     /// Emptied on sign-out: the next account must not inherit the photos the
     /// previous one browsed.
     static let cache = URLCache(memoryCapacity: 16 * 1024 * 1024, diskCapacity: 128 * 1024 * 1024)
 
-    static let session: URLSession = {
-        let configuration = URLSessionConfiguration.default
-        configuration.urlCache = cache
-        configuration.requestCachePolicy = .returnCacheDataElseLoad
-        configuration.timeoutIntervalForRequest = 20
-        return URLSession(configuration: configuration)
-    }()
+    static let invalidateLegacyCache: Void = cache.removeAllCachedResponses()
 
     static func url(for path: String) -> URL? {
         AppEnvironment.apiBaseURL.appending(path: "v1/avatars/\(path)")
     }
+
+    static func requestPath(for url: URL, baseURL: URL) -> String? {
+        guard url.scheme == baseURL.scheme, url.host() == baseURL.host(), url.port == baseURL.port,
+              url.query() == nil, url.fragment() == nil else { return nil }
+        let prefix = baseURL.path().trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let path = url.path().trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let relative: String
+        if prefix.isEmpty { relative = path }
+        else {
+            guard path.hasPrefix(prefix + "/") else { return nil }
+            relative = String(path.dropFirst(prefix.count + 1))
+        }
+        guard relative.hasPrefix("v1/avatars/") else { return nil }
+        return relative
+    }
 }
 
 struct RemoteImage<Placeholder: View>: View {
+    @Environment(AppModel.self) private var app
     let url: URL
     @ViewBuilder var placeholder: Placeholder
     @State private var image: UIImage?
@@ -178,9 +209,12 @@ struct RemoteImage<Placeholder: View>: View {
                 placeholder
             }
         }
-        .task(id: url) {
-            guard loadedURL != url else { return }
-            if let result = try? await AvatarLoader.session.data(from: url), let loaded = UIImage(data: result.0) {
+        .task(id: "\(url.absoluteString):\(app.dataRevision)") {
+            _ = AvatarLoader.invalidateLegacyCache
+            image = nil
+            loadedURL = nil
+            guard let path = AvatarLoader.requestPath(for: url, baseURL: app.api.baseURL) else { return }
+            if let data = try? await app.api.data(.get(path)), !Task.isCancelled, let loaded = UIImage(data: data) {
                 image = loaded
                 loadedURL = url
             } else if !Task.isCancelled {

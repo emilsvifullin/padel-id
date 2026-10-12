@@ -15,6 +15,7 @@ struct MatchFeedbackSheet: View {
 
     @Environment(AppModel.self) private var app
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var selections: [UUID: MatchFeedbackSelection]
     @State private var limitNotice: UUID?
@@ -155,7 +156,7 @@ struct MatchFeedbackSheet: View {
         } else {
             guard selection.improvement != dimension else { return }
             guard selection.strengths.count < Self.strengthLimit else {
-                withAnimation(.snappy) { limitNotice = playerId }
+                withAnimation(reduceMotion ? nil : .snappy) { limitNotice = playerId }
                 limitFeedback += 1
                 // The notice appears in the section footer, far from the chip.
                 Announce.post("Можно отметить не больше двух сильных сторон")
@@ -164,7 +165,7 @@ struct MatchFeedbackSheet: View {
             selection.strengths.append(dimension)
         }
         if limitNotice == playerId {
-            withAnimation(.snappy) { limitNotice = nil }
+            withAnimation(reduceMotion ? nil : .snappy) { limitNotice = nil }
         }
         selections[playerId] = selection
         selectionFeedback += 1

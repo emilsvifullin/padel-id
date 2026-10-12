@@ -2,7 +2,7 @@ name: iOS
 
 on:
   push:
-    branches: [main, "claude/**"]
+    branches: [main, "claude/**", "codex/**"]
     paths:
       - "ios/**"
       - "scripts/ios/**"
@@ -61,6 +61,11 @@ jobs:
       - uses: actions/checkout@v5
 
       - uses: ./.github/actions/setup-ios
+
+      - name: Check API and push build configuration gates
+        run: |
+          python3 scripts/ios/test-api-url.py
+          python3 scripts/ios/test-push-config.py
 
       - name: Boot the simulator
         id: sim

@@ -1,0 +1,31 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    command: ["node", "dist/relay-server.js"]
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "8787"
+    expose: ["8787"]
+    read_only: true
+    tmpfs: ["/tmp"]
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+  caddy:
+    image: caddy:2.11.7
+    restart: unless-stopped
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?A dedicated owned API hostname required}
+    ports: ["80:80", "443:443", "443:443/udp"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_relay_data:/data
+      - caddy_relay_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+volumes:
+  caddy_relay_data:
+  caddy_relay_config:

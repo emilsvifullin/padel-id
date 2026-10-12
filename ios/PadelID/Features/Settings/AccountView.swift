@@ -11,9 +11,30 @@ struct AccountView: View {
     @State private var isSigningOut = false
 
     var body: some View {
-        NavigationStack {
+        PadelNavigationStack {
             List {
                 profileSection
+                Section {
+                    NavigationLink(value: Route.analysis) {
+                        Label("Анализ игры", systemImage: "chart.xyaxis.line")
+                    }.accessibilityIdentifier("account.analysis")
+                    NavigationLink(value: Route.myEvents) {
+                        Label("Мои тренировки и турниры", systemImage: "calendar")
+                    }.accessibilityIdentifier("account.myEvents")
+                }
+                Section {
+                    NavigationLink {
+                        AppearanceSettingsView()
+                    } label: {
+                        Label("Оформление", systemImage: "paintpalette")
+                    }
+                    .accessibilityIdentifier("account.appearance")
+                    NavigationLink {
+                        NetworkDiagnosticsView()
+                    } label: {
+                        Label("Проверка сети", systemImage: "network")
+                    }
+                }
                 styleSection
                 coachSection
                 if app.me?.isAdmin == true {
@@ -21,6 +42,11 @@ struct AccountView: View {
                 }
                 AccountNotificationsSection()
                 securitySection
+                Section {
+                    NavigationLink(value: Route.socialPrivacy) {
+                        Label("Приватность и общение", systemImage: "hand.raised")
+                    }.accessibilityIdentifier("account.privacy")
+                }
                 aboutSection
                 signOutSection
                 deleteSection
@@ -97,6 +123,9 @@ struct AccountView: View {
                 CoachReviewView()
             } label: {
                 Label("Заявки тренеров", systemImage: "checkmark.shield")
+            }
+            NavigationLink { ModerationReportsView() } label: {
+                Label("Жалобы сообщества", systemImage: "flag")
             }
         } header: {
             Text("Администрирование")
@@ -222,11 +251,12 @@ private struct AccountNotificationsSection: View {
     @State private var isRequesting = false
     @State private var showsDeniedHint = false
     @State private var toggleCount = 0
+    @State private var remotePush = RemotePushService.shared
 
     var body: some View {
         Section {
             Toggle(isOn: toggleBinding) {
-                Label("Напоминать о подтверждении матчей", systemImage: "bell.badge")
+                Label("Уведомления и напоминания", systemImage: "bell.badge")
             }
             .disabled(isRequesting)
             .sensoryFeedback(.selection, trigger: toggleCount)
@@ -241,10 +271,17 @@ private struct AccountNotificationsSection: View {
                     .foregroundStyle(.secondary)
                 Button("Открыть настройки", action: openSettings)
             }
+            if AppEnvironment.remotePushEnabled, remotePush.state == .pending {
+                Text("Не удалось синхронизировать уведомления. Повторите при подключении к интернету.")
+                    .font(.subheadline).foregroundStyle(.secondary)
+                Button("Повторить") { Task { await remotePush.synchronize() } }
+            }
         } header: {
             Text("Уведомления")
         } footer: {
-            Text("Напоминания приходят, когда iOS обновляет приложение в фоне, — время выбирает система.")
+            Text(AppEnvironment.remotePushEnabled
+                 ? "Получайте сообщения о новых событиях. Настройки сообщений и активности находятся в разделе конфиденциальности сообщества."
+                 : "Напоминания приходят, когда iOS обновляет приложение в фоне, — время выбирает система.")
         }
     }
 

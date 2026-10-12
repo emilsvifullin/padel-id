@@ -45,7 +45,7 @@ final class Resource<Value: Decodable> {
         } catch let apiError as APIError {
             guard requestID == id, !Task.isCancelled else { return }
             error = apiError
-            if apiError.code == "player_not_found" {
+            if Self.deniesAccess(apiError) {
                 revokeAccess(apiError, using: app, path: request.path)
             } else {
                 isStale = value != nil
@@ -60,7 +60,7 @@ final class Resource<Value: Decodable> {
     /// Pagination can receive the same authoritative denial independently of
     /// its first-page request. It must invalidate that first page as well.
     func revokeAccess(_ error: APIError, using app: AppModel, path: String? = nil) {
-        guard error.code == "player_not_found" else { return }
+        guard Self.deniesAccess(error) else { return }
         requestID = UUID()
         value = nil
         self.error = error
@@ -86,4 +86,9 @@ final class Resource<Value: Decodable> {
     }
 
     var hasLoaded: Bool { loadedOnce }
+
+    private static func deniesAccess(_ error: APIError) -> Bool {
+        error.status == 401 || error.status == 403
+        || ["player_not_found", "conversation_not_found", "post_not_found", "scheduled_match_not_found", "event_not_found", "club_not_found"].contains(error.code)
+    }
 }

@@ -82,8 +82,18 @@ struct PlayerProfileView: View {
                     StaleDataBanner(error: error)
                 }
                 PlayerProfileHeader(profile: value.profile)
+                if let coach = value.coach { coachBlock(coach) }
+                if isMe(value) {
+                    SectionContainer {
+                        NavigationLink("Мои тренировки и турниры", value: Route.myEvents)
+                            .accessibilityIdentifier("player.myEvents")
+                    }
+                }
                 levelBlock(value)
-                if !isMe(value) { SectionContainer { FriendshipControls(playerId: playerId) } }
+                if !isMe(value) {
+                    SectionContainer { FriendshipControls(playerId: playerId) }
+                    SectionContainer { SocialPlayerActions(playerId: playerId, initialFollowing: value.isFollowing ?? false) }
+                }
                 if !isMe(value), let compatibility = value.compatibility {
                     compatibilityBlock(compatibility, name: value.profile.displayName)
                 }
@@ -113,6 +123,30 @@ struct PlayerProfileView: View {
     }
 
     // MARK: - Level
+
+    private func coachBlock(_ coach: PublicCoachProfile) -> some View {
+        SectionContainer {
+            VStack(alignment: .leading, spacing: 14) {
+                Label("Подтверждённый тренер", systemImage: "checkmark.seal.fill")
+                    .font(.headline).foregroundStyle(Theme.accent)
+                LabeledContent("Стаж", value: Format.count(coach.experienceYears, "год", "года", "лет"))
+                Text(coach.about).fixedSize(horizontal: false, vertical: true)
+                if let certification = coach.certification {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Квалификация").font(.subheadline.bold())
+                        Text(certification).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                if let club = coach.club { LabeledContent("Клуб", value: club.name) }
+                Text("Опыт, квалификация и описание занятий указаны тренером.")
+                    .font(.footnote).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                NavigationLink("Расписание и запись", value: Route.coachTrainings(playerId))
+                    .accessibilityIdentifier("player.coachTrainings")
+            }
+        }
+        .accessibilityIdentifier("player.coach")
+    }
 
     @ViewBuilder
     private func levelBlock(_ value: PlayerProfileResponse) -> some View {

@@ -3,10 +3,17 @@ import SwiftUI
 /// The "Padel ID" tab: the player's identity, level, rating trend, Padel DNA,
 /// insights and statistics at a glance.
 struct AnalysisView: View {
+    var embedded = false
     @Environment(AppModel.self) private var app
 
     var body: some View {
-        NavigationStack {
+        Group {
+            if embedded { dashboard }
+            else { NavigationStack { dashboard } }
+        }
+    }
+
+    private var dashboard: some View {
             ZStack {
                 if let me = app.me {
                     HomeDashboard(meId: me.userId)
@@ -16,11 +23,10 @@ struct AnalysisView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(.systemGroupedBackground))
+            .background(Theme.background)
             .navigationTitle("Анализ")
             .navigationBarTitleDisplayMode(.large)
             .padelRoutes()
-        }
     }
 
 }
@@ -141,7 +147,9 @@ private struct HomeIdentityHeader: View {
     let profile: Profile
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        HStack(spacing: 12) {
+            AvatarView(profile: profile, size: 52)
+            VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(profile.displayName)
                     .font(.title2.bold())
@@ -158,6 +166,7 @@ private struct HomeIdentityHeader: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+            }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -176,17 +185,17 @@ private struct HomeIdentityHeader: View {
 
 // MARK: - Level hero
 
-private struct HomeLevelHero: View {
+struct HomeLevelHero: View {
     let meId: UUID
     let profile: Profile
     let rating: RatingSummary?
     let matches: Int
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         NavigationLink(value: Route.rating(meId)) {
-            SectionContainer(padding: 20) {
-                VStack(alignment: .leading, spacing: 14) {
-                    HomeCardHeader(title: "Уровень")
+            VStack(alignment: .leading, spacing: 14) {
+                    HomeCardHeader(title: "Ваш уровень")
                     ViewThatFits(in: .horizontal) {
                         HStack(alignment: .center, spacing: 16) {
                             levelBlock
@@ -206,8 +215,24 @@ private struct HomeLevelHero: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
-                }
             }
+            .padding(22)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background {
+                ZStack(alignment: .trailing) {
+                    LinearGradient(colors: [Theme.ink, Color(red: 0.09, green: 0.19, blue: 0.17)],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing)
+                    CourtMarkings()
+                        .stroke(Theme.lime.opacity(0.10), lineWidth: 1)
+                        .frame(width: 170)
+                        .rotationEffect(.degrees(-18))
+                        .offset(x: 30)
+                }
+                .clipShape(.rect(cornerRadius: Theme.cornerRadius, style: .continuous))
+                .accessibilityHidden(true)
+            }
+            .foregroundStyle(.white)
+            .environment(\.colorScheme, .dark)
             .tappableCard()
         }
         .buttonStyle(.plain)
@@ -229,7 +254,7 @@ private struct HomeLevelHero: View {
                 .padding(.bottom, 6)
                 .overlay(alignment: .bottomLeading) {
                     Capsule()
-                        .fill(Theme.ball)
+                        .fill(Theme.lime)
                         .frame(width: 40, height: 4)
                 }
             if let level {
@@ -243,21 +268,36 @@ private struct HomeLevelHero: View {
     @ViewBuilder
     private var reliabilityBlock: some View {
         if let rating {
-            HStack(spacing: 12) {
-                ReliabilityRing(reliability: rating.reliability, size: 48)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: "Надёжность \(rating.reliability)%")
-                        .font(.subheadline.weight(.semibold))
-                    if rating.provisional {
-                        Text("Предварительный рейтинг")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 12) {
+                    reliabilityRing(rating)
+                    reliabilityText(rating)
                 }
-                .fixedSize(horizontal: false, vertical: true)
+            } else {
+                HStack(spacing: 12) {
+                    reliabilityRing(rating)
+                    reliabilityText(rating)
+                }
             }
         }
+    }
+
+    private func reliabilityRing(_ rating: RatingSummary) -> some View {
+        ReliabilityRing(reliability: rating.reliability, size: 48)
+            .accessibilityHidden(true)
+    }
+
+    private func reliabilityText(_ rating: RatingSummary) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(verbatim: "Надёжность \(rating.reliability)%")
+                .font(.subheadline.weight(.semibold))
+            if rating.provisional {
+                Text("Предварительный рейтинг")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private var accessibilityText: String {

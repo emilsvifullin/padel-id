@@ -342,9 +342,11 @@ describe.runIf(RUN && MODE === "full")("full API flow", () => {
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     const path = res.body.profile.avatar_path as string;
     expect(path.startsWith(players[0]!.id)).toBe(true);
-    const img = await fetch(`${BASE}/v1/avatars/${path}`);
+    expect((await fetch(`${BASE}/v1/avatars/${path}`)).status).toBe(401);
+    const img = await fetch(`${BASE}/v1/avatars/${path}`, { headers: { authorization: `Bearer ${players[0]!.token}` } });
     expect(img.status).toBe(200);
     expect(img.headers.get("content-type")).toBe("image/jpeg");
+    expect(img.headers.get("cache-control")).toBe("private, no-store");
   });
 
   it("changes the password, recovers with the key and changes email", async () => {

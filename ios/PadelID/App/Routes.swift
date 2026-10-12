@@ -1,4 +1,31 @@
 import SwiftUI
+import Observation
+
+/// Each tab (and the modal account) owns a separate, value-based path.
+/// Async actions push into the same path as NavigationLink destinations.
+@Observable
+final class NavigationRouter {
+    var path: [Route] = []
+
+    /// A late response must not reopen a screen the user already left.
+    func push(_ route: Route, from source: [Route]) {
+        guard path == source else { return }
+        path.append(route)
+    }
+}
+
+struct PadelNavigationStack<Content: View>: View {
+    @State private var router = NavigationRouter()
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        @Bindable var router = router
+        NavigationStack(path: $router.path) {
+            content()
+        }
+        .environment(router)
+    }
+}
 
 /// Push destinations shared by every tab's NavigationStack.
 enum Route: Hashable {
@@ -11,7 +38,26 @@ enum Route: Hashable {
     case upcoming(UUID)
     case upcomingGames
     case findPlayers
+    case communityFeed
+    case conversations
+    case groups
+    case friends
+    case socialInbox
+    case conversationMembers(UUID)
+    case groupFeed(UUID)
+    case socialPrivacy
+    case socialPlayers(blocked: Bool)
+    case sportsEvents
+    case myEvents
+    case coachTrainings(UUID)
+    case club(Club, city: NamedRef)
+    case clubEvents(Int, name: String)
+    case clubNews(Int, name: String)
     case insights
+    case analysis
+    case conversation(UUID)
+    case post(UUID)
+    case event(UUID)
 }
 
 extension View {
@@ -28,7 +74,26 @@ extension View {
             case .upcoming(let id): UpcomingDetailView(matchId: id)
             case .upcomingGames: UpcomingListView()
             case .findPlayers: PlayersView()
+            case .communityFeed: FeedView()
+            case .conversations: ConversationsView()
+            case .groups: GroupsView()
+            case .friends: FriendsView(embedded: true)
+            case .socialInbox: SocialInboxView()
+            case .conversationMembers(let id): ConversationMembersView(conversationId: id)
+            case .groupFeed(let id): FeedView(groupId: id)
+            case .socialPrivacy: SocialPrivacyView()
+            case .socialPlayers(let blocked): SocialPlayersListView(blocked: blocked)
+            case .sportsEvents: EventsView()
+            case .myEvents: EventsView(initialMine: true)
+            case .coachTrainings(let id): EventsView(organizerId: id)
+            case .club(let club, let city): ClubDetailView(club: club, city: city)
+            case .clubEvents(let id, let name): ClubEventsView(clubID: id, name: name)
+            case .clubNews(let id, let name): FeedView(clubId: id, clubName: name)
             case .insights: InsightsView()
+            case .analysis: AnalysisView(embedded: true)
+            case .conversation(let id): ChatView(id: id)
+            case .post(let id): PostDetailView(id: id)
+            case .event(let id): EventDetailView(eventId: id)
             }
         }
     }

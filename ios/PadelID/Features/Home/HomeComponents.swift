@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 // Components shared by the Home area screens (HomeView, InsightsView,
 // StatsDetailView).
@@ -79,5 +80,56 @@ enum HomeStreakText {
 
     static func color(_ streak: Streak) -> Color {
         streak.type == "win" ? Theme.positive : Theme.negative
+    }
+}
+
+/// Only confirmed results from PlayerStats enter the balance chart.
+struct MatchBalanceSummary: View {
+    let stats: PlayerStats
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    var body: some View {
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 16) { chart; legend }
+            } else {
+                HStack(spacing: 20) { chart; legend }
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Баланс подтверждённых матчей")
+        .accessibilityValue("\(Format.matches(stats.matches)), \(stats.wins) побед, \(stats.losses) поражений. Доля побед \(Format.percent(Double(stats.wins) / Double(max(stats.matches, 1))))")
+        .accessibilityIdentifier("stats.balance")
+    }
+
+    private var chart: some View {
+        Chart {
+            SectorMark(angle: .value("Победы", stats.wins), innerRadius: .ratio(0.76), angularInset: 2)
+                .foregroundStyle(Theme.accent)
+            SectorMark(angle: .value("Поражения", stats.losses), innerRadius: .ratio(0.76), angularInset: 2)
+                .foregroundStyle(Color.secondary.opacity(0.35))
+        }
+        .frame(width: 118, height: 118)
+        .overlay {
+            VStack(spacing: 2) {
+                Text("\(stats.matches)").font(.title2.bold()).monospacedDigit()
+                Text("матчей").font(.caption).foregroundStyle(.secondary)
+            }
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+        }
+        .accessibilityHidden(true)
+    }
+
+    private var legend: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Победы: \(stats.wins)", systemImage: "circle.fill")
+                .foregroundStyle(Theme.accent)
+            Label("Поражения: \(stats.losses)", systemImage: "circle")
+            Text("\(Format.percent(Double(stats.wins) / Double(max(stats.matches, 1)))) побед")
+                .font(.headline).monospacedDigit()
+        }
+        .font(.subheadline)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

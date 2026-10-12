@@ -10,19 +10,22 @@ import Foundation
 /// * Retries idempotent requests after transient failures with backoff.
 /// * Never logs request bodies or tokens.
 final class APIClient {
-    static let shared = APIClient(sessionStore: .shared)
+    static let shared = APIClient(sessionStore: .shared, fallbackURLs: AppEnvironment.apiFallbackURLs)
 
     let baseURL: URL
     let sessionStore: SessionStore
     private let urlSession: URLSession
+    private let routeSelector: APIRouteSelector
     private var refreshTask: Task<Session, Error>?
+    /// No bodies, credentials or URL queries are retained for diagnostics.
+    private(set) var lastTransportFailure: TransportFailure?
 
     /// Called when the session can no longer be refreshed.
     var onSessionInvalidated: (() -> Void)?
     /// Called when the server requires a newer build of the app (426).
     var onClientOutdated: (() -> Void)?
 
-    init(baseURL: URL = AppEnvironment.apiBaseURL, sessionStore: SessionStore, urlSession: URLSession? = nil) {
+    init(baseURL: URL = AppEnvironment.apiBaseURL, sessionStore: SessionStore, urlSession: URLSession? = nil, fallbackURLs: [URL] = []) {
         self.baseURL = baseURL
         self.sessionStore = sessionStore
         if let urlSession {
@@ -34,8 +37,9 @@ final class APIClient {
             configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
             configuration.urlCache = nil
             configuration.httpAdditionalHeaders = ["Accept-Language": "ru"]
-            self.urlSession = URLSession(configuration: configuration)
+            self.urlSession = URLSession(configuration: configuration, delegate: GatewayRedirectPolicy(), delegateQueue: nil)
         }
+        routeSelector = APIRouteSelector(routes: [baseURL] + fallbackURLs, session: self.urlSession)
     }
 
     // MARK: - Public API
@@ -93,7 +97,9 @@ final class APIClient {
     }
 
     private func execute(_ endpoint: Endpoint, token: String?) async throws -> Data {
-        var components = URLComponents(url: baseURL.appending(path: endpoint.path), resolvingAgainstBaseURL: false)!
+        let route = try await routeSelector.select()
+        try Task.checkCancellation()
+        var components = URLComponents(url: route.appending(path: endpoint.path), resolvingAgainstBaseURL: false)!
         if !endpoint.query.isEmpty {
             components.queryItems = endpoint.query
             // URLComponents leaves "+" as is, and servers decode it as a space
@@ -130,12 +136,16 @@ final class APIClient {
         } catch let error as URLError where error.code == .cancelled {
             throw CancellationError()
         } catch {
+            let failure = error as NSError
+            lastTransportFailure = TransportFailure(path: endpoint.path, code: failure.code, domain: failure.domain, date: .now)
+            routeSelector.failed(route)
             throw APIError.offline
         }
         let (data, response) = result
         guard let http = response as? HTTPURLResponse else {
             throw APIError(kind: .decoding, code: "decoding", serverMessage: nil)
         }
+        if http.statusCode == 502 || http.statusCode == 504 { routeSelector.failed(route) }
         if (200..<300).contains(http.statusCode) {
             return data
         }
@@ -180,6 +190,12 @@ final class APIClient {
             do {
                 let data = try await self.perform(endpoint)
                 let session = try JSONCoding.decoder.decode(Session.self, from: data)
+                guard self.sessionStore.session?.refreshToken == current.refreshToken,
+                      self.sessionStore.session?.user.id == current.user.id else {
+                    // Logout or a different sign-in must win over a delayed
+                    // response belonging to the previous session.
+                    throw CancellationError()
+                }
                 self.sessionStore.save(session)
                 return session
             } catch let error as APIError where error.code == "session_expired" || error.code == "not_authenticated" {
@@ -196,4 +212,11 @@ final class APIClient {
         defer { refreshTask = nil }
         return try await task.value
     }
+}
+
+nonisolated struct TransportFailure: Sendable {
+    let path: String
+    let code: Int
+    let domain: String
+    let date: Date
 }

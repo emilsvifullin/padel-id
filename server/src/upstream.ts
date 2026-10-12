@@ -223,10 +223,11 @@ export class Upstream {
     });
   }
 
-  /** Streams a public avatar from Storage. */
-  async fetchAvatar(path: string): Promise<Response> {
+  /** Reads private Storage with the caller's live-session/visibility policies. */
+  async fetchAvatar(path: string, accessToken: string): Promise<Response> {
     try {
-      return await this.fetchImpl(`${this.config.supabaseUrl}/storage/v1/object/public/avatars/${path}`, {
+      return await this.fetchImpl(`${this.config.supabaseUrl}/storage/v1/object/authenticated/avatars/${path}`, {
+        headers: this.headers(accessToken),
         signal: AbortSignal.timeout(this.config.upstreamTimeoutMs),
       });
     } catch {

@@ -189,7 +189,8 @@ def main():
         # Cleanup runs only against this suite's unique users and related rows.
         if players:
             ids = ",".join(literal(player) for player in players)
-            sql("begin; delete from public.scheduled_match_players where match_id in (select id from public.scheduled_matches where organizer_id in (" + ids + "));"
+            sql("begin; delete from public.social_notifications where player_id in (" + ids + ") or actor_id in (" + ids + ");"
+                "delete from public.scheduled_match_players where match_id in (select id from public.scheduled_matches where organizer_id in (" + ids + "));"
                 "delete from public.scheduled_matches where organizer_id in (" + ids + ");"
                 "delete from public.matches where created_by in (" + ids + ");"
                 "delete from public.friendships where player_low in (" + ids + ") or player_high in (" + ids + ");"

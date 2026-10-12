@@ -174,7 +174,10 @@ describe.runIf(RUN)("local mutual friendship and future-game lifecycle", () => {
     // Uncertainty is reviewed even outside the range rather than a beginner lockout.
     expect(ok(await call("POST", `/v1/upcoming-matches/${outside.id}/join`, accounts[6])).viewer.participation).toBe("pending");
     ok(await call("POST", `/v1/upcoming-matches/${outside.id}/cancel`, accounts[0]));
-    rejected(await call("POST", `/v1/upcoming-matches/${outside.id}/join`, accounts[1]), "scheduled_match_closed", 409);
+    // A cancelled game is no longer visible to nonparticipants. Neither a
+    // read nor a join may reveal it through a different error response.
+    rejected(await call("GET", `/v1/upcoming-matches/${outside.id}`, accounts[1]), "scheduled_match_not_found", 404);
+    rejected(await call("POST", `/v1/upcoming-matches/${outside.id}/join`, accounts[1]), "scheduled_match_not_found", 404);
   });
 
   it("serializes joins and approvals at the final slot, supports leaving, and prevents unauthorized cancellation", async () => {

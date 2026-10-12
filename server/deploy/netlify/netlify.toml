@@ -1,0 +1,13 @@
+# Isolated probe only. Select the Free account plan before any approved deploy.
+[build]
+  base = "server"
+  command = "pnpm run build"
+  publish = "deploy/netlify/public"
+  functions = "deploy/netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+  PNPM_VERSION = "10.28.0"
+
+[functions]
+  node_bundler = "esbuild"

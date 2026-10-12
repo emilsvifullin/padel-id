@@ -5,7 +5,7 @@ struct WelcomeView: View {
     @State private var path: [AuthRoute] = []
 
     enum AuthRoute: Hashable {
-        case signIn, signUp, recover
+        case signIn, signUp, recover, network
     }
 
     var body: some View {
@@ -13,25 +13,41 @@ struct WelcomeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 32) {
                     VStack(alignment: .leading, spacing: 16) {
-                        BrandMark(size: 72)
+                        Image("IconPreview-lime")
+                            .resizable().frame(width: 72, height: 72)
+                            .clipShape(.rect(cornerRadius: 18)).accessibilityHidden(true)
                         Text("Padel ID")
                             .font(.largeTitle.bold())
-                        Text("Ваш уровень, стиль игры и подтверждённые матчи — в одном профиле игрока.")
+                        Text("Ваше место\nв мире падела.")
+                            .font(.largeTitle.weight(.semibold)).fixedSize(horizontal: false, vertical: true)
+                        Text("Игроки, общение и спортивный прогресс — в одном приложении.")
                             .font(.title3)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.white.opacity(0.82))
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    .padding(.top, 24)
+                    .foregroundStyle(.white)
+                    .padding(24)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background {
+                        ZStack(alignment: .topTrailing) {
+                            Theme.ink
+                            CourtMarkings().stroke(Theme.lime.opacity(0.12), lineWidth: 1)
+                                .frame(width: 180, height: 220).rotationEffect(.degrees(-15)).offset(x: 40, y: -35)
+                        }
+                        .clipShape(.rect(cornerRadius: Theme.cornerRadius))
+                        .accessibilityHidden(true)
+                    }
+                    .padding(.top, 16)
 
                     VStack(alignment: .leading, spacing: 20) {
-                        FeatureRow(symbol: "chart.line.uptrend.xyaxis",
-                                   title: "Честный рейтинг 0–7",
-                                   text: "Учитывает партнёра, соперников и счёт. Показывает надёжность и объясняет каждое изменение.")
+                        FeatureRow(symbol: "person.2",
+                                   title: "Собирайте свою игру",
+                                   text: "Находите партнёров, общайтесь и договаривайтесь о встречах на корте.")
                         FeatureRow(symbol: "hexagon",
                                    title: "Padel DNA",
                                    text: "Шесть направлений игры по оценкам партнёров, тренеров и результатам матчей.")
                         FeatureRow(symbol: "checkmark.seal",
-                                   title: "Матчи без споров",
+                                   title: "Подтверждённые результаты",
                                    text: "Результат засчитывается, только когда его подтвердили все четыре игрока.")
                     }
 
@@ -40,6 +56,9 @@ struct WelcomeView: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
+                    NavigationLink("Проверка сети", value: AuthRoute.network)
+                        .font(.footnote)
+                        .accessibilityIdentifier("welcome.network")
                 }
                 .padding(.horizontal, Theme.horizontalPadding)
                 .padding(.bottom, 24)
@@ -84,6 +103,7 @@ struct WelcomeView: View {
                 case .signIn: SignInView(onForgotPassword: { path.append(.recover) })
                 case .signUp: SignUpView()
                 case .recover: RecoverView()
+                case .network: NetworkDiagnosticsView()
                 }
             }
             .toolbar(.hidden, for: .navigationBar)

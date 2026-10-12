@@ -15,7 +15,7 @@ final class AppModel {
     }
 
     enum Tab: Hashable {
-        case padelID, matches, analysis, friends, profile
+        case padelID, matches, clubs, community, profile
     }
 
     private(set) var phase: Phase = .launching
@@ -82,6 +82,7 @@ final class AppModel {
             apply(me: cached)
         }
         NotificationService.shared.scheduleBackgroundRefresh()
+        await RemotePushService.shared.sessionStarted()
         await refreshMe()
         await flushOutbox()
     }
@@ -114,9 +115,7 @@ final class AppModel {
 
     func apply(me: Me) {
         self.me = me
-        withAnimation(.smooth) {
-            phase = me.needsOnboarding ? .onboarding : .ready
-        }
+        phase = me.needsOnboarding ? .onboarding : .ready
     }
 
     func dataDidChange() {
@@ -159,6 +158,7 @@ final class AppModel {
 
     private func startSession(_ session: Session) async {
         sessionStore.save(session)
+        await RemotePushService.shared.sessionStarted()
         signOutNotice = nil
         activateStorage(for: session.user.id)
         await refreshMe()
@@ -172,6 +172,7 @@ final class AppModel {
     /// Signs out on this device (the server session is ended when reachable).
     func signOut() async {
         if sessionStore.session != nil {
+            await RemotePushService.shared.revokeCurrentDevice()
             try? await api.sendVoid(.json(.post, "v1/auth/logout", ["scope": "local"]))
         }
         resetLocalState()
@@ -187,6 +188,7 @@ final class AppModel {
     /// Called after account deletion or when the session cannot be refreshed.
     func resetLocalState(notice: String? = nil) {
         sessionStore.clear()
+        RemotePushService.shared.reset()
         cache.purgeAll()
         outbox.purge()
         me = nil
@@ -195,7 +197,7 @@ final class AppModel {
         isAccountPresented = false
         matchEditor = nil
         signOutNotice = notice
-        withAnimation(.smooth) { phase = .signedOut }
+        phase = .signedOut
         AvatarLoader.cache.removeAllCachedResponses()
         Task { await NotificationService.shared.reset() }
     }
