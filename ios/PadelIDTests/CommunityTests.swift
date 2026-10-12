@@ -144,6 +144,149 @@ struct CommunityTests {
         #expect(requests.allSatisfy { $0.header("Authorization") != nil })
     }
 
+    @Test func stalePollCannotOverwriteConfirmedSendAndFreshPollStillReconcilesPrivacy() async throws {
+        let gate = ChatReplyGate()
+        let context = CommunityTestContext(gate: gate)
+        defer { context.close() }
+        let chat = Self.conversation()
+        let detail = try JSONCoding.encoder.encode(chat)
+        let original = Self.message(conversation: chat.id)
+        let sent = Self.message(conversation: chat.id, id: 2)
+        let moderated = Self.message(conversation: chat.id, id: 2, body: "Сообщение скрыто", deleted: true)
+        let originalPage = try Self.messagePage([original])
+        let updatedPage = try Self.messagePage([moderated])
+        let confirmed = try JSONCoding.encoder.encode(sent)
+        let polls = StubCounter()
+        gate.handler = { request in
+            if request.method == "POST", request.path.hasSuffix("/messages") { return .data(201, confirmed) }
+            if request.path.hasSuffix("/read") { return .json(200, "{\"ok\":true}") }
+            if request.path.hasSuffix("/messages") {
+                switch polls.next() {
+                case 1: return originalPage
+                case 2: return nil // Snapshot taken before the concurrent send.
+                default: return updatedPage
+                }
+            }
+            return .data(200, detail)
+        }
+        let model = ChatModel(id: chat.id)
+        await model.load(using: context.app)
+        let poll = Task { await model.load(using: context.app, poll: true) }
+        try #require(await gate.waitForHeldResponse())
+        #expect(await model.send("Давайте сыграем", using: context.app))
+        #expect(model.messages.map(\.id) == [1, 2])
+        gate.reply(originalPage)
+        await poll.value
+        #expect(model.messages.map(\.id) == [1, 2])
+        #expect(model.error == nil)
+        // A new authoritative snapshot must still remove blocked content and
+        // replace moderated bodies, rather than union every response forever.
+        await model.load(using: context.app, poll: true)
+        #expect(model.messages.map(\.id) == [2])
+        #expect(model.messages.first?.deleted == true)
+        #expect(model.messages.first?.body == "Сообщение скрыто")
+    }
+
+    @Test(arguments: ["detail", "history"])
+    func stalePollCannotRestoreContentAfterSendRevokesAccess(heldStage: String) async throws {
+        let gate = ChatReplyGate()
+        let context = CommunityTestContext(gate: gate)
+        defer { context.close() }
+        let chat = Self.conversation()
+        let detail = try JSONCoding.encoder.encode(chat)
+        let history = try Self.messagePage([Self.message(conversation: chat.id)])
+        let details = StubCounter(), pages = StubCounter()
+        gate.handler = { request in
+            if request.method == "POST", request.path.hasSuffix("/messages") {
+                return .error(403, code: "conversation_access_denied", message: "Чат недоступен")
+            }
+            if request.path.hasSuffix("/read") { return .json(200, "{\"ok\":true}") }
+            if request.path.hasSuffix("/messages") {
+                return pages.next() == 2 && heldStage == "history" ? nil : history
+            }
+            return details.next() == 2 && heldStage == "detail" ? nil : .data(200, detail)
+        }
+        let model = ChatModel(id: chat.id)
+        await model.load(using: context.app)
+        #expect(model.messages.count == 1)
+        let poll = Task { await model.load(using: context.app, poll: true) }
+        try #require(await gate.waitForHeldResponse())
+        #expect(await model.send("Давайте сыграем", using: context.app) == false)
+        #expect(model.conversation == nil && model.messages.isEmpty && model.before == nil)
+        gate.reply(heldStage == "detail" ? .data(200, detail) : history)
+        await poll.value
+        #expect(model.conversation == nil && model.messages.isEmpty && model.before == nil)
+        #expect(model.error == "Чат недоступен")
+    }
+
+    @Test func staleSendCannotRestoreContentAfterPollRevokesAccess() async throws {
+        let gate = ChatReplyGate()
+        let context = CommunityTestContext(gate: gate)
+        defer { context.close() }
+        let chat = Self.conversation()
+        let detail = try JSONCoding.encoder.encode(chat)
+        let history = try Self.messagePage([Self.message(conversation: chat.id)])
+        let confirmed = try JSONCoding.encoder.encode(Self.message(conversation: chat.id, id: 2))
+        let details = StubCounter(), sends = StubCounter()
+        gate.handler = { request in
+            if request.method == "POST", request.path.hasSuffix("/messages") {
+                return sends.next() == 1 ? nil : .data(201, confirmed)
+            }
+            if request.path.hasSuffix("/read") { return .json(200, "{\"ok\":true}") }
+            if request.path.hasSuffix("/messages") { return history }
+            return details.next() == 2 ? .error(403, code: "conversation_access_denied", message: "Чат недоступен")
+                : .data(200, detail)
+        }
+        let model = ChatModel(id: chat.id)
+        await model.load(using: context.app)
+        let send = Task { await model.send("Давайте сыграем", using: context.app) }
+        try #require(await gate.waitForHeldResponse())
+        await model.load(using: context.app, poll: true)
+        #expect(model.conversation == nil && model.messages.isEmpty)
+        gate.reply(.data(201, confirmed))
+        #expect(await send.value == false)
+        #expect(model.conversation == nil && model.messages.isEmpty && model.before == nil)
+        #expect(model.error == "Чат недоступен")
+        // Only a fresh successful access check may reopen the conversation.
+        await model.load(using: context.app)
+        #expect(model.conversation?.id == chat.id)
+        #expect(await model.send("Давайте сыграем", using: context.app))
+        let requests = gate.requests.filter { $0.method == "POST" && $0.path.hasSuffix("/messages") }
+        #expect(requests.count == 2)
+        let first = try #require(requests.first)
+        #expect(first.header("Idempotency-Key") != nil && first.body != nil)
+        #expect(requests.allSatisfy { $0.header("Idempotency-Key") == first.header("Idempotency-Key") && $0.body == first.body })
+    }
+
+    @Test func cancelledSendDoesNotCommitLateContentOrDiscardItsRetryIdentity() async throws {
+        let gate = ChatReplyGate()
+        let context = CommunityTestContext(gate: gate)
+        defer { context.close() }
+        let chat = Self.conversation()
+        let confirmed = try JSONCoding.encoder.encode(Self.message(conversation: chat.id))
+        let sends = StubCounter()
+        gate.handler = { _ in sends.next() == 1 ? nil : .data(201, confirmed) }
+        let model = ChatModel(id: chat.id)
+        let send = Task { await model.send("Давайте сыграем", using: context.app) }
+        try #require(await gate.waitForHeldResponse())
+        send.cancel()
+        gate.reply(.data(201, confirmed))
+        #expect(await send.value == false)
+        #expect(model.messages.isEmpty && model.error == nil && !model.isSending)
+        #expect(await model.send("Давайте сыграем", using: context.app))
+        #expect(model.messages.map(\.id) == [1])
+        let requests = gate.requests
+        #expect(requests.count == 2)
+        let first = try #require(requests.first)
+        #expect(first.header("Idempotency-Key") != nil && first.body != nil)
+        #expect(requests.allSatisfy { $0.header("Idempotency-Key") == first.header("Idempotency-Key") && $0.body == first.body })
+    }
+
+    private static func messagePage(_ messages: [ChatMessage]) throws -> StubResponse {
+        let items = String(decoding: try JSONCoding.encoder.encode(messages), as: UTF8.self)
+        return .json(200, "{\"items\":\(items),\"next_before\":null}")
+    }
+
     @Test func uncertainSendKeepsTheRetryKeyAndDoesNotShowUnconfirmedMessage() async throws {
         let context = CommunityTestContext()
         defer { context.close() }
@@ -293,12 +436,81 @@ private struct CommunityTestContext {
     let url: URL
     let store: SessionStore
     let app: AppModel
-    init() {
+    init(gate: ChatReplyGate? = nil) {
         url = StubURLProtocol.makeBaseURL()
         store = SessionStore()
         store.save(Session(accessToken: "community-test-access-0123456789", refreshToken: "community-test-refresh-0123456789",
                            expiresIn: 3600, expiresAt: Int(Date.now.timeIntervalSince1970) + 3600, user: AuthUser(id: UUID(), email: "test@example.test")))
-        app = AppModel(api: APIClient(baseURL: url, sessionStore: store, urlSession: StubURLProtocol.makeURLSession()))
+        let session: URLSession
+        if let gate {
+            ChatRaceURLProtocol.register(url, gate: gate)
+            let configuration = URLSessionConfiguration.ephemeral
+            configuration.protocolClasses = [ChatRaceURLProtocol.self]
+            configuration.urlCache = nil
+            session = URLSession(configuration: configuration)
+        } else { session = StubURLProtocol.makeURLSession() }
+        app = AppModel(api: APIClient(baseURL: url, sessionStore: store, urlSession: session))
     }
-    func close() { store.clear(); StubURLProtocol.unregister(url) }
+    func close() { store.clear(); StubURLProtocol.unregister(url); ChatRaceURLProtocol.unregister(url) }
+}
+
+/// A real URLSession response is held while another ChatModel operation commits.
+/// Each test uses a separate host; response order is explicit, without sleeps.
+private nonisolated final class ChatReplyGate: @unchecked Sendable {
+    private let lock = NSLock()
+    private var callback: (@Sendable (StubResponse) -> Void)?
+    private var recordings: [StubRecordedRequest] = []
+    var requests: [StubRecordedRequest] { lock.withLock { recordings } }
+    func record(_ request: StubRecordedRequest) { lock.withLock { recordings.append(request) } }
+    var handler: @Sendable (StubRecordedRequest) -> StubResponse? = { _ in nil }
+    var isWaiting: Bool { lock.withLock { callback != nil } }
+    func attach(_ callback: @escaping @Sendable (StubResponse) -> Void) { lock.withLock { self.callback = callback } }
+    func reply(_ response: StubResponse) {
+        let respond = lock.withLock { let value = callback; callback = nil; return value }
+        respond?(response)
+    }
+    @MainActor func waitForHeldResponse() async -> Bool {
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while !isWaiting && ContinuousClock.now < deadline { await Task.yield() }
+        return isWaiting
+    }
+}
+
+private nonisolated final class ChatRaceURLProtocol: URLProtocol, @unchecked Sendable {
+    private static let lock = NSLock()
+    nonisolated(unsafe) private static var gates: [String: ChatReplyGate] = [:]
+    static func register(_ url: URL, gate: ChatReplyGate) { lock.withLock { gates[url.host()!] = gate } }
+    static func unregister(_ url: URL) { _ = lock.withLock { gates.removeValue(forKey: url.host()!) } }
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+        guard let gate = Self.lock.withLock({ Self.gates[request.url!.host()!] }) else {
+            client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse)); return
+        }
+        let respond: @Sendable (StubResponse) -> Void = { [self] response in
+            let http = HTTPURLResponse(url: request.url!, statusCode: response.status, httpVersion: "HTTP/1.1",
+                                       headerFields: ["Content-Type": "application/json"])!
+            client?.urlProtocol(self, didReceive: http, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: response.body)
+            client?.urlProtocolDidFinishLoading(self)
+        }
+        let recorded = StubRecordedRequest(request: request, body: Self.readBody(request))
+        gate.record(recorded)
+        if let response = gate.handler(recorded) { respond(response) }
+        else { gate.attach(respond) }
+    }
+    override func stopLoading() {}
+    private static func readBody(_ request: URLRequest) -> Data? {
+        if let data = request.httpBody { return data }
+        guard let stream = request.httpBodyStream else { return nil }
+        stream.open()
+        defer { stream.close() }
+        var data = Data(), buffer = [UInt8](repeating: 0, count: 4096)
+        while stream.hasBytesAvailable {
+            let count = stream.read(&buffer, maxLength: buffer.count)
+            if count <= 0 { break }
+            data.append(contentsOf: buffer.prefix(count))
+        }
+        return data
+    }
 }

@@ -16,24 +16,29 @@ final class ChatModel {
     var error: String? { sendError ?? loadError }
     private var sendingKey = UUID()
     private var pendingBody: String?
+    // A confirmed send invalidates older history snapshots. Revoked access
+    // additionally fences pending sends, so late replies cannot reopen a chat.
+    private var contentRevision: UInt64 = 0
+    private var accessGeneration: UInt64 = 0
     init(id: UUID) { self.id = id }
     var path: String { "v1/conversations/" + id.uuidString.lowercased() }
 
     func load(using app: AppModel, older: Bool = false, poll: Bool = false) async {
         guard !isLoading else { return }
+        let revision = contentRevision
         isLoading = true
         defer { isLoading = false }
         do {
             let detail = try await app.api.send(.get(path), as: Conversation.self)
-            guard !Task.isCancelled else { return }
-            conversation = detail
+            guard !Task.isCancelled, revision == contentRevision else { return }
             var query = [URLQueryItem(name: "limit", value: "50")]
             if older, let before { query.append(URLQueryItem(name: "before_id", value: String(before))) }
             // Reconcile the visible history as well as new deliveries: moderation
             // and bilateral blocks can change messages that were already loaded.
             else if poll, let first = messages.first { query.append(URLQueryItem(name: "after_id", value: String(first.id - 1))) }
             var page = try await app.api.send(.get(path + "/messages", query: query), as: MessagePage.self)
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, revision == contentRevision else { return }
+            var loadedMessages: [ChatMessage]
             if poll, !messages.isEmpty {
                 var authoritative = page.items
                 while page.items.count == 50, let last = page.items.last {
@@ -41,16 +46,18 @@ final class ChatModel {
                         URLQueryItem(name: "limit", value: "50"),
                         URLQueryItem(name: "after_id", value: String(last.id))
                     ]), as: MessagePage.self)
-                    guard !Task.isCancelled else { return }
+                    guard !Task.isCancelled, revision == contentRevision else { return }
                     authoritative += page.items
                 }
-                messages = authoritative
+                loadedMessages = authoritative
             }
-            else if !older { messages = page.items; if poll { before = page.nextBefore } }
+            else if !older { loadedMessages = page.items; if poll { before = page.nextBefore } }
             else {
                 let merged = Dictionary((messages + page.items).map { ($0.id, $0) }, uniquingKeysWith: { _, fresh in fresh })
-                messages = merged.values.sorted { $0.id < $1.id }
+                loadedMessages = merged.values.sorted { $0.id < $1.id }
             }
+            conversation = detail
+            messages = loadedMessages
             if !poll { before = page.nextBefore }
             loadError = nil
             if let last = messages.last {
@@ -59,12 +66,14 @@ final class ChatModel {
             }
         } catch let failure as APIError {
             guard !Task.isCancelled else { return }
-            loadError = failure.message
             if failure.status == 403 || failure.status == 404 || failure.status == 401 {
-                conversation = nil; messages = []; before = nil
+                revokeAccess()
                 sendError = nil
-            }
-        } catch { if !Task.isCancelled { loadError = "Не удалось загрузить чат." } }
+                loadError = failure.message
+            } else if revision == contentRevision { loadError = failure.message }
+        } catch {
+            if !Task.isCancelled, revision == contentRevision { loadError = "Не удалось загрузить чат." }
+        }
     }
 
     func send(_ raw: String, using app: AppModel) async -> Bool {
@@ -72,22 +81,36 @@ final class ChatModel {
         let body = SettingsText.trimmed(raw)
         guard (1...4000).contains(body.unicodeScalars.count) else { return false }
         if pendingBody != body { sendingKey = UUID(); pendingBody = body }
+        let generation = accessGeneration
         isSending = true; sendError = nil
         defer { isSending = false }
         do {
             let message = try await app.api.send(.json(.post, path + "/messages", ["body": body], idempotencyKey: sendingKey), as: ChatMessage.self)
+            guard !Task.isCancelled, generation == accessGeneration else { return false }
+            contentRevision &+= 1
             if !messages.contains(where: { $0.id == message.id }) { messages.append(message); messages.sort { $0.id < $1.id } }
             pendingBody = nil
             sendError = nil
             return true
         } catch let failure as APIError {
+            guard !Task.isCancelled, generation == accessGeneration else { return false }
             sendError = failure.message
             if failure.status == 403 || failure.status == 404 || failure.status == 401 {
-                conversation = nil; messages = []; before = nil
+                revokeAccess()
             }
         }
-        catch { sendError = "Отправка не подтверждена. Повторите с тем же текстом." }
+        catch {
+            if !Task.isCancelled, generation == accessGeneration {
+                sendError = "Отправка не подтверждена. Повторите с тем же текстом."
+            }
+        }
         return false
+    }
+
+    private func revokeAccess() {
+        contentRevision &+= 1
+        accessGeneration &+= 1
+        conversation = nil; messages = []; before = nil
     }
 }
 

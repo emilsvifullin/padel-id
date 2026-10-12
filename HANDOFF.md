@@ -4,9 +4,10 @@
 Пользователь подтвердил весь релиз 1.2.0, включая три подготовленные настоящие
 Home Screen icons с Лайм по умолчанию. Shift Register изучали только read-only;
 его проект, DNS, конфигурация и данные не изменены.
-Локальные Release units 164 / 164 и focused icons/chat 3 / 3 прошли на обеих OS.
+Новые Release27 units 168 / 168 и Community 18 / 21 прошли; Release26 и targeted
+chat UI27 ещё выполняются. Units164 / focused3 / 3 обеих OS исторические.
 Все failed UI cases покрыты успешными focused retries; нового полного 32 / 32
-нет. IPA d56bc актуален и unsigned; production доставка и физическая приёмка
+нет. IPA d56bc исторический после новой ChatModel правки; production доставка и физическая приёмка
 остаются незавершёнными.
 
 ## Разрешения и сохранность
@@ -15,7 +16,8 @@ Home Screen icons с Лайм по умолчанию. Shift Register изуча
 Разрешены необходимые Git/release/deployment операции и production migrations/API
 после резервирования и CI. Доступность через МегаФон без VPN пользователь вынес
 за текущий scope; это отдельная незавершённая задача, а не gate этой публикации.
-Production операции ещё не выполнены. PADELID_GATEWAY_SECRET не менять;
+Production migrations/API/release ещё не выполнены; backup готов, branch 6d26f72
+и PR 3 опубликованы, предыдущий Backend CI прошёл. PADELID_GATEWAY_SECRET не менять;
 Shift Register, его конфигурацию и данные не трогать. Владелец явно согласовал выпуск 1.2.0 с уведомлениями внутри приложения.
 APNs отложен на отдельный этап; shipping push NO — согласованное ограничение
 этого релиза, а не ожидающее решение или gate публикации.
@@ -105,6 +107,35 @@ provisioning/key/worker/device acceptance.
   Старый клиент использовал anonymous API image URL и persistent cache, прежний
   сервер public Storage; нужен согласованный порядок обновления и cache audit.
 
+## Последние исправления перед production
+
+ChatModel защищён от позднего poll после подтверждённой отправки и от поздних
+ответов после отзыва доступа. Release27 Community: 18 declarations / 21 case
+executions PASS; полный optimized Release27: 168 / 168 PASS, без fail/skip.
+`unit-chat-concurrent-fixed-27-summary.json`, `unit-chat-concurrent-all-27-summary.json`.
+Полный Release26 168 и targeted chat UI27 ещё выполняются; их успех не заявлен.
+Предыдущие units 164 и focused icons/chat3 / 3 каждой OS — исторические до этой правки.
+
+Новая миграция `20261012180722_group_owner_account_cleanup.sql` при удалении
+аккаунта владельца передаёт игровую группу детерминированному активному
+незаблокированному участнику. Если преемника нет, группа архивируется; данные
+остальных участников сохраняются. Service-only операции сериализованы.
+Свежий полный локальный SQL: 87 / 87 PASS; реальные новые races: 3 / 3 PASS.
+`group-owner-full-sql-final.log`, `group-owner-concurrency-final.log`;
+новая guarded concurrency проверка включена в CI. Локальная цепочка — 25 миграций,
+11 новых после исходных 14 hosted; production apply ещё не выполнен.
+
+Защищённый production backup готов. Branch head 6d26f72 и PR 3 опубликованы;
+Backend CI 6d прошёл 107 units / 83 SQL / 27 races, Node E2E 23 pass +5 skip и
+Edge health. Это CI до последней миграции/ChatModel правки, новый integrated CI
+нужен. Исходный Release 5f3 прошёл с units 164 и IPA 3.8 MB; draft не опубликован
+и требует замены. Исходная GUI matrix ещё выполняется. Local IPA d56bc и manifest
+127 относятся к прошлому app source, новый текущий артефакт ещё не проверен.
+Финальный CLI dry-run подтверждает ровно 11 неприменённых миграций, без seeds/roles.
+Production API остаётся b93723; nonsecret minimum build 3 staged, работающий старый
+API не изменён. Shared secret сохранён. Уведомления внутри приложения входят
+в 1.2.0; APNs и МегаФон без VPN отложены по явному решению владельца.
+
 ## Текущие результаты после устранения трёх пробелов
 
 `EventEditDraft` сохраняет локальные правки при HTTP 409. Пользователь явно
@@ -112,14 +143,14 @@ provisioning/key/worker/device acceptance.
 черновика. Профиль открывает `Route.myEvents`. Новости клуба используют прежние
 posts с фильтром club_id, атрибуцией клуба и проверкой актуальных прав администратора.
 Добавлена миграция `20261012073216_club_news_feed.sql`: локальная цепочка теперь
-содержит 24 миграции, десять новых для 1.2.0. Hosted база не изменена.
+содержит 25 миграций, одиннадцать новых для 1.2.0. Hosted база не изменена.
 
 | Проверка | Фактический результат | Доказательство |
 |---|---|---|
 | Полный backend unit | 107 / 107 passed | club-news-backend-full-unit.log |
 | SQL в rollback/savepoint изоляции | 83 / 83 passed; данные 78 таблиц и fingerprint секрета сохранены | club-news-backend-full-sql-isolated.log, club-news-backend-* |
 | Реальные Node и Edge E2E | Каждый: 23 passed, 5 skipped | club-news-backend-node-e2e.log, club-news-backend-edge-e2e.log |
-| Current Release unit26 / unit27 | Каждый: 164 / 164 PASS, 0 failed / 0 skipped, exit 0 | unit-chat-feedback-current-{26,27}-summary.json, .xcresult/log |
+| Прежний Release unit26 / unit27 до concurrency fix | Каждый: 164 / 164 PASS, 0 failed / 0 skipped, exit 0 | unit-chat-feedback-current-{26,27}-summary.json, .xcresult/log |
 | Release unit26 / unit27 до ChatView fix | Каждый: 163 / 163 passed; historical | unit-draft-club-news-current-{26,27}-summary.json |
 | Первый targeted UI27 новых требований | 4 passed, 1 failed из 5; отказ при первом вводе title до 409 | ui-draft-club-news-current-27-summary.json |
 | Предыдущий event409 UI27 после wait helper fix | 0 passed / 1 failed; второй title edit после keepDraft, поле вне viewport | ui-event-draft-observed-27.xcresult/log |
@@ -132,7 +163,7 @@ posts с фильтром club_id, атрибуцией клуба и прове
 | Последний full UI27 после трёх дополнений | 32 total: 29 passed / 3 failed / 0 skipped, exit 65; historical до ChatView fix; все три failed cases затем покрыты focused PASS | ui-draft-club-news-full-27-summary.json, ui-draft-club-news-full-27.xcresult/log, ui-draft-club-news-full-27-devices.json, ui-draft-club-news-full-27-content-size.json |
 | Players27 без сна Mac | 1 / 1 PASS, 0 failed / 0 skipped, exit 0, 167.885 s | ui-players-awake-27-summary.json, ui-players-awake-27.xcresult/log |
 | Chat poll/send regression | RED 13 / 14 → GREEN 14 / 14, Release27; 16 case invocations / 14 declarations | unit-chat-send-poll-{red,fixed}-27-summary.json, .xcresult/log |
-| Current focused icons/chat26 / 27 | Каждый: 3 / 3 PASS, 0 failed / 0 skipped, exit 0 | ui-chat-icons-completion-{26,27}-summary.json, .xcresult/log |
+| Прежний focused icons/chat26 / 27 до concurrency fix | Каждый: 3 / 3 PASS, 0 failed / 0 skipped, exit 0 | ui-chat-icons-completion-{26,27}-summary.json, .xcresult/log |
 | Иконки 24pt и HomeAX26 / 27 | Каждый: 2 / 2 PASS; визуально обе OS без наложения, SpringBoard показывает три реальных дизайна | ui-icon-native-size-final-{26,27}.xcresult/log |
 | Прежний full UI27 retry | TEST INTERRUPTED, exit 75 после новых требований; не PASS | ui-final-current-full-27.xcresult/log |
 
@@ -187,7 +218,7 @@ Chat feedback исправлен: poll обновляет loadError, а не о�
 regression прошёл RED 13 / 14 → GREEN 14 / 14; privacy test имеет три аргумента
 401 / 403 / 404, поэтому 14 declarations соответствуют 16 case invocations.
 Артефакты: `unit-chat-send-poll-red-27` и `unit-chat-send-poll-fixed-27`.
-Текущие полные optimized Release units26 / 27: каждый 164 / 164 PASS,
+Прежние полные optimized Release units26 / 27: каждый 164 / 164 PASS,
 0 failed / 0 skipped, exit 0 (`unit-chat-feedback-current-{26,27}-summary.json`).
 
 Icon failure в старом full27 произошёл на ожидании charcoal selected (line 177),
@@ -206,7 +237,7 @@ Screen, возврат к Лайм по умолчанию и cold relaunch; cha
 
 Доказательства: `ui-chat-icons-completion-{26,27}-summary.json`, `.xcresult/log`.
 Все ранее упавшие отдельные UI cases покрыты успешными focused проверками:
-event button26, icons/chat обеих OS, Players27 без сна. Исторические full26
+event button 26, icons/chat обеих OS, Players27 без сна. Исторические full26
 31 / 32 и full27 29 / 32 остаются failed; свежий full 32 / 32 с текущим
 ChatModel не выполнялся. Полные Release units и targeted UI подтверждены.
 Visual review27 подтверждён: свежие SpringBoard screenshots показывают
@@ -222,7 +253,7 @@ assertions подтверждены тестом. Последний full27 бы
 test-only button query/snapshot additions; это доказательство относится к исходникам до нового ChatView fix.
 Две actual clones: iOS 27.0, accessibility-extra-large, доказательства
 `ui-draft-club-news-full-27-devices.json` и `ui-draft-club-news-full-27-content-size.json`.
-IPA 69667 и его manifest исторические; текущий shipping artifact указан ниже.
+IPA 69667 и его manifest исторические; исторический shipping artifact указан ниже.
 Полная текущая UI matrix ещё не принята.
 
 Исторический unsigned archive до ChatView fix: `archive-draft-club-news-local.log`, ARCHIVE SUCCEEDED.
@@ -231,7 +262,7 @@ SHA256 `69667ee2ec70bd95d88c290e531ec3938c5490c8b5f5a7b69247e1c49a6c5fca`.
 `ipa-draft-club-news-local-verification.log`: IPA OK 1.2.0(3).
 `ipa-draft-club-news-local-source.json`: 127 app source hashes совпадали с исходниками до ChatView fix;
 signed=false, published=false; этот IPA исторический.
-Текущий shipping archive `PadelID-chat-feedback-local.xcarchive`:
+Исторический shipping archive до concurrency fix `PadelID-chat-feedback-local.xcarchive`:
 `archive-chat-feedback-local.log`, ARCHIVE SUCCEEDED, ENABLE_TESTABILITY=NO.
 Unsigned IPA `ios/build/verification/PadelID-1.2.0-chat-feedback-local-unsigned.ipa`,
 3739714 bytes, SHA256
@@ -398,14 +429,16 @@ Current event409 UI27 с final native button query прошёл: 1 / 1 PASS, 128
 Full26 завершён: 31 passed / 1 failed. Причина подтверждена как test-only wrapper
 query defect; corrected focused26 прошёл 1 / 1 за 108.138 s. Это не новый full 32 / 32,
 полная текущая matrix ещё не принята.
-Текущие Release units26 / 27: каждый 164 / 164 PASS, 0 fail / skip, exit 0.
-Backend 107, SQL 83 и реальные Node/Edge E2E 23/5 прошли. Новый shipping archive
-и IPA d56bc прошли static verification; 127 app hashes, только ChatView изменён
+Последние Release27 units 168 / 168 PASS; Release26 и targeted UI27 pending.
+Units164 обеих OS исторические.
+Backend 107, SQL 83 и реальные Node/Edge E2E 23/5 прошли. Прежний shipping archive
+и IPA d56bc прошли static verification до concurrency fix; 127 app hashes, только ChatView изменён
 относительно 69667. Units163 и IPA69667 исторические. Полные UI bundles
 31 / 32 и 29 / 32 остаются историческими failed, новый полный UI не принят.
 Исторические failed/interrupted bundles и старые IPA сохраняются. CI/UI/physical
 проверки требуют фактических результатов. Production поставка разрешена новым
-поручением; выполнить backup → CI → migrations/API → проверенный Release.
+поручением; backup выполнен, завершить новые checks → integrated CI →
+11 migrations/API → новый проверенный Release. Старый Release draft5f3 заменить.
 Signing/install и физическая приёмка не выполнены; это явно сообщить при публикации.
 Выпуск с уведомлениями внутри приложения и без APNs явно согласован. МегаФон без VPN
 отложен и не должен останавливать разрешённую поставку.

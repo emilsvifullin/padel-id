@@ -112,6 +112,16 @@ jobs:
           PGDATABASE: postgres
         run: python3 scripts/db/run-social-concurrency-tests.py
 
+      - name: Account deletion concurrency regressions (independent connections)
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: "54322"
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: postgres
+          PADELID_DISPOSABLE_DB: "1"
+        run: python3 scripts/db/run-account-cleanup-concurrency-tests.py
+
       - name: Event concurrency regressions (independent connections)
         env:
           PGHOST: 127.0.0.1
