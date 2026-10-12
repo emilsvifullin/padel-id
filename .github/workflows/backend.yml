@@ -75,6 +75,13 @@ jobs:
           cache: pnpm
           cache-dependency-path: server/pnpm-lock.yaml
 
+      - name: Build generated Edge gateway
+        working-directory: server
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+          pnpm run build:edge
+
       - name: Start Supabase (applies all migrations from scratch)
         run: supabase start -x studio,imgproxy,mailpit,realtime,vector,logflare,supavisor
 
@@ -150,13 +157,6 @@ jobs:
           echo "::add-mask::$SECRET"
           echo "GATEWAY_SECRET=$SECRET" >> "$GITHUB_ENV"
           psql -v ON_ERROR_STOP=1 -c "insert into private.bff_secret (secret_hash) values (extensions.digest('$SECRET', 'sha256')) on conflict (id) do update set secret_hash = excluded.secret_hash"
-
-      - name: Build generated Edge gateway
-        working-directory: server
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm run build
-          pnpm run build:edge
 
       - name: Serve edge functions
         run: |
