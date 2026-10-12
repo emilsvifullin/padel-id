@@ -212,7 +212,7 @@ struct HomeLevelHero: View {
                             DeltaText(delta: rating.trend30d)
                             Text("за 30 дней")
                                 .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.white.opacity(0.8))
                         }
                     }
             }

@@ -104,19 +104,23 @@ struct AppearanceSettingsView: View {
             Section {
                 Picker(selection: $appearance) {
                     ForEach(AppAppearance.allCases) { option in
-                        Text(option.title).font(.body).tag(option.rawValue)
+                        Text(option.title).font(.body)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .tag(option.rawValue)
                             .accessibilityIdentifier("appearance.theme." + option.rawValue)
                     }
                 } label: {
-                    Text("Тема").font(.body)
+                    Text("Тема").font(.body).fixedSize(horizontal: false, vertical: true)
                 }
                 .font(.body)
                 .pickerStyle(.inline)
                 .accessibilityIdentifier("appearance.theme")
             } header: {
                 Text("Оформление").foregroundStyle(Color.primary)
+                    .fixedSize(horizontal: false, vertical: true)
             } footer: {
                 Text("Автоматический режим следует оформлению iPhone. Тема применяется сразу ко всем экранам.").foregroundStyle(Color.primary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Section {
                 ForEach(AppIconChoice.allCases) { icon in
@@ -124,21 +128,20 @@ struct AppearanceSettingsView: View {
                         Task { await icons.choose(icon) }
                     } label: {
                         HStack(spacing: 16) {
-                            Label {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(icon.title).foregroundStyle(Color.primary)
-                                    if icon == .lime {
-                                        Text("По умолчанию").font(.caption).foregroundStyle(Color.primary)
-                                            .accessibilityHidden(true)
-                                    }
+                            Image(icon.previewName)
+                                .resizable()
+                                .frame(width: 24, height: 24)
+                                .clipShape(.rect(cornerRadius: 6))
+                                .accessibilityHidden(true)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(icon.title).foregroundStyle(Color.primary)
+                                if icon == .lime {
+                                    Text("По умолчанию").font(.caption).foregroundStyle(Color.primary)
+                                        .accessibilityHidden(true)
                                 }
-                            } icon: {
-                                Image(icon.previewName)
-                                    .resizable()
-                                    .frame(width: 24, height: 24)
-                                    .clipShape(.rect(cornerRadius: 6))
-                                    .accessibilityHidden(true)
                             }
+                            .fixedSize(horizontal: false, vertical: true)
+                            .layoutPriority(1)
                             Spacer()
                             if icons.selected == icon {
                                 Image(systemName: "checkmark.circle.fill")
@@ -167,8 +170,10 @@ struct AppearanceSettingsView: View {
                 }
             } header: {
                 Text("Иконка приложения").foregroundStyle(Color.primary)
+                    .fixedSize(horizontal: false, vertical: true)
             } footer: {
                 Text("Изменяется иконка Padel ID на домашнем экране iPhone. Системное оформление иконок выбирается в настройках домашнего экрана.").foregroundStyle(Color.primary)
+                    .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("appearance.icon.help")
             }
         }

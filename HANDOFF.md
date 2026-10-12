@@ -1,11 +1,34 @@
 # Текущая работа: Padel ID 1.2.0
 
+## Проверка кандидата 13 октября — публикация ещё не выполнена
+
+- Последний серверный CI `38290256006` на `12d42f4`: 107 Node unit,
+  87 SQL, 30 реальных проверок конкурентности; Node E2E 23 PASS / 5 SKIP.
+- Release CI `38290256036` прошёл: 168 unit и самостоятельный архив 1.2.0(3).
+  Этот `PadelID.ipa` (3811352 bytes) прошёл статическую проверку, но предшествует
+  последующим исправлениям доступности. Нужен новый архив; черновик GitHub
+  Release ещё содержит прежний IPA и до публикации будет заменён.
+- Локальные optimized Release unit26 и unit27: каждый 168/168 PASS.
+  Последние chat UI27: 2/2 PASS. Иконки с холодным запуском26: 1/1 PASS.
+- Финальная UI matrix `38290255927` прервана по лимиту 75 минут. Pro Max
+  успел завершить 30/32: повторный вход после восстановленной сессии и
+  accessibility отказали. Остальные три результата неполные, успех не заявлен.
+  Исправлено предположение UI теста о потере сессии. Workflow оставляет время
+  для полного выполнения и сохраняет диагностику при отмене. Новый строгий
+  Home/Appearance audit на iPhone 17 Pro27 dark/large: 1/1 PASS.
+  Реальные ошибки воспроизведены на Max26: исправлены высота подписей иконок,
+  область нажатия «Все» и контраст тренда; неизменённый строгий audit теперь
+  1/1 PASS (107.5s). Оригинальный системный выбор темы сохранён.
+- Hosted база всё ещё содержит 14 исходных миграций; 11 новых не применены.
+  Production API остаётся на `b93723d`. Ключ сохранён. Push и МегаФон без VPN
+  отложены пользователем; физическая приёмка не выполнена.
+
 Обновлено 12.10.2026. Рабочая копия `/Users/emilsvifullin/Developer/Padel ID`.
 Пользователь подтвердил весь релиз 1.2.0, включая три подготовленные настоящие
 Home Screen icons с Лайм по умолчанию. Shift Register изучали только read-only;
 его проект, DNS, конфигурация и данные не изменены.
-Новые Release27 units 168 / 168 и Community 18 / 21 прошли; Release26 и targeted
-chat UI27 ещё выполняются. Units164 / focused3 / 3 обеих OS исторические.
+Новые Release27 units 168 / 168 и Community 18 / 21 прошли; Release26: 168 / 168 PASS; targeted
+chat UI27: 2 / 2 PASS. Units164 / focused3 / 3 обеих OS исторические.
 Все failed UI cases покрыты успешными focused retries; нового полного 32 / 32
 нет. IPA d56bc исторический после новой ChatModel правки; production доставка и физическая приёмка
 остаются незавершёнными.
@@ -113,7 +136,7 @@ ChatModel защищён от позднего poll после подтверж�
 ответов после отзыва доступа. Release27 Community: 18 declarations / 21 case
 executions PASS; полный optimized Release27: 168 / 168 PASS, без fail/skip.
 `unit-chat-concurrent-fixed-27-summary.json`, `unit-chat-concurrent-all-27-summary.json`.
-Полный Release26 168 и targeted chat UI27 ещё выполняются; их успех не заявлен.
+Полный optimized Release26: 168 / 168 PASS, без fail/skip. Targeted chat UI27: 2 / 2 PASS (повтор отправки и навигация участника).
 Предыдущие units 164 и focused icons/chat3 / 3 каждой OS — исторические до этой правки.
 
 Новая миграция `20261012180722_group_owner_account_cleanup.sql` при удалении
@@ -429,7 +452,7 @@ Current event409 UI27 с final native button query прошёл: 1 / 1 PASS, 128
 Full26 завершён: 31 passed / 1 failed. Причина подтверждена как test-only wrapper
 query defect; corrected focused26 прошёл 1 / 1 за 108.138 s. Это не новый full 32 / 32,
 полная текущая matrix ещё не принята.
-Последние Release27 units 168 / 168 PASS; Release26 и targeted UI27 pending.
+Последние Release26 / 27 units: каждый 168 / 168 PASS; targeted chat UI27: 2 / 2 PASS.
 Units164 обеих OS исторические.
 Backend 107, SQL 83 и реальные Node/Edge E2E 23/5 прошли. Прежний shipping archive
 и IPA d56bc прошли static verification до concurrency fix; 127 app hashes, только ChatView изменён

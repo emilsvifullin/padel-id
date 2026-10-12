@@ -28,7 +28,9 @@ jobs:
   test:
     name: ${{ matrix.name }}
     runs-on: macos-26
-    timeout-minutes: 75
+    # Hosted UI automation can take about an hour; leave time to export the
+    # result bundle even when the bounded UI step times out.
+    timeout-minutes: 110
     strategy:
       fail-fast: false
       matrix:
@@ -76,7 +78,7 @@ jobs:
         run: |
           if ! xcodebuild build-for-testing \
             -project PadelID.xcodeproj -scheme PadelID -configuration Debug \
-            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }},arch=arm64" \
             -derivedDataPath "$RUNNER_TEMP/dd" > "$RUNNER_TEMP/build.log" 2>&1; then
             grep -E "error:" "$RUNNER_TEMP/build.log" | sort -u | head -300
             tail -40 "$RUNNER_TEMP/build.log"
@@ -87,28 +89,34 @@ jobs:
 
       - name: Unit tests
         if: matrix.unit
+        timeout-minutes: 15
         working-directory: ios
         run: |
           set -o pipefail
           xcodebuild test-without-building \
             -project PadelID.xcodeproj -scheme PadelID -configuration Debug \
-            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }},arch=arm64" \
             -derivedDataPath "$RUNNER_TEMP/dd" \
+            -parallel-testing-enabled NO \
+            -maximum-concurrent-test-simulator-destinations 1 \
             -only-testing:PadelIDTests \
             -resultBundlePath "$RUNNER_TEMP/unit.xcresult" \
-            | tail -60
+            2>&1 | tee "$RUNNER_TEMP/unit.log"
 
       - name: UI tests
+        timeout-minutes: 85
         working-directory: ios
         run: |
           set -o pipefail
           xcodebuild test-without-building \
             -project PadelID.xcodeproj -scheme PadelID -configuration Debug \
-            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }},arch=arm64" \
             -derivedDataPath "$RUNNER_TEMP/dd" \
+            -parallel-testing-enabled NO \
+            -maximum-concurrent-test-simulator-destinations 1 \
             -only-testing:PadelIDUITests \
             -resultBundlePath "$RUNNER_TEMP/ui.xcresult" \
-            | tail -80
+            2>&1 | tee "$RUNNER_TEMP/ui.log"
 
       - name: Test summary
         if: always()
@@ -117,12 +125,14 @@ jobs:
           summary="$RUNNER_TEMP/screenshots/${{ matrix.slug }}-summary.txt"
           : > "$summary"
           for r in unit ui; do
-            if [ -d "$RUNNER_TEMP/$r.xcresult" ]; then
+            if [ -f "$RUNNER_TEMP/$r.xcresult/Info.plist" ]; then
               echo "== $r" | tee -a "$summary"
               xcrun xcresulttool get test-results summary --path "$RUNNER_TEMP/$r.xcresult" --compact \
                 | python3 -c 'import json,sys; s=json.load(sys.stdin); print({k: s.get(k) for k in ("result","totalTestCount","passedTests","failedTests","skippedTests")}); [print("FAILED:", f.get("testName"), "-", f.get("failureText")) for f in s.get("testFailures", [])]' \
                 | tee -a "$summary"
               python3 scripts/ios/failed-activities.py "$RUNNER_TEMP/$r.xcresult" >> "$summary" || true
+            elif [ -d "$RUNNER_TEMP/$r.xcresult" ]; then
+              echo "== $r: incomplete result bundle (test execution interrupted)" | tee -a "$summary"
             fi
           done
 
@@ -139,13 +149,15 @@ jobs:
           retention-days: 14
 
       - uses: actions/upload-artifact@v7
-        if: failure()
+        if: always() && (failure() || cancelled())
         with:
           name: xcresult-${{ matrix.slug }}
           path: |
             ${{ runner.temp }}/unit.xcresult
             ${{ runner.temp }}/ui.xcresult
             ${{ runner.temp }}/build.log
+            ${{ runner.temp }}/unit.log
+            ${{ runner.temp }}/ui.log
           if-no-files-found: ignore
           retention-days: 7
 

@@ -197,8 +197,13 @@ final class CommunityReleaseUITests: PadelIDUITestCase {
         app.terminate()
         app.launchArguments.removeAll { $0 == "-padelid-uitest-reset-state" }
         app.launch()
-        // Reauthenticate the unsigned test app before checking the OS state.
-        signIn()
+        // Keychain persistence depends on how the test app is signed. A cold
+        // launch may restore the session or require authentication; both must
+        // still preserve the icon selected through UIKit.
+        XCTAssertTrue(waitUntil(timeout: 20) {
+            app.navigationBars["Главная"].exists || element("welcome.signIn").exists
+        })
+        if element("welcome.signIn").exists { signIn() }
         waitForHome(); selectTab("Профиль")
         open(element("account.appearance"), screen: "Оформление")
         scrollIntoView(element("appearance.icon.lime"))

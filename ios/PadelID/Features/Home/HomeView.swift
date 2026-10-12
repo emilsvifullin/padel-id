@@ -172,8 +172,14 @@ struct HomeView: View {
     private var upcomingSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             SectionHeader("Ближайшая игра") {
-                NavigationLink("Все", value: Route.upcomingGames)
-                    .font(.subheadline.weight(.semibold)).frame(minHeight: 44)
+                NavigationLink(value: Route.upcomingGames) {
+                    Text("Все")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Theme.accent)
             }
             if upcoming.isStale, let error = upcoming.error { StaleDataBanner(error: error) }
             if let page = upcoming.value {
