@@ -37,11 +37,14 @@ Core/Networking APIClient, Endpoint, APIError, AppEnvironment, Connectivity
 Core/Storage    ResponseCache, Outbox, Resource
 Core/Auth       Keychain, SessionStore
 Core/Services   NotificationService
-DesignSystem    Theme, Components (LevelNumeral, LevelChip, DeltaText,
-                ReliabilityRing, AvatarView, RemoteImage, PlayerRow, StatusPill,
-                OfflineBanner, StaleDataBanner, LoadingView, ErrorStateView,
-                SectionContainer, SectionHeader, FormResultDot,
-                EqualWidthHStack, Announce), DNAHexagon, RatingChart
+DesignSystem    Theme (tokens, type, motion, surfaces, button styles),
+                Brand (PerforationGrid, LimeSurface, InkSurface, limeCard,
+                inkCard, PerforationLoader, PadelChip, SymbolPlate, Chevron,
+                PadelEmptyState, ComposerBar), Components (LevelNumeral,
+                LevelChip, DeltaText, ReliabilityRing, AvatarView, RemoteImage,
+                PlayerRow, StatusPill, OfflineBanner, StaleDataBanner,
+                LoadingView, ErrorStateView, FormResultDot, EqualWidthHStack,
+                Announce), DNAHexagon, RatingChart
 Features/<Area> screens of one area
 ```
 
@@ -179,35 +182,57 @@ Server rules worth mirroring in the UI (the server stays authoritative):
 
 ## Visual language
 
-* Native first: system fonts (Dynamic Type text styles only; numerals use
-  `.rounded` design + `.monospacedDigit()`), SF Symbols, `List`/`Form` where
-  the content is a list or a form, standard navigation bars and toolbars,
-  `.sheet` with detents for short tasks, `.confirmationDialog` for
-  destructive multi-option choices; `.alert` for binary discard/cancel/delete confirmations and errors. The latter avoids iOS26 toolbar-anchored action-sheet popovers without custom presentation.
-* Backgrounds: `Color(.systemGroupedBackground)` for scroll screens with
-  `SectionContainer` blocks; `List`/`Form` use `.insetGrouped`.
-* Colors: `Theme.accent` (court blue), `Theme.ball` only for the level hero
-  and DNA fill, `Theme.positive/negative/attention` for meaning. No other
-  hard-coded colors.
-* **Liquid Glass** is used deliberately, not decoratively: system bars and tab
-  bar (automatic), toolbar buttons (automatic), floating primary action areas
-  pinned to the bottom with `.safeAreaBar(edge: .bottom)` containing
-  `GlassEffectContainer` and `.buttonStyle(.glassProminent)` /
-  `.buttonStyle(.glass)`. Never apply `.glassEffect` to content cards or list
-  rows; buttons inside forms use `.borderedProminent`.
+The language comes from the app icon; the neutrals come from the system.
+
+* **Neutrals are the system grouped colours** (`Theme.canvas`,
+  `Theme.surface`, `Theme.inset`), so `List`, `Form`, sheets and bars are
+  native in both themes. Scroll screens use `.padelCanvas()` with
+  `SectionContainer` or surface cards; lists and forms use `.insetGrouped`.
+* **Lime carries ink, in both themes.** `Theme.lime` with `Theme.ink` is the
+  one brand surface: the player ID card (`limeCard`), primary actions, a
+  chosen chip, the viewer's own chat bubbles, a won set on the scoreboard, an
+  earned achievement. Never put white text on lime — that is why prominent
+  system button styles are not used: `.buttonStyle(.padelPrimary)` (full
+  width), `.padelProminent` (compact, in a row) and `.padelGlassProminent()`
+  (in a floating glass bar).
+* `Theme.accent` is for text and symbols on neutral surfaces: deep court
+  green in Light, lime in Dark. `inkCard` is the graphite of the alternate
+  icon, used for the header of a profile, a club, a game and an event.
+* **The six perforation dots** of the racket (`PerforationGrid`) are the mark:
+  they show rating reliability on the ID card and pulse as the loader. Do
+  not use them as decoration elsewhere.
+* **Type**: system fonts and Dynamic Type text styles only. Large navigation
+  titles, section headers, level and score numerals use the expanded face
+  (`Font.display`); inline titles and body text use the standard one.
+  Numerals also take `.monospacedDigit()`.
+* **Liquid Glass** is for navigation and for controls that float above
+  content: system bars and the tab bar (automatic), toolbar buttons
+  (automatic), bottom action bars in `.safeAreaBar(edge: .bottom)` with
+  `GlassEffectContainer`, and `ComposerBar`. Never apply `.glassEffect` to
+  content cards or list rows.
+* **Motion** answers a touch and goes through `Motion` and
+  `.padelAnimation(_:value:)`, which stand still under Reduce Motion. A card
+  that opens a screen declares `.zoomSource(route)` and the destination
+  grows out of it; plain rows keep the standard push. `PadelCardButtonStyle`
+  gives every tappable card the same press response.
+* Standard navigation bars and toolbars, `.sheet` with a medium detent for
+  short tasks, `.confirmationDialog` for destructive multi-option choices,
+  `.alert` for binary discard/cancel/delete confirmations and errors (this
+  avoids iOS 26 toolbar-anchored action-sheet popovers).
 * Results and failures of actions are spoken with `Announce.post(_:)` so
   VoiceOver users hear what happened.
 * Spacing: `Theme.horizontalPadding` (20) side margins on scroll screens,
-  `Theme.sectionSpacing` between sections, 12–16 inside containers.
+  `Theme.sectionSpacing` between sections, 12–18 inside containers.
   Touch targets ≥ 44 pt.
 * Every screen supports Light/Dark, Dynamic Type up to accessibility sizes
-  (no fixed heights for text; allow wrapping; use `ViewThatFits` or vertical
-  stacks when horizontal layouts would truncate), VoiceOver (labels for
-  icon-only buttons, combined row elements, headers marked with
+  (no fixed heights for text; allow wrapping; use `ViewThatFits`, `Grid` or
+  vertical stacks when horizontal layouts would truncate), VoiceOver (labels
+  for icon-only buttons, combined row elements, headers marked with
   `.accessibilityAddTraits(.isHeader)`).
 * Haptics with `.sensoryFeedback` on meaningful events (confirm success,
-  dispute warning, selection changes in pickers).
-* Empty states use `ContentUnavailableView` with one clear action at most.
+  dispute warning, selection changes in pickers, joining and sending).
+* Empty states use `ContentUnavailableView` or `PadelEmptyState` with one
+  clear action at most.
 * No placeholder copy, no "coming soon", no buttons without an action, no
   debug UI.
 

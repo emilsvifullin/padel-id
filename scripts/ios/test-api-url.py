@@ -21,6 +21,14 @@ class ReleaseOriginTests(unittest.TestCase):
                     "http://project.supabase.co/functions/v1/gateway", "https://127.0.0.1/functions/v1/gateway"]:
             self.assertFalse(module.valid_fallback(url))
 
+    def test_several_fallbacks_are_each_validated(self):
+        self.assertTrue(module.valid_fallback("https://a.example.com https://b.example.com/functions/v1/gateway"))
+        for raw in ["https://a.example.com  https://b.example.com", "https://a.example.com https://a.example.com",
+                    "https://a.example.com http://b.example.com", "https://a.example.com https://b.example.com/rest/v1",
+                    " https://a.example.com", "https://a.example.com "]:
+            with self.subTest(raw=raw):
+                self.assertFalse(module.valid_fallback(raw))
+
     def test_public_https_origins(self):
         for origin in ["https://padel-id-gamma.vercel.app", "https://api-padel.shiftregister.ru", "https://api.example.com:443/"]:
             with self.subTest(origin=origin):

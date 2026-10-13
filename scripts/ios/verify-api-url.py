@@ -27,8 +27,16 @@ def valid_origin(raw: str) -> bool:
 
 
 def valid_fallback(raw: str) -> bool:
+    """Zero or more gateway origins separated by single spaces."""
     if not raw:
         return True
+    entries = raw.split(" ")
+    return len(set(entries)) == len(entries) and all(valid_fallback_entry(entry) for entry in entries)
+
+
+def valid_fallback_entry(raw: str) -> bool:
+    if not raw:
+        return False
     try:
         url = urlsplit(raw)
         # A complete copy of the gateway, never raw Auth/rest/storage endpoints.
@@ -45,5 +53,5 @@ if __name__ == "__main__":
         sys.exit("Production API must be a public HTTPS origin, without credentials, path, query or fragment")
     fallback = sys.argv[2] if len(sys.argv) > 2 else os.environ.get("PADELID_API_FALLBACK_URL", "")
     if not valid_fallback(fallback):
-        sys.exit("Fallback must be a public HTTPS gateway origin or its /functions/v1/gateway endpoint")
+        sys.exit("Fallbacks must be public HTTPS gateway origins (or /functions/v1/gateway endpoints) separated by single spaces")
     print("Production API origin validated")

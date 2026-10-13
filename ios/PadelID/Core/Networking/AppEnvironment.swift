@@ -38,13 +38,20 @@ nonisolated enum AppEnvironment {
     /// Auth or Data API directly.
     static var apiFallbackURLs: [URL] {
         if isUITesting { return [] }
-        guard let raw = Bundle.main.object(forInfoDictionaryKey: "PadelIDAPIFallbackURL") as? String,
-              !raw.isEmpty else { return [] }
-        guard let url = URL(string: raw), url.scheme == "https", url.host() != nil,
-              url.user == nil, url.password == nil, url.query == nil, url.fragment == nil else {
-            preconditionFailure("Invalid build-time gateway fallback URL")
+        guard let raw = Bundle.main.object(forInfoDictionaryKey: "PadelIDAPIFallbackURL") as? String else { return [] }
+        return fallbackURLs(from: raw)
+    }
+
+    /// One or more origins separated by spaces. A build with an invalid entry
+    /// must not start: it would silently lose a route.
+    static func fallbackURLs(from raw: String) -> [URL] {
+        raw.split(whereSeparator: \.isWhitespace).map { entry in
+            guard let url = URL(string: String(entry)), url.scheme == "https", url.host() != nil,
+                  url.user == nil, url.password == nil, url.query == nil, url.fragment == nil else {
+                preconditionFailure("Invalid build-time gateway fallback URL")
+            }
+            return url
         }
-        return [url]
     }
 
     static var buildNumber: String {
