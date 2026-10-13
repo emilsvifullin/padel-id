@@ -104,7 +104,6 @@ request id) and never logs bodies, tokens or passwords.
 | `PADELID_MIN_CLIENT_BUILD` | `1` | Oldest supported iOS build; older builds receive `426 update_required` |
 | `PADELID_UPSTREAM_TIMEOUT_MS` | `12000` | Upstream timeout |
 | `PADELID_SIGNUPS_PER_HOUR` | `5` | Sign-ups per client IP per hour |
-| `PADELID_RELAY_KEY` | unset | Key a trusted relay presents (`x-padelid-relay-key`) so that the caller address it reports (`x-padelid-relay-ip`) is used for per-address limits. At least 32 characters, different from the gateway secret. Unset: both headers are ignored |
 
 ## Deploying
 

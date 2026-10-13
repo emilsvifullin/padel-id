@@ -13,8 +13,6 @@ export interface Config {
   signupsPerHour: number;
   /** Deployment revision supplied by the host, never a client header. */
   releaseCommit?: string;
-  /** Key a trusted relay presents so that the caller address it reports is used for rate limits. */
-  relayKey?: string;
 }
 
 export function loadConfig(env: Record<string, string | undefined> = process.env): Config {
@@ -27,10 +25,6 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
   if (gatewaySecret.length < 32) {
     throw new Error("PADELID_GATEWAY_SECRET must be at least 32 characters");
   }
-  const relayKey = env.PADELID_RELAY_KEY || undefined;
-  if (relayKey !== undefined && (relayKey.length < 32 || relayKey === gatewaySecret)) {
-    throw new Error("PADELID_RELAY_KEY must be at least 32 characters and differ from the gateway secret");
-  }
   return {
     supabaseUrl,
     supabaseKey,
@@ -39,6 +33,5 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     upstreamTimeoutMs: Number.parseInt(env.PADELID_UPSTREAM_TIMEOUT_MS ?? "12000", 10) || 12000,
     signupsPerHour: Number.parseInt(env.PADELID_SIGNUPS_PER_HOUR ?? "5", 10) || 5,
     releaseCommit: env.PADELID_RELEASE_COMMIT ?? env.VERCEL_GIT_COMMIT_SHA,
-    relayKey,
   };
 }

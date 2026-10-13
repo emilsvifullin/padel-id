@@ -28,22 +28,6 @@ describe("existing API relay", () => {
     expect(result.headers.get("location")).toBeNull();
     expect(result.headers.get("cache-control")).toBe("no-store");
   });
-  it("reports the platform's caller address with the relay key and never forwards a client's own claim", async () => {
-    const sent: Headers[] = [];
-    const fetcher = async (_input: RequestInfo | URL, init?: RequestInit) => { sent.push(new Headers(init?.headers)); return Response.json({}); };
-    const spoof = { "x-padelid-relay-key": "guess", "x-padelid-relay-ip": "9.9.9.9" };
-    await createEdgeRelay(fetcher, 1000, { key: "k".repeat(40), address: () => "203.0.113.7" })(
-      new Request("https://relay.test/v1/me", { headers: spoof }));
-    expect(sent[0]!.get("x-padelid-relay-key")).toBe("k".repeat(40));
-    expect(sent[0]!.get("x-padelid-relay-ip")).toBe("203.0.113.7");
-    await createEdgeRelay(fetcher, 1000)(new Request("https://relay.test/v1/me", { headers: spoof }));
-    await createEdgeRelay(fetcher, 1000, { key: "k".repeat(40), address: () => undefined })(
-      new Request("https://relay.test/v1/me", { headers: spoof }));
-    for (const headers of sent.slice(1)) {
-      expect(headers.get("x-padelid-relay-key")).toBeNull();
-      expect(headers.get("x-padelid-relay-ip")).toBeNull();
-    }
-  });
   it("preserves upstream authorization refusal and empty DELETE response", async () => {
     for (const status of [401, 403, 404, 204]) {
       const relay = createEdgeRelay(async () => new Response(status === 204 ? null : "denied", { status }));

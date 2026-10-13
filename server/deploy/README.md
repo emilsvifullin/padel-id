@@ -31,14 +31,11 @@ stores its certificates in dedicated named volumes. The Node API port is private
 the compose file publishes only Caddy ports. Configuration parsing does not prove
 certificate issuance or physical reachability.
 
-Without an identity the relay's own address shares the API's per-address
-budgets across all its users. For production traffic give the relay a key and
-the platform's caller address (`createEdgeRelay(fetch, deadline, { key, address })`)
-and set the same value on the API as `PADELID_RELAY_KEY`: the API then limits
-by the address the relay reports. The address must come from the hosting
-platform, never from a client header; the relay does not forward a client's
-own `x-padelid-relay-*` headers. Do not relax signup/password protection or
-forward untrusted client XFF as a shortcut.
+The relay's upstream address shares the existing Vercel anonymous IP budgets
+across users. Resolving a trustworthy caller-IP/rate-limit boundary is required
+before production traffic. Do not relax signup/password protection or forward
+untrusted client XFF as a shortcut. This candidate is suitable for a bounded
+network verification, not for declaring a new production ingress accepted.
 
 ## Independent full API
 
