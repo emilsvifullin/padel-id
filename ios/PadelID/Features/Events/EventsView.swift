@@ -114,18 +114,12 @@ struct EventsView: View {
                 Button("Все города", systemImage: "globe") { allCities = true }
                 Button("Выбрать город", systemImage: "mappin.and.ellipse") { isPickingCity = true }
             } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: allCities ? "globe" : "mappin.and.ellipse").imageScale(.small)
-                    Text(allCities ? "Все города" : city?.name ?? "Город").lineLimit(1)
-                    Image(systemName: "chevron.down").font(.caption2.weight(.bold)).foregroundStyle(.secondary)
-                }
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Color.primary)
-                .padding(.horizontal, 14)
-                .frame(minHeight: 36)
-                .background(Theme.surface, in: .capsule)
-                .contentShape(.capsule)
+                Label(allCities ? "Все города" : city?.name ?? "Город",
+                      systemImage: allCities ? "globe" : "mappin.and.ellipse")
+                    .lineLimit(1)
             }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
             .accessibilityLabel("Город")
             .accessibilityValue(allCities ? "Все города" : city?.name ?? "Не выбран")
             .accessibilityIdentifier("events.city")

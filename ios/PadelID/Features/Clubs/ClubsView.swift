@@ -18,12 +18,9 @@ struct ClubsView: View {
         PadelNavigationStack {
             List {
                 Section {
-                    VStack(alignment: .leading, spacing: 10) {
-                        searchField
-                        ViewThatFits(in: .horizontal) {
-                            HStack(spacing: 10) { cityChip; Spacer(minLength: 0); modePicker.frame(width: 190) }
-                            VStack(alignment: .leading, spacing: 10) { cityChip; modePicker }
-                        }
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 10) { cityChip; Spacer(minLength: 0); modePicker.frame(width: 190) }
+                        VStack(alignment: .leading, spacing: 10) { cityChip; modePicker }
                     }
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
@@ -45,6 +42,8 @@ struct ClubsView: View {
             .navigationDestination(isPresented: $isPickingCity) { CityPickerView(selection: $city) }
             .navigationTitle("Клубы")
             .mainTabTitle()
+            .searchable(text: $searchText, prompt: "Название или адрес клуба")
+            .autocorrectionDisabled()
             .refreshable {
                 await model.load(city: city, using: app)
                 await model.search(city: city, query: query, using: app, debounce: false)
@@ -62,29 +61,6 @@ struct ClubsView: View {
         }
     }
 
-    /// The search sits in the content, not in the navigation bar: a search bar
-    /// there keeps this tab's large title collapsed on iOS 27.
-    private var searchField: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass").foregroundStyle(.secondary).accessibilityHidden(true)
-            TextField("Название или адрес клуба", text: $searchText)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .submitLabel(.search)
-                .accessibilityIdentifier("clubs.search")
-            if !searchText.isEmpty {
-                Button { searchText = "" } label: {
-                    Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Очистить поиск")
-            }
-        }
-        .padding(.horizontal, 14)
-        .frame(minHeight: 44)
-        .background(Theme.surface, in: .capsule)
-    }
-
     /// Clubs to pin on the map: none unless the map is chosen and has
     /// something to show.
     private var mapClubs: [ClubCatalogEntry] {
@@ -96,19 +72,11 @@ struct ClubsView: View {
     /// The city the catalog shows, as one compact control next to the view switch.
     private var cityChip: some View {
         Button { isPickingCity = true } label: {
-            HStack(spacing: 6) {
-                Image(systemName: "mappin.and.ellipse").imageScale(.small).foregroundStyle(Theme.accent)
-                Text(city?.name ?? "Выберите город").lineLimit(1)
-                Image(systemName: "chevron.down").font(.caption2.weight(.bold)).foregroundStyle(.secondary)
-            }
-            .font(.subheadline.weight(.semibold))
-            .foregroundStyle(Color.primary)
-            .padding(.horizontal, 14)
-            .frame(minHeight: 36)
-            .background(Theme.surface, in: .capsule)
-            .contentShape(.capsule)
+            Label(city?.name ?? "Выберите город", systemImage: "mappin.and.ellipse")
+                .lineLimit(1)
         }
-        .buttonStyle(.padelCard)
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.capsule)
         .accessibilityLabel("Город")
         .accessibilityValue(city?.name ?? "Не выбран")
         .accessibilityIdentifier("clubs.city")
