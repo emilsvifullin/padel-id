@@ -177,6 +177,7 @@ struct MatchesView: View {
 
         }
         .listStyle(.insetGrouped)
+        .contentMargins(.top, 8, for: .scrollContent)
         .refreshable { await reload() }
 
     }

@@ -47,6 +47,7 @@ struct AccountView: View {
                 deleteSection
             }
             .listStyle(.insetGrouped)
+            .contentMargins(.top, 8, for: .scrollContent)
             .navigationTitle("Профиль")
             .mainTabTitle()
             .padelRoutes()

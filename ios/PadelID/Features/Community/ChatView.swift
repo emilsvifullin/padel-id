@@ -182,13 +182,15 @@ struct ChatView: View {
     }
 
     /// The viewer's own lines sit on lime to the right, everyone else's on a
-    /// surface to the left with the sender named.
+    /// surface to the left. A group names the sender of each line; a chat
+    /// between two people does not, as its title already does.
     private func messageRow(_ message: ChatMessage) -> some View {
         let mine = message.sender.id == app.me?.userId
+        let namesSender = !mine && model.conversation?.kind != "direct"
         return HStack(alignment: .bottom, spacing: 8) {
-            if mine { Spacer(minLength: 44) } else { AvatarView(card: message.sender, size: 30) }
+            if mine { Spacer(minLength: 44) } else if namesSender { AvatarView(card: message.sender, size: 30) }
             VStack(alignment: .leading, spacing: 4) {
-                if !mine {
+                if namesSender {
                     NavigationLink(value: Route.player(message.sender.id)) {
                         Text(message.sender.displayName).font(.caption.bold()).foregroundStyle(Theme.accent)
                     }

@@ -64,6 +64,15 @@ jobs:
             appearance: dark
             content_size: extra-extra-extra-large
             unit: false
+          # The narrowest screen the app runs on, with a Home button: every
+          # section with typical and with worst-case data.
+          - name: iPhone SE · light · sections tour
+            slug: se-tour
+            device: iPhone SE (3rd generation)
+            appearance: light
+            content_size: large
+            unit: false
+            only: PadelIDUITests/SectionsTourUITests
     steps:
       - uses: actions/checkout@v5
 
@@ -119,7 +128,7 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/dd" \
             -parallel-testing-enabled NO \
             -maximum-concurrent-test-simulator-destinations 1 \
-            -only-testing:"${{ inputs.only_testing || 'PadelIDUITests' }}" \
+            -only-testing:"${{ matrix.only || inputs.only_testing || 'PadelIDUITests' }}" \
             -resultBundlePath "$RUNNER_TEMP/ui.xcresult" \
             2>&1 | tee "$RUNNER_TEMP/ui.log"
 

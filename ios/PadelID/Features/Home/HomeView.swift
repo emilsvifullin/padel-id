@@ -105,11 +105,8 @@ struct HomeView: View {
                     .foregroundStyle(Theme.lime)
                     .accessibilityHidden(true)
                 Text("Найти игру").font(.headline)
-                Spacer(minLength: 8)
-                Image(systemName: "arrow.right")
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(.white.opacity(0.7))
-                    .accessibilityHidden(true)
+                    .lineLimit(dynamicTypeSize > .xLarge ? nil : 1).minimumScaleFactor(0.85)
+                Spacer(minLength: 0)
             }
             .padding(.horizontal, 18)
             .frame(maxWidth: .infinity, minHeight: HomeActionMetrics.height)
@@ -147,7 +144,7 @@ struct HomeView: View {
 
     private var findPlayers: some View {
         NavigationLink(value: Route.findPlayers) {
-            HomeActionTile(title: "Найти игроков", symbol: "person.2")
+            HomeActionTile(title: "Найти игроков", symbol: "person.2", lines: 1)
         }
         .buttonStyle(.padelCard)
         .accessibilityIdentifier("home.findPlayers")
@@ -320,6 +317,10 @@ private enum HomeActionMetrics {
 private struct HomeActionTile: View {
     let title: String
     let symbol: String
+    /// A short title stays on one line, tightened a little on a narrow
+    /// screen; a long one may take two.
+    var lines = 2
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         HStack(spacing: 10) {
@@ -331,7 +332,8 @@ private struct HomeActionTile: View {
             Text(title)
                 .font(.subheadline.weight(.semibold))
                 .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
+                .lineLimit(dynamicTypeSize > .xLarge ? nil : lines)
+                .minimumScaleFactor(lines == 1 && dynamicTypeSize <= .xLarge ? 0.8 : 1)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 14)
