@@ -62,6 +62,7 @@ struct CommunityShortcuts: View {
 
 /// Players the server ranks as the best fit for the viewer, nearest first.
 struct SuggestedPlayersRow: View {
+    @ScaledMetric(relativeTo: .subheadline) private var cardWidth: CGFloat = 132
     @Environment(AppModel.self) private var app
     @State private var suggested: Resource<SearchResult>?
     @State private var cityId: Int?
@@ -116,12 +117,13 @@ struct SuggestedPlayersRow: View {
             if let compatibility = player.compatibility {
                 Text(verbatim: "Совместимость \(compatibility)%")
                     .font(.caption2).foregroundStyle(.secondary)
-                    .lineLimit(1).minimumScaleFactor(0.8)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 14)
-        .frame(width: 132)
+        .frame(width: min(cardWidth, 260))
         .background(Theme.surface, in: .rect(cornerRadius: 22, style: .continuous))
         .contentShape(.rect(cornerRadius: 22, style: .continuous))
         .accessibilityElement(children: .combine)

@@ -236,26 +236,18 @@ private struct AccountHeaderRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            HStack(alignment: .top, spacing: 14) {
-                AvatarView(profile: profile, size: 64)
-                    .overlay(Circle().strokeBorder(.white.opacity(0.18), lineWidth: 1))
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(profile.displayName)
-                        .font(.display(.title3, weight: .bold))
-                        .fixedSize(horizontal: false, vertical: true)
-                    if let username = profile.username {
-                        Text("@" + username).font(.subheadline).foregroundStyle(.white.opacity(0.75))
-                    }
-                    if let email, !email.isEmpty {
-                        Text(email).font(.subheadline).foregroundStyle(.white.opacity(0.75))
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(alignment: .top) { avatar; Spacer(minLength: 4); editMark }
+                    identity
                 }
-                Spacer(minLength: 4)
-                Image(systemName: "pencil")
-                    .font(.footnote.weight(.bold))
-                    .frame(width: 32, height: 32)
-                    .background(.white.opacity(0.12), in: .circle)
+            } else {
+                HStack(alignment: .top, spacing: 14) {
+                    avatar
+                    identity
+                    Spacer(minLength: 4)
+                    editMark
+                }
             }
             if let rating {
                 Rectangle().fill(.white.opacity(0.12)).frame(height: 1)
@@ -273,6 +265,34 @@ private struct AccountHeaderRow: View {
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .inkCard()
+    }
+
+    private var avatar: some View {
+        AvatarView(profile: profile, size: 64)
+            .overlay(Circle().strokeBorder(.white.opacity(0.18), lineWidth: 1))
+    }
+
+    private var identity: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(profile.displayName)
+                .font(.display(.title3, weight: .bold))
+                .fixedSize(horizontal: false, vertical: true)
+            if let username = profile.username {
+                Text("@" + username).font(.subheadline).foregroundStyle(.white.opacity(0.75))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if let email, !email.isEmpty {
+                Text(email).font(.subheadline).foregroundStyle(.white.opacity(0.75))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private var editMark: some View {
+        Image(systemName: "pencil")
+            .font(.footnote.weight(.bold))
+            .frame(width: 32, height: 32)
+            .background(.white.opacity(0.12), in: .circle)
     }
 
     private func level(_ rating: RatingSummary) -> some View {
