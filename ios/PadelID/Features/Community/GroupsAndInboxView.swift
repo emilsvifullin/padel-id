@@ -11,13 +11,15 @@ struct GroupsView: View {
     var body: some View {
         List {
             ForEach(groups.items) { group in
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(group.title).font(.headline)
-                    if let description = group.description { Text(description).font(.subheadline).foregroundStyle(.secondary) }
-                    Text("Участников: \(group.memberCount)").font(.caption).foregroundStyle(.secondary)
-                    if group.joined {
-                        NavigationLink("Открыть чат", value: Route.conversation(group.id))
-                    } else { Button("Вступить") { join(group.id) }.disabled(working || !app.isOnline) }
+                if group.joined {
+                    NavigationLink(value: Route.conversation(group.id)) { GroupRow(group: group) }
+                } else {
+                    HStack(alignment: .center, spacing: 10) {
+                        GroupRow(group: group)
+                        Button("Вступить") { join(group.id) }
+                            .buttonStyle(.padelProminent)
+                            .disabled(working || !app.isOnline)
+                    }
                 }
             }
             CommunityCollectionFooter(collection: groups)
@@ -54,17 +56,10 @@ struct SocialInboxView: View {
     var body: some View {
         List {
             ForEach(notifications.items) { notification in
-                VStack(alignment: .leading, spacing: 6) {
-                    Label(notification.title, systemImage: notification.readAt == nil ? "circle.fill" : "circle")
-                    Text(notification.createdAt, format: .dateTime.day().month().hour().minute()).font(.caption).foregroundStyle(.secondary)
-                    if let id = notification.resourceId {
-                        if notification.kind == "message" { NavigationLink("Открыть чат", value: Route.conversation(id)) }
-                        else if notification.kind == "comment" || notification.kind == "reaction" { NavigationLink("Открыть публикацию", value: Route.post(id)) }
-                        else if notification.kind.hasPrefix("game_") { NavigationLink("Открыть игру", value: Route.upcoming(id)) }
-                        else if notification.kind.hasPrefix("friend_") { NavigationLink("Открыть профиль", value: Route.player(id)) }
-                        else if notification.kind == "match" { NavigationLink("Открыть матч", value: Route.match(id)) }
-                        else if notification.kind == "event" { NavigationLink("Открыть событие", value: Route.event(id)) }
-                    }
+                if let route = route(for: notification) {
+                    NavigationLink(value: route) { NotificationRow(notification: notification) }
+                } else {
+                    NotificationRow(notification: notification)
                 }
             }
             CommunityCollectionFooter(collection: notifications)
@@ -83,6 +78,20 @@ struct SocialInboxView: View {
         }
         .refreshable { await notifications.load(using: app) }
     }
+    /// Where a notification leads, when it names something that can be opened.
+    private func route(for notification: SocialNotification) -> Route? {
+        guard let id = notification.resourceId else { return nil }
+        switch notification.kind {
+        case "message": return .conversation(id)
+        case "comment", "reaction": return .post(id)
+        case "match": return .match(id)
+        case "event": return .event(id)
+        case let kind where kind.hasPrefix("game_"): return .upcoming(id)
+        case let kind where kind.hasPrefix("friend_"): return .player(id)
+        default: return nil
+        }
+    }
+
     private func markRead() {
         working = true
         Task {
@@ -90,6 +99,69 @@ struct SocialInboxView: View {
             do { try await app.api.sendVoid(.json(.post, "v1/notifications/read", [String:String](), retryable: true)); await notifications.refreshVisibleWindow(using: app) }
             catch let failure as APIError { error = failure.message }
             catch { self.error = "Не удалось отметить уведомления прочитанными." }
+        }
+    }
+}
+
+private struct GroupRow: View {
+    let group: SocialGroup
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            SymbolPlate(symbol: group.visibility == "public" ? "person.3.fill" : "lock.fill")
+            VStack(alignment: .leading, spacing: 3) {
+                Text(group.title).font(.headline).fixedSize(horizontal: false, vertical: true)
+                if let description = group.description, !description.isEmpty {
+                    Text(description).font(.subheadline).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Text(Format.count(group.memberCount, "участник", "участника", "участников")
+                     + (group.joined ? " · вы в группе" : ""))
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct NotificationRow: View {
+    let notification: SocialNotification
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            SymbolPlate(symbol: symbol, tint: notification.readAt == nil ? Theme.accent : Color.secondary)
+                .overlay(alignment: .topTrailing) {
+                    if notification.readAt == nil {
+                        Circle().fill(Theme.negative).frame(width: 10, height: 10)
+                            .overlay(Circle().strokeBorder(Theme.surface, lineWidth: 2))
+                    }
+                }
+            VStack(alignment: .leading, spacing: 3) {
+                Text(notification.title)
+                    .font(notification.readAt == nil ? .body.weight(.semibold) : .body)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(notification.createdAt, format: .dateTime.day().month().hour().minute())
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
+        .accessibilityValue(notification.readAt == nil ? "Не прочитано" : "")
+    }
+
+    private var symbol: String {
+        switch notification.kind {
+        case "message": "bubble.left.fill"
+        case "comment": "text.bubble.fill"
+        case "reaction": "heart.fill"
+        case "match": "checkmark.seal.fill"
+        case "event": "calendar"
+        case let kind where kind.hasPrefix("game_"): "tennis.racket"
+        case let kind where kind.hasPrefix("friend_"): "person.2.fill"
+        default: "bell.fill"
         }
     }
 }

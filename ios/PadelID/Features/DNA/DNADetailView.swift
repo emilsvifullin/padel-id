@@ -143,7 +143,7 @@ private struct DNADetailHero: View {
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     Text(archetype.title)
-                        .font(.title2.bold())
+                        .font(.display(.title2, weight: .bold))
                         .fixedSize(horizontal: false, vertical: true)
                         .accessibilityAddTraits(.isHeader)
                     Text(archetype.summary)
@@ -158,7 +158,7 @@ private struct DNADetailHero: View {
                         Spacer(minLength: 8)
                         Text(Format.level(mu))
                             .font(.headline)
-                            .fontDesign(.rounded)
+            .fontWidth(.expanded)
                             .monospacedDigit()
                     }
                     .accessibilityElement(children: .combine)
@@ -193,7 +193,7 @@ private struct DNADetailLevelBar: View {
                 Spacer(minLength: 0)
                 Text(Format.level(state.level))
                     .font(.headline)
-                    .fontDesign(.rounded)
+            .fontWidth(.expanded)
                     .monospacedDigit()
                     .fixedSize()
             }
@@ -265,7 +265,7 @@ private struct DNADetailDimensionCard: View {
             Spacer(minLength: 8)
             Text(Format.level(state.level))
                 .font(.title3.weight(.semibold))
-                .fontDesign(.rounded)
+            .fontWidth(.expanded)
                 .monospacedDigit()
         }
         .accessibilityElement(children: .combine)

@@ -275,7 +275,7 @@ struct MatchEditorView: View {
                 Spacer(minLength: 12)
                 if let score {
                     Text(EditorScoreText.set(score))
-                        .font(.system(.title3, design: .rounded, weight: .semibold).monospacedDigit())
+                        .font(.display(.title3, weight: .semibold).monospacedDigit())
                         .foregroundStyle(.primary)
                 } else {
                     Text("Указать счёт")
@@ -315,7 +315,7 @@ struct MatchEditorView: View {
         TextField("0", text: text)
             .keyboardType(.numberPad)
             .multilineTextAlignment(.center)
-            .font(.system(.title3, design: .rounded, weight: .semibold).monospacedDigit())
+            .font(.display(.title3, weight: .semibold).monospacedDigit())
             .frame(width: pointsFieldWidth)
             .padding(.vertical, 8)
             .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 10, style: .continuous))

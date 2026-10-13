@@ -138,7 +138,7 @@ struct EditorScoreGrid: View {
             choose(option)
         } label: {
             Text(verbatim: "\(option.t1) : \(option.t2)")
-                .font(.system(.title3, design: .rounded, weight: .semibold).monospacedDigit())
+                .font(.display(.title3, weight: .semibold).monospacedDigit())
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .frame(maxWidth: .infinity)

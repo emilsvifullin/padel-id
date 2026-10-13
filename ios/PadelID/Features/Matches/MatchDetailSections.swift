@@ -185,12 +185,12 @@ struct MatchDetailScoreboard: View {
         let tiebreak: Int? = wonSet ? nil : (team == 1 ? set.tb1 : set.tb2)
         return HStack(alignment: .top, spacing: 1) {
             Text("\(games)")
-                .font(.system(.title2, design: .rounded, weight: wonSet ? Font.Weight.semibold : Font.Weight.regular))
+                .font(.display(.title2, weight: wonSet ? Font.Weight.semibold : Font.Weight.regular))
                 .monospacedDigit()
                 .foregroundStyle(wonSet ? Color.primary : Color.secondary)
             if let tiebreak {
                 Text("\(tiebreak)")
-                    .font(.system(.caption2, design: .rounded, weight: .semibold))
+                    .font(.display(.caption2, weight: .semibold))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
             }
@@ -325,7 +325,7 @@ struct MatchDetailStatusSection: View {
 struct MatchDetailProjectionSection: View {
     let projection: ProjectedChange
 
-    private var numeralFont: Font { Font.system(.title2, design: .rounded, weight: .semibold) }
+    private var numeralFont: Font { Font.display(.title2, weight: .semibold) }
 
     var body: some View {
         MatchDetailSection("Рейтинг") {
@@ -534,7 +534,7 @@ struct MatchDetailAnalysisSection: View {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(Format.percent(chance))
-                        .font(.system(.title3, design: .rounded, weight: .semibold))
+                        .font(.display(.title3, weight: .semibold))
                         .monospacedDigit()
                         .foregroundStyle(Theme.accent)
                     Text(ownLabel)
@@ -545,7 +545,7 @@ struct MatchDetailAnalysisSection: View {
                 Spacer(minLength: 12)
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(Format.percent(1 - chance))
-                        .font(.system(.title3, design: .rounded, weight: .semibold))
+                        .font(.display(.title3, weight: .semibold))
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
                     Text(otherLabel)

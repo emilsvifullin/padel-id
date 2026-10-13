@@ -45,7 +45,7 @@ struct OnboardingResultView: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.accent)
                 Text("Ваш стартовый уровень")
-                    .font(.title.bold())
+                    .font(.display(.title, weight: .bold))
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityAddTraits(.isHeader)
             }
@@ -90,7 +90,7 @@ struct OnboardingResultView: View {
     private var profileReady: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Профиль готов")
-                .font(.title.bold())
+                .font(.display(.title, weight: .bold))
                 .accessibilityAddTraits(.isHeader)
             Text("Уровень появится после первого подтверждённого рейтингового матча.")
                 .foregroundStyle(.secondary)

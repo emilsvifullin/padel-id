@@ -237,7 +237,7 @@ struct PlayerProfileView: View {
                 PlayerProfileBlockTitle(title: "Совместимость с вами", navigates: false)
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
                     Text(String(compatibility.score) + "%")
-                        .font(.system(.largeTitle, design: .rounded, weight: .semibold))
+                        .font(.display(.largeTitle, weight: .semibold))
                         .monospacedDigit()
                         .foregroundStyle(Self.compatibilityTint(compatibility.score))
                     Text(Self.verdict(compatibility.score))
@@ -408,7 +408,7 @@ struct PlayerProfileView: View {
     private func statTile(value: String, title: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value)
-                .font(.system(.title2, design: .rounded, weight: .semibold))
+                .font(.display(.title2, weight: .semibold))
                 .monospacedDigit()
             Text(title)
                 .font(.subheadline)
@@ -556,7 +556,7 @@ private struct PlayerProfileHeader: View {
             AvatarView(profile: profile, size: 88)
             VStack(spacing: 4) {
                 Text(profile.displayName)
-                    .font(.title2.bold())
+                    .font(.display(.title2, weight: .bold))
                     .multilineTextAlignment(.center)
                 if let username = profile.username {
                     Text("@" + username)

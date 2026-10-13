@@ -280,18 +280,28 @@ struct PlayerRow<Trailing: View>: View {
                         .accessibilityLabel("Тренер")
                 }
             }
-            if !card.deleted {
-                Text("Надёжность: \(card.reliability.map { String($0) + "%" } ?? "—")")
-                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                Text("Предпочитает: \(card.preferredSide.map { $0 == .both ? "обе стороны" : Narratives.sideShort($0).lowercased() } ?? "не указано")")
-                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            }
             Text(subtitle ?? defaultSubtitle)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .lineLimit(textLineLimit)
                 .fixedSize(horizontal: false, vertical: textLineLimit == nil)
+            if !card.deleted, !facts.isEmpty {
+                Text(facts)
+                    .font(.caption).foregroundStyle(.secondary)
+                    .lineLimit(textLineLimit)
+                    .fixedSize(horizontal: false, vertical: textLineLimit == nil)
+            }
         }
+    }
+
+    /// What helps choose a partner: how settled the rating is and the side played.
+    private var facts: String {
+        var parts: [String] = []
+        if let reliability = card.reliability { parts.append("надёжность \(reliability)%") }
+        if let side = card.preferredSide {
+            parts.append(side == .both ? "обе стороны" : Narratives.sideShort(side).lowercased())
+        }
+        return parts.joined(separator: ", ").capitalizedFirst
     }
 
     /// One line normally; wrapping at accessibility sizes.

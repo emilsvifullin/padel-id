@@ -330,7 +330,7 @@ private struct HomeCardHeader: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text(title)
-                .font(.headline)
+                .font(.display(.headline, weight: .semibold))
             if let detail {
                 Text(detail)
                     .font(.subheadline)
@@ -612,7 +612,7 @@ private extension Text {
     func homeStatValueStyle() -> some View {
         self
             .font(.title3.weight(.semibold))
-            .fontDesign(.rounded)
+            .fontWidth(.expanded)
             .monospacedDigit()
             .fixedSize(horizontal: false, vertical: true)
     }

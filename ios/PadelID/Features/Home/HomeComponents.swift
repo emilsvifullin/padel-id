@@ -112,7 +112,7 @@ struct MatchBalanceSummary: View {
         .frame(width: 118, height: 118)
         .overlay {
             VStack(spacing: 2) {
-                Text("\(stats.matches)").font(.title2.bold()).monospacedDigit()
+                Text("\(stats.matches)").font(.display(.title2, weight: .bold)).monospacedDigit()
                 Text("матчей").font(.caption).foregroundStyle(.secondary)
             }
             .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
