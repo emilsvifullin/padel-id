@@ -8,7 +8,7 @@ Padel ID 1.2.0 turns the app into a social and sports platform, rebuilds its int
 
 **Product.** Community is a feed with chats, groups, friends and suggested players one tap away; chats use bubbles and a floating composer. Private games with invitations, waitlists and weekly series; trainings with verified coaches; Americano, Mexicano, King of the Court and Round Robin tournaments; a club catalogue with list and map, club news and verified external booking links. Statistics gain achievements counted from confirmed results only. Three Home Screen icons and Automatic/Light/Dark appearance.
 
-**Backend.** Eleven migrations after the fourteen in production, private avatar storage, group ownership transfer on account deletion, moderation of reported content.
+**Backend.** Twelve migrations after the fourteen in production, private avatar storage, group ownership transfer on account deletion, moderation of reported content. Padel ID 1.1.0 keeps working against the new server: its routes and response shapes are unchanged, and because it loads avatars without a session, the gateway reads the current photo of a player who is not hidden on its behalf with the gateway secret, while Storage itself stays private.
 
 ## Not in this release
 

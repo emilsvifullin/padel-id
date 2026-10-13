@@ -788,6 +788,35 @@ describe("avatars", () => {
     expect(denied.calls).toHaveLength(1);
     expect(denied.calls.some((call) => call.url.includes("/storage/"))).toBe(false);
   });
+
+  it("serves the previous client without a session only while that build is supported, and never downgrades a session", async () => {
+    const path = "/v1/avatars/11111111-1111-1111-1111-111111111111/abcdefgh12.jpg";
+    const supported = { ...config, minClientBuild: 2 };
+    const h = harness(() => ({ status: 200, body: "jpeg-bytes" }), supported);
+    let res = await h.request(path);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("cache-control")).toBe("private, max-age=300");
+    expect(h.calls).toHaveLength(1);
+    expect(h.calls[0]!.url).toContain("/storage/v1/object/authenticated/avatars/11111111-1111-1111-1111-111111111111/abcdefgh12.jpg");
+    expect(h.calls[0]!.headers["x-padelid-gateway"]).toBe(config.gatewaySecret);
+    expect(h.calls[0]!.headers.authorization).toBeUndefined();
+    // A session, valid or not, takes the strict path: visibility first, the caller's own token to Storage.
+    res = await h.request(path, { headers: auth });
+    expect(res.headers.get("cache-control")).toBe("private, no-store");
+    expect(h.calls[1]!.url).toContain("/rpc/player_profile");
+    expect(h.calls[2]!.headers.authorization).toBe(auth.authorization);
+    expect(h.calls[2]!.headers["x-padelid-gateway"]).toBeUndefined();
+    res = await h.request(path, { headers: { authorization: "Bearer x" } });
+    expect(res.status).toBe(401);
+    expect(h.calls).toHaveLength(3);
+    // What Storage refuses (a hidden profile, a photo that is no longer current) is not found.
+    const refused = harness(() => ({ status: 400, body: { error: "not_found" } }), supported);
+    expect((await refused.request(path)).status).toBe(404);
+    // Once the minimum build reaches the first one that sends a session, anonymous reads stop.
+    const retired = harness(() => ({ status: 200, body: "jpeg-bytes" }), { ...config, minClientBuild: 3 });
+    expect((await retired.request(path)).status).toBe(401);
+    expect(retired.calls).toHaveLength(0);
+  });
 });
 
 describe("social ecosystem contracts", () => {
