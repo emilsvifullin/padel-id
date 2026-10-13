@@ -10,7 +10,7 @@ const check = spawnSync(process.execPath, [resolve(server, "node_modules/typescr
 if (check.status !== 0) process.exit(check.status ?? 1);
 await rm(target, { recursive: true, force: true });
 await mkdir(target, { recursive: true });
-const names = (await readdir(resolve(server, "src"))).filter(name => name.endsWith(".ts") && !["index.ts", "dev-server.ts", "relay-server.ts", "push-provider.ts", "push-worker.ts"].includes(name)).sort();
+const names = (await readdir(resolve(server, "src"))).filter(name => name.endsWith(".ts") && !["index.ts", "dev-server.ts", "relay-server.ts", "push-provider.ts", "push-worker.ts", "yandex-function.ts"].includes(name)).sort();
 for (const name of names) {
   const source = await readFile(resolve(server, "src", name), "utf8");
   const result = ts.transpileModule(source, {
