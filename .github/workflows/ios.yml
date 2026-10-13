@@ -16,6 +16,10 @@ on:
       - ".github/actions/setup-ios/**"
       - ".github/workflows/ios.yml"
   workflow_dispatch:
+    inputs:
+      only_testing:
+        description: "Test identifier for a targeted run, e.g. PadelIDUITests/HomeUITests/testHomeAndAppearanceAccessibility"
+        default: PadelIDUITests
 
 permissions:
   contents: read
@@ -88,7 +92,7 @@ jobs:
           grep -E "warning:" "$RUNNER_TEMP/build.log" | grep -v "appintentsmetadataprocessor" | sort -u | head -200 || true
 
       - name: Unit tests
-        if: matrix.unit
+        if: matrix.unit && (github.event_name != 'workflow_dispatch' || inputs.only_testing == 'PadelIDUITests')
         timeout-minutes: 15
         working-directory: ios
         run: |
@@ -114,7 +118,7 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/dd" \
             -parallel-testing-enabled NO \
             -maximum-concurrent-test-simulator-destinations 1 \
-            -only-testing:PadelIDUITests \
+            -only-testing:"${{ inputs.only_testing || 'PadelIDUITests' }}" \
             -resultBundlePath "$RUNNER_TEMP/ui.xcresult" \
             2>&1 | tee "$RUNNER_TEMP/ui.log"
 
