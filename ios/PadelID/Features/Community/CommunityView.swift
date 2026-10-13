@@ -60,6 +60,74 @@ struct CommunityShortcuts: View {
     }
 }
 
+/// Players the server ranks as the best fit for the viewer, nearest first.
+struct SuggestedPlayersRow: View {
+    @Environment(AppModel.self) private var app
+    @State private var suggested: Resource<SearchResult>?
+    @State private var cityId: Int?
+
+    var body: some View {
+        let players = (suggested?.value?.items ?? []).filter { $0.id != app.me?.userId && !$0.deleted }
+        VStack(alignment: .leading, spacing: 12) {
+            if !players.isEmpty {
+                SectionHeader("Вам подойдут") {
+                    NavigationLink("Все", value: Route.findPlayers)
+                        .font(.subheadline.weight(.semibold))
+                        .frame(minWidth: 44, minHeight: 44)
+                }
+                ScrollView(.horizontal) {
+                    HStack(alignment: .top, spacing: 10) {
+                        ForEach(players.prefix(10)) { player in
+                            NavigationLink(value: Route.player(player.id)) { card(player) }
+                                .buttonStyle(.padelCard)
+                                .accessibilityIdentifier("community.suggested")
+                        }
+                    }
+                    .scrollTargetLayout()
+                }
+                .scrollIndicators(.hidden)
+                .scrollTargetBehavior(.viewAligned)
+                .scrollClipDisabled()
+            }
+        }
+        .task(id: "\(app.me?.profile?.city?.id ?? 0):\(app.dataRevision)") {
+            let city = app.me?.profile?.city?.id
+            if suggested == nil || cityId != city {
+                cityId = city
+                var query = [URLQueryItem(name: "sort", value: PlayersSort.compatibility.rawValue),
+                             URLQueryItem(name: "limit", value: "12")]
+                if let city { query.append(URLQueryItem(name: "city_id", value: String(city))) }
+                suggested = Resource(cacheKey: nil) { .get("v1/players/search", query: query) }
+            }
+            await suggested?.load(using: app)
+        }
+    }
+
+    private func card(_ player: PlayerCard) -> some View {
+        VStack(spacing: 8) {
+            AvatarView(card: player, size: 56)
+            Text(player.displayName)
+                .font(.subheadline.weight(.semibold))
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, minHeight: 38, alignment: .top)
+            LevelChip(level: player.level, reliability: player.reliability)
+            if let compatibility = player.compatibility {
+                Text(verbatim: "Совместимость \(compatibility)%")
+                    .font(.caption2).foregroundStyle(.secondary)
+                    .lineLimit(1).minimumScaleFactor(0.8)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 14)
+        .frame(width: 132)
+        .background(Theme.surface, in: .rect(cornerRadius: 22, style: .continuous))
+        .contentShape(.rect(cornerRadius: 22, style: .continuous))
+        .accessibilityElement(children: .combine)
+    }
+}
+
 struct ConversationsView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.scenePhase) private var scenePhase

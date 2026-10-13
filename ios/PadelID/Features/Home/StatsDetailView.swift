@@ -51,6 +51,7 @@ struct StatsDetailView: View {
                     }
                 }
                 StatsDetailSections(stats: stats, isMe: isMe)
+                StatsAchievementsSection(achievements: Achievements.list(stats: stats, rating: value.rating))
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
@@ -313,5 +314,53 @@ private enum StatsDetailFormat {
 
     static func rivalSubtitle(_ stat: PartnerStat) -> String {
         "\(Format.matches(stat.matches)) против, \(Format.count(stat.wins, "победа", "победы", "побед"))"
+    }
+}
+
+/// Milestones from confirmed results: reached ones on lime, the next ones
+/// with how far there is to go.
+private struct StatsAchievementsSection: View {
+    let achievements: [Achievement]
+
+    var body: some View {
+        if !achievements.isEmpty {
+            Section {
+                ForEach(achievements) { achievement in
+                    HStack(spacing: 12) {
+                        Image(systemName: achievement.symbol)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(achievement.isEarned ? Theme.ink : Color.secondary)
+                            .frame(width: 40, height: 40)
+                            .background(achievement.isEarned ? AnyShapeStyle(Theme.lime) : AnyShapeStyle(Theme.inset), in: .circle)
+                            .accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(achievement.title)
+                                .font(achievement.isEarned ? .body.weight(.semibold) : .body)
+                                .foregroundStyle(achievement.isEarned ? Color.primary : Color.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                            if !achievement.isEarned {
+                                ProgressView(value: achievement.progress).tint(Theme.accent)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        if achievement.isEarned {
+                            Image(systemName: "checkmark").font(.footnote.weight(.bold)).foregroundStyle(Theme.positive)
+                                .accessibilityHidden(true)
+                        } else {
+                            Text(achievement.remainder).font(.footnote).monospacedDigit().foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 2)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(achievement.title)
+                    .accessibilityValue(achievement.isEarned ? "Получено" : achievement.remainder)
+                }
+            } header: {
+                Text("Достижения")
+            } footer: {
+                Text("Считаются только матчи, подтверждённые всеми четырьмя игроками.")
+            }
+            .accessibilityIdentifier("stats.achievements")
+        }
     }
 }

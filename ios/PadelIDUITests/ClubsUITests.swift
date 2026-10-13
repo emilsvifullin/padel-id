@@ -83,7 +83,7 @@ final class ClubsUITests: PadelIDUITestCase {
             server.setOverride("GET", "v1/clubs/1", .json(data))
         }
         signIn(); waitForHome(); selectTab("Клубы")
-        tap(app.switches["Клубы на карте"])
+        tap(element("clubs.mode").buttons["Карта"])
         // The list is the accessible alternative to spatial map controls.
         open(row("clubs.row", containing: clubName, timeout: 15), screen: "Клуб")
         waitForRequest("GET", "v1/clubs/1")

@@ -175,7 +175,7 @@ struct ChatView: View {
             guard scenePhase == .active else { return }
             await model.load(using: app)
             while !Task.isCancelled {
-                do { try await Task.sleep(for: .seconds(10)) } catch { return }
+                do { try await Task.sleep(for: .seconds(4)) } catch { return }
                 await model.load(using: app, poll: true)
             }
         }

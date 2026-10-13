@@ -150,3 +150,37 @@ struct DomainTests {
         #expect(!PasswordPolicy.isPlausibleEmail(""))
     }
 }
+
+@Suite("Achievements")
+struct AchievementsTests {
+    private func stats(matches: Int, wins: Int, tiebreaks: Int = 0, deciding: Int = 0) -> PlayerStats {
+        PlayerStats(matches: matches, wins: wins, losses: matches - wins,
+                    ranked: WinCount(matches: matches, wins: wins), friendly: WinCount(matches: 0, wins: 0),
+                    sets: WonLost(won: 0, lost: 0), games: WonLost(won: 0, lost: 0),
+                    tiebreaks: WonLost(won: tiebreaks, lost: 0), decidingSets: WonLost(won: deciding, lost: 0),
+                    sides: SideStats(left: WinCount(matches: 0, wins: 0), right: WinCount(matches: 0, wins: 0)),
+                    lastPlayedAt: nil, form: [], streak: nil, partners: [], rivals: [])
+    }
+
+    @Test("A ladder shows every reached step and only the next one ahead")
+    func ladderStops() {
+        let list = Achievements.list(stats: stats(matches: 12, wins: 3), rating: nil)
+        let matches = list.filter { $0.id.hasPrefix("matches.") }
+        #expect(matches.map(\.goal) == [1, 10, 50])
+        #expect(matches.map(\.isEarned) == [true, true, false])
+        #expect(matches.last?.remainder == "12 из 50")
+    }
+
+    @Test("Reached milestones come before the ones still ahead")
+    func earnedFirst() {
+        let list = Achievements.list(stats: stats(matches: 12, wins: 3), rating: nil)
+        let firstPending = list.firstIndex { !$0.isEarned } ?? list.count
+        #expect(list[..<firstPending].allSatisfy(\.isEarned))
+        #expect(list[firstPending...].allSatisfy { !$0.isEarned })
+    }
+
+    @Test("Nothing is earned before the first confirmed match")
+    func emptyHistory() {
+        #expect(Achievements.list(stats: stats(matches: 0, wins: 0), rating: nil).allSatisfy { !$0.isEarned })
+    }
+}

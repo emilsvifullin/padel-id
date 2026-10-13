@@ -91,8 +91,8 @@ final class CommunityReleaseUITests: PadelIDUITestCase {
             server.setOverride("POST", "v1/social/posts", .error(400, code: "invalid_request", message: "Исправьте публикацию."))
         }
         signIn(); waitForHome(); selectTab("Сообщество")
-        open(element("community.feed"), screen: "Лента")
-        tap(button(label: "Публикация"))
+        // The Community tab is the feed itself.
+        tap(element("feed.publish"))
         let draft = require(element("post.draft"))
         enter("Первый текст", into: draft)
         tap(element("post.publish"))

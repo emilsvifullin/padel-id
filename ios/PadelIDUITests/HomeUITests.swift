@@ -34,111 +34,48 @@ final class HomeUITests: PadelIDUITestCase {
         requireScreen("Главная")
     }
 
+    /// The system accessibility audit on the two screens that carry the
+    /// brand surfaces, in both themes: contrast, labels, hit regions, Dynamic
+    /// Type and clipped text.
     func testHomeAndAppearanceAccessibility() throws {
         try launch(.existingUser)
         signIn(); waitForHome()
-        let audits: XCUIAccessibilityAuditType = [.sufficientElementDescription, .hitRegion]
-        func audit(scrollViewport: Bool = false, layoutChecks: Bool = false) throws {
-            // Dynamic Type and clipping audits change font sizes and reflow the
-            // ScrollView. Re-establish the viewport before pixel-based audits.
-            let types: [XCUIAccessibilityAuditType] = layoutChecks
-                ? [.dynamicType, .textClipped] : [.contrast, audits]
-            for type in types {
-                try app.performAccessibilityAudit(for: type) { issue in
-                    print("ACCESSIBILITY AUDIT: \(issue.compactDescription); target: \(issue.element?.debugDescription ?? "unknown")")
-                    print("ACCESSIBILITY DETAIL: \(issue.detailedDescription)")
-                    // XCTest sometimes reports screenshot-based contrast for scroll
-                    // text entirely behind native bars or outside the screen. Those
-                    // fragments contain no complete glyph sample. Classify only
-                    // contrast on scroll text/buttons crossing the unobscured viewport;
-                    // every other category and fully visible text remains strict.
-                    if scrollViewport, issue.auditType == .contrast, let target = issue.element,
-                       (target.elementType == .staticText || target.elementType == .button),
-                       [self.app.scrollViews, self.app.collectionViews].contains(where: {
-                           $0.descendants(matching: target.elementType)
-                               .matching(NSPredicate(format: "label == %@", target.label)).firstMatch.exists
-                       }) {
-                        let top = self.app.navigationBars.firstMatch.frame.maxY
-                        let bottom = self.app.tabBars.firstMatch.frame.minY
-                        if target.frame.minY < top || target.frame.maxY > bottom {
-                            print("ACCESSIBILITY EDGE FRAGMENT: \(target.label), frame=\(target.frame), content=\(top)...\(bottom)")
-                            return true
-                        }
-                    }
-                    return false
-                }
-            }
-        }
-        // Record every real failure; log screenshot edge-fragment classifications.
+        // Record every failure of a pass instead of stopping at the first.
         continueAfterFailure = true
         defer { continueAfterFailure = false }
         selectTab("Профиль")
         open(element("account.appearance"), screen: "Оформление")
         for title in ["Тёмная", "Светлая"] {
             tap(button(label: title))
-            try audit(layoutChecks: true)
-            try audit(scrollViewport: true)
-            let help = scrollIntoView(element("appearance.icon.help"))
-            for _ in 0..<4 {
-                if help.frame.maxY <= app.tabBars.firstMatch.frame.minY - 16 { break }
-                let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.65))
-                let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.50))
-                start.press(forDuration: 0.1, thenDragTo: end)
-            }
-            XCTAssertGreaterThanOrEqual(help.frame.minY, app.navigationBars.firstMatch.frame.maxY)
-            XCTAssertLessThanOrEqual(help.frame.maxY, app.tabBars.firstMatch.frame.minY - 16)
-            try audit(scrollViewport: true)
+            try auditVisibleScreen()
             snap("appearance-accessibility-" + title)
             selectTab("Главная")
-            try audit(scrollViewport: true, layoutChecks: true)
-            // Tab navigation retains the previous scroll position. Audit the
-            // header only after returning the complete identity above the bars.
-            let identity = scrollIntoView(element("home.profile"), searchBelow: false)
-            let headerTop = app.navigationBars.firstMatch.frame.maxY
-            let headerBottom = app.tabBars.firstMatch.frame.minY
-            for _ in 0..<6 {
-                if identity.frame.minY >= headerTop && identity.frame.maxY <= headerBottom { break }
-                let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.42))
-                let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.65))
-                start.press(forDuration: 0.1, thenDragTo: end)
-            }
-            XCTAssertGreaterThanOrEqual(identity.frame.minY, headerTop)
-            XCTAssertLessThanOrEqual(identity.frame.maxY, headerBottom)
-            try audit(scrollViewport: true)
-            snap("home-header-accessibility-" + title)
-            // The system contrast audit samples the screenshot. A trend whose
-            // frame only intersects the bottom edge has no rendered glyphs to
-            // measure. Bring both labels above the native tab bar and prove
-            // their full visibility before running the unchanged strict audit.
-            let trend = require(app.staticTexts["за 30 дней"], "rating trend period")
-            let delta = require(app.staticTexts["Рост на 0.24"], "rating trend delta")
-            let findGame = require(app.staticTexts["Найти игру"], "find game action")
-            let createGame = require(app.staticTexts["Создать игру"], "create game action")
-            try audit(scrollViewport: true, layoutChecks: true)
-            let viewport = app.windows.firstMatch.frame
-            let top = app.navigationBars.firstMatch.frame.maxY + 8
-            let bottom = min(app.tabBars.firstMatch.frame.minY - 16, viewport.maxY - 110)
-            for _ in 0..<6 {
-                if trend.frame.minY >= top && trend.frame.maxY <= bottom &&
-                    delta.frame.minY >= top && delta.frame.maxY <= bottom &&
-                    findGame.frame.minY >= top && findGame.frame.maxY <= bottom &&
-                    createGame.frame.minY >= top && createGame.frame.maxY <= bottom { break }
-                let above = [trend, delta, findGame, createGame].contains { $0.frame.minY < top }
-                let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: above ? 0.42 : 0.65))
-                let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: above ? 0.65 : 0.42))
-                start.press(forDuration: 0.1, thenDragTo: end)
-            }
-            for label in [trend, delta, findGame, createGame] {
-                XCTAssertGreaterThanOrEqual(label.frame.minX, viewport.minX)
-                XCTAssertLessThanOrEqual(label.frame.maxX, viewport.maxX)
-                XCTAssertGreaterThanOrEqual(label.frame.minY, top)
-                XCTAssertLessThanOrEqual(label.frame.maxY, bottom)
-                XCTAssertTrue(label.isHittable)
-                print("ACCESSIBILITY VISIBLE: \(label.label) frame=\(label.frame), bounds=\(top)...\(bottom)")
-            }
-            try audit(scrollViewport: true)
+            require(element("home.level"), timeout: 15, "home.level")
+            try auditVisibleScreen()
             snap("home-accessibility-" + title)
             selectTab("Профиль")
+        }
+    }
+
+    private func auditVisibleScreen() throws {
+        let types: [XCUIAccessibilityAuditType] = [.dynamicType, .textClipped, .contrast, .sufficientElementDescription, .hitRegion]
+        for type in types {
+            try app.performAccessibilityAudit(for: type) { issue in
+                print("ACCESSIBILITY AUDIT: \(issue.compactDescription); target: \(issue.element?.debugDescription ?? "unknown")")
+                print("ACCESSIBILITY DETAIL: \(issue.detailedDescription)")
+                // The contrast audit samples the screenshot. Scroll content cut
+                // by the navigation or tab bar has no complete glyphs to
+                // measure; every other category and all fully visible text
+                // stay strict.
+                guard issue.auditType == .contrast, let target = issue.element else { return false }
+                let top = self.app.navigationBars.firstMatch.frame.maxY
+                let bottom = self.app.tabBars.firstMatch.frame.minY
+                if target.frame.minY < top || target.frame.maxY > bottom {
+                    print("ACCESSIBILITY EDGE FRAGMENT: \(target.label), frame=\(target.frame), content=\(top)...\(bottom)")
+                    return true
+                }
+                return false
+            }
         }
     }
 

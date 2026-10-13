@@ -30,7 +30,11 @@ struct FeedView: View {
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 12) {
-                if isHub { CommunityShortcuts().padding(.bottom, 6) }
+                if isHub {
+                    CommunityShortcuts().padding(.bottom, 6)
+                    SuggestedPlayersRow().padding(.bottom, 6)
+                    SectionHeader("Лента")
+                }
                 if groupId == nil && clubId == nil {
                     Picker("Лента", selection: $scope) {
                         Text("Все").tag("all")
