@@ -53,7 +53,7 @@ struct HomeView: View {
             .padelCanvas()
             .refreshable { await refresh() }
             .navigationTitle("Главная")
-            .navigationBarTitleDisplayMode(.large)
+            .mainTabTitle()
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Настройки", systemImage: "gearshape") { app.isAccountPresented = true }

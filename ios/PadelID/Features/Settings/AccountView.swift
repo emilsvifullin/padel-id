@@ -48,7 +48,7 @@ struct AccountView: View {
             }
             .listStyle(.insetGrouped)
             .navigationTitle("Профиль")
-            .navigationBarTitleDisplayMode(.large)
+            .mainTabTitle()
             .padelRoutes()
             .alert("Выйти из аккаунта?", isPresented: $isConfirmingSignOut) {
                 Button("Выйти", role: .destructive, action: signOut)

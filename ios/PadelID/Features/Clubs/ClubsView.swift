@@ -44,7 +44,7 @@ struct ClubsView: View {
                                     height: dynamicTypeSize.isAccessibilitySize ? 200 : 260))
             .navigationDestination(isPresented: $isPickingCity) { CityPickerView(selection: $city) }
             .navigationTitle("Клубы")
-            .navigationBarTitleDisplayMode(.large)
+            .mainTabTitle()
             .refreshable {
                 await model.load(city: city, using: app)
                 await model.search(city: city, query: query, using: app, debounce: false)

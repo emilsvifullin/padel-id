@@ -13,6 +13,7 @@ struct MainTabView: View {
             Tab("Сообщество", systemImage: "person.3", value: AppModel.Tab.community) { CommunityView() }
             Tab("Профиль", systemImage: "person.crop.circle", value: AppModel.Tab.profile) { AccountView() }
         }
+        // The owner wants the tabs always in place: no collapsing on scroll.
         .tabBarMinimizeBehavior(.never)
         .sheet(item: $app.matchEditor) { request in MatchEditorView(request: request) }
         .sheet(isPresented: $app.isAccountPresented) {

@@ -5,6 +5,7 @@ struct CommunityView: View {
     var body: some View {
         PadelNavigationStack {
             FeedView(isHub: true)
+                .mainTabTitle()
                 .padelRoutes()
         }
     }

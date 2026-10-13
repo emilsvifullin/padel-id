@@ -81,6 +81,7 @@ struct MatchesView: View {
         PadelNavigationStack {
             content
                 .navigationTitle("Матчи")
+                .mainTabTitle()
                 .toolbar { toolbarContent }
                 .padelRoutes()
         }

@@ -167,11 +167,20 @@ extension View {
     }
 
     /// The canvas behind a scrolling screen; lists and forms keep their rows.
-    /// Cards and avatars scrolling under the title must not show through it,
-    /// so the top edge cuts cleanly instead of fading.
     func padelCanvas() -> some View {
         background(Theme.canvas.ignoresSafeArea())
-            .scrollEdgeEffectStyle(.hard, for: .top)
+    }
+
+    /// The top of a main tab: a large title that leaves with the content and
+    /// no title in the bar afterwards. Content scrolls up under the status bar
+    /// and dissolves there, with only the glass buttons above it.
+    func mainTabTitle() -> some View {
+        navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Color.clear.frame(width: 1, height: 1).accessibilityHidden(true)
+                }
+            }
     }
 }
 
