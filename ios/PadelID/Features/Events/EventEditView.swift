@@ -26,7 +26,7 @@ struct EventEditView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 if let error { SettingsErrorRow(message: error) }
                 if needsReload {

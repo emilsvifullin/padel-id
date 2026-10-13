@@ -43,7 +43,7 @@ struct MatchFeedbackSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 Section {
                     Text("Отметьте, что у каждого игрока получалось лучше всего и над чем стоит поработать, — отметки уточняют их Padel DNA.")

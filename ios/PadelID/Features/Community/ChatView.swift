@@ -277,6 +277,8 @@ struct ChatView: View {
                 Text("\(Text(message.deleted ? "Сообщение скрыто" : message.body))\(reserved)")
                     .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
+                    // The message itself, without the room kept for the time.
+                    .accessibilityLabel(message.deleted ? "Сообщение скрыто" : message.body)
                     .overlay(alignment: .bottomTrailing) {
                         HStack(spacing: 3) {
                             Text(time)
@@ -376,7 +378,7 @@ struct ConversationMembersView: View {
         .navigationTitle("Участники")
         .task(id: app.dataRevision) { await current.load(using: app) }
         .sheet(isPresented: $adding) {
-            NavigationStack {
+            SheetNavigationStack {
                 List {
                     ForEach(friends.value?.accepted ?? []) { friend in
                         if !(detail?.members.contains { $0.id == friend.id } ?? true) {

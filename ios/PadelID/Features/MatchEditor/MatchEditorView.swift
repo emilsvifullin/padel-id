@@ -32,7 +32,7 @@ struct MatchEditorView: View {
 
     var body: some View {
         let previewKey = model.previewKey(meId: meId)
-        NavigationStack {
+        SheetNavigationStack {
             ScrollViewReader { proxy in
                 Form {
                     statusSection

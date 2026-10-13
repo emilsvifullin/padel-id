@@ -32,7 +32,7 @@ struct ClubCourtEditor: View {
     }
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 Section("Корт") {
                     TextField("Название", text: $name)

@@ -345,7 +345,7 @@ private struct DNADetailSelfAssessmentSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 Section {
                     Text("Оцените каждое направление относительно своего общего уровня. Самооценка — лишь один из источников: со временем её уточняют отметки партнёров, оценки тренеров и результаты матчей.")

@@ -29,6 +29,25 @@ struct PadelNavigationStack<Content: View>: View {
         }
         .environment(router)
         .environment(\.zoomNamespace, zoom)
+        .padelTypesetting()
+    }
+}
+
+/// The navigation stack of a sheet. A sheet does not take the typesetting
+/// setting from the screen that presents it, so it is set again here.
+struct SheetNavigationStack<Content: View>: View {
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        NavigationStack { content() }.padelTypesetting()
+    }
+}
+
+extension View {
+    /// Russian text set by its own rules breaks words by syllable
+    /// ("сохра-нён"); the system apps break between words.
+    func padelTypesetting() -> some View {
+        typesettingLanguage(Locale.Language(identifier: "en"))
     }
 }
 

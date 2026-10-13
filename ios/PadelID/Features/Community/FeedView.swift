@@ -159,7 +159,7 @@ struct PostCreateView: View {
     @State private var lastSubmission: PostCreateBody?
     @State private var requestId = UUID()
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 Section {
                     if let clubName { Label(clubName, systemImage: "building.2").font(.headline) }

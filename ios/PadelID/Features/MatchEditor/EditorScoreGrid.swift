@@ -52,7 +52,7 @@ struct EditorScoreGrid: View {
     }
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {

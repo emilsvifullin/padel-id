@@ -30,7 +30,7 @@ struct UpcomingCreateView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 if !app.isOnline { SettingsOfflineNotice() }
                 if let error { SettingsErrorRow(message: error) }

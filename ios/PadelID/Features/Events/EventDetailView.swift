@@ -265,7 +265,7 @@ private struct EventScoreView: View {
     @State private var working = false
     @State private var error: String?
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 Section {
                     Text(game.team1.map(\.displayName).joined(separator: " + "))

@@ -17,7 +17,7 @@ struct PlayersFilterSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 Section {
                     NavigationLink {

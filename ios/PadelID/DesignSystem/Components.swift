@@ -283,6 +283,7 @@ struct PlayerRow<Trailing: View>: View {
                 Text(facts)
                     .font(.caption).foregroundStyle(.secondary)
                     .lineLimit(textLineLimit)
+                    .minimumScaleFactor(0.85)
                     .fixedSize(horizontal: false, vertical: textLineLimit == nil)
             }
         }
@@ -303,11 +304,10 @@ struct PlayerRow<Trailing: View>: View {
         dynamicTypeSize.isAccessibilitySize ? nil : 1
     }
 
+    /// The user name alone: with the city after it the line did not fit next
+    /// to the level and was cut mid-word.
     private var defaultSubtitle: String {
-        var parts: [String] = []
-        if let username = card.username { parts.append("@\(username)") }
-        if let city = card.city?.name { parts.append(city) }
-        return parts.joined(separator: ", ")
+        card.username.map { "@" + $0 } ?? card.city?.name ?? ""
     }
 }
 

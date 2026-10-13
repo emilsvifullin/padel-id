@@ -220,11 +220,10 @@ struct PlayersView: View {
     }
 
     private func recentSubtitle(_ card: PlayerCard) -> String? {
+        // Only what the two of you share: with the user name in front the
+        // line did not fit next to the level and was cut mid-word.
         guard let together = card.matchesTogether, together > 0 else { return nil }
-        var parts: [String] = []
-        if let username = card.username { parts.append("@" + username) }
-        parts.append(Format.count(together, "общий матч", "общих матча", "общих матчей"))
-        return parts.joined(separator: ", ")
+        return Format.count(together, "общий матч", "общих матча", "общих матчей")
     }
 
     // MARK: - Results

@@ -115,9 +115,11 @@ struct AppearanceSettingsView: View {
                 }
                 .font(.body)
                 .pickerStyle(.inline)
+                .labelsHidden()
                 .accessibilityIdentifier("appearance.theme")
             } header: {
-                Text("Оформление").foregroundStyle(Color.primary)
+                // The screen is already titled «Оформление».
+                Text("Тема").foregroundStyle(Color.primary)
                     .fixedSize(horizontal: false, vertical: true)
             } footer: {
                 Text("Автоматический режим следует оформлению iPhone. Тема применяется сразу ко всем экранам.").foregroundStyle(Color.primary)

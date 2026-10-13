@@ -232,7 +232,7 @@ private struct AdminReviewDecisionSheet: View {
     @State private var failureCount = 0
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 if !app.isOnline {
                     Section {

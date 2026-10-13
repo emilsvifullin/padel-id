@@ -9,7 +9,7 @@ struct UpcomingInviteView: View {
     @State private var working = false
     @State private var error: String?
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             List {
                 Section {
                     ForEach(friends.value?.accepted ?? []) { friend in

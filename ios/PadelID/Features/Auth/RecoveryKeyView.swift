@@ -9,7 +9,7 @@ struct RecoveryKeyView: View {
     @State private var copied = false
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     Image(systemName: "key.horizontal.fill")

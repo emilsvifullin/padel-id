@@ -242,7 +242,7 @@ struct ConversationCreateView: View {
     @State private var requestId = UUID()
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 Section("Групповой чат") {
                     TextField("Название", text: $title)

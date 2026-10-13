@@ -21,7 +21,7 @@ struct MatchDisputeSheet: View {
     private var limit: Int { MatchActions.disputeCommentLimit }
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 Section {
                     ForEach(DisputeReason.allCases, id: \.self) { option in

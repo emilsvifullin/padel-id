@@ -17,7 +17,7 @@ struct ReportContentView: View {
     @State private var working = false
     @State private var error: String?
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 Section {
                     Picker("Причина", selection: $reason) {

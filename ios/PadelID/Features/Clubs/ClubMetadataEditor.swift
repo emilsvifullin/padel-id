@@ -18,7 +18,7 @@ struct ClubMetadataEditor: View {
     }
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 Section("Описание") {
                     TextField("Описание клуба", text: $draft.description, axis: .vertical).lineLimit(4...12)
