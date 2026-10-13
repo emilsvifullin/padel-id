@@ -342,7 +342,15 @@ describe.runIf(RUN && MODE === "full")("full API flow", () => {
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     const path = res.body.profile.avatar_path as string;
     expect(path.startsWith(players[0]!.id)).toBe(true);
-    expect((await fetch(`${BASE}/v1/avatars/${path}`)).status).toBe(401);
+    // Without a session this is how Padel ID 1.1.0 asks; it is answered while
+    // that build is supported (PADELID_MIN_CLIENT_BUILD below 3) and never cached for long.
+    const previous = await fetch(`${BASE}/v1/avatars/${path}`);
+    if (Number.parseInt(process.env.PADELID_MIN_CLIENT_BUILD ?? "1", 10) < 3) {
+      expect(previous.status).toBe(200);
+      expect(previous.headers.get("cache-control")).toBe("private, max-age=300");
+    } else {
+      expect(previous.status).toBe(401);
+    }
     const img = await fetch(`${BASE}/v1/avatars/${path}`, { headers: { authorization: `Bearer ${players[0]!.token}` } });
     expect(img.status).toBe(200);
     expect(img.headers.get("content-type")).toBe("image/jpeg");
