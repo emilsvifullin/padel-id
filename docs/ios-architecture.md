@@ -207,7 +207,8 @@ The language comes from the app icon; the neutrals come from the system.
   tennis racket and a pitch with a centre circle. They are custom symbol
   assets drawn by `scripts/ios/make-symbols.py`; use `Image(symbol:)` where a
   symbol name is passed around. A `SymbolPlate` without a tint of its own
-  carries ink on lime; segmented controls select in lime with ink text.
+  carries ink on lime. Segmented controls are the system's, untinted: a
+  tinted selection distorts the glass lens of iOS 26.
 * **Type**: system fonts and Dynamic Type text styles only. Large navigation
   titles, section headers, level and score numerals use the expanded face
   (`Font.display`); inline titles and body text use the standard one.

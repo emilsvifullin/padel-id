@@ -35,28 +35,25 @@ struct MatchRowView: View {
 
     // MARK: - Header
 
+    /// The day and the result share the first line, the result always at its
+    /// end; what kind of match it is and its state follow on a line of their
+    /// own. Nothing moves to another place when a row has more to say.
     private var header: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(alignment: .center, spacing: 8) {
-                dateText
-                typePill
-                statusPill
-                Spacer(minLength: 8)
-                outcome
-            }
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 8) {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
                     dateText
-                    typePill
-                    statusPill
+                    Spacer(minLength: 8)
+                    outcome
                 }
-                outcome
+                VStack(alignment: .leading, spacing: 4) {
+                    dateText
+                    outcome
+                }
             }
-            VStack(alignment: .leading, spacing: 6) {
-                dateText
+            HStack(spacing: 8) {
                 typePill
                 statusPill
-                outcome
             }
         }
     }
@@ -94,7 +91,7 @@ struct MatchRowView: View {
             HStack(spacing: 6) {
                 Text(won ? "Победа" : "Поражение")
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(won ? Theme.positive : Color.secondary)
+                    .foregroundStyle(won ? Theme.positive : Theme.negative)
                 if let delta {
                     DeltaText(delta: delta)
                 }

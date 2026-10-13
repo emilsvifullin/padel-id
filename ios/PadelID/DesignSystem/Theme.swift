@@ -79,13 +79,6 @@ enum Theme {
         let font = UIFontMetrics(forTextStyle: .largeTitle)
             .scaledFont(for: .systemFont(ofSize: 32, weight: .bold, width: .expanded), maximumPointSize: 44)
         UINavigationBar.appearance().largeTitleTextAttributes = [.font: font]
-        // The chosen segment in the icon's lime with ink text: the system
-        // grey on grey barely reads in the dark theme.
-        let segments = UISegmentedControl.appearance()
-        segments.selectedSegmentTintColor = UIColor(Theme.lime)
-        let weight = UIFont.systemFont(ofSize: UIFont.preferredFont(forTextStyle: .footnote).pointSize, weight: .semibold)
-        segments.setTitleTextAttributes([.foregroundColor: UIColor(Theme.ink), .font: weight], for: .selected)
-        segments.setTitleTextAttributes([.foregroundColor: UIColor.label], for: .normal)
     }
 }
 
