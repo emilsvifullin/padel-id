@@ -114,7 +114,7 @@ struct PostSummary: View {
                 AvatarView(card: post.author, size: 40)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(post.author.displayName).font(.subheadline.bold())
-                        .fixedSize(horizontal: false, vertical: true)
+                        .rowText()
                     Text(post.createdAt, format: .dateTime.day().month().hour().minute())
                         .font(.caption).foregroundStyle(.secondary)
                 }
@@ -299,7 +299,7 @@ struct PostDetailView: View {
                 Button {
                     react(value.myReaction == "like" ? nil : "like")
                 } label: {
-                    Label(liked ? "Нравится · \(value.reactionCount)" : "Нравится", systemImage: liked ? "heart.fill" : "heart")
+                    Label("Нравится", systemImage: liked ? "heart.fill" : "heart")
                         .symbolEffect(.bounce, value: liked)
                         .contentTransition(.symbolEffect(.replace))
                         .font(.subheadline.weight(.semibold))

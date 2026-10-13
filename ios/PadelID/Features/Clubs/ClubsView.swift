@@ -224,10 +224,10 @@ private struct ClubCatalogRow: View {
         HStack(alignment: .top, spacing: 14) {
             leading
             VStack(alignment: .leading, spacing: 6) {
-                Text(club.name).font(.headline).fixedSize(horizontal: false, vertical: true)
+                Text(club.name).font(.headline).rowText()
                 if let address = club.address, !address.isEmpty {
                     Text(address).font(.subheadline).foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .rowText(lines: 2)
                 }
                 // What the club has, at a glance: courts, players, the first amenities.
                 FlowLayout(spacing: 6) { facts }

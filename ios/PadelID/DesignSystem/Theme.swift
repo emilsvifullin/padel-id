@@ -130,6 +130,19 @@ private struct ReduceMotionAnimation<Value: Equatable>: ViewModifier {
     }
 }
 
+private struct RowText: ViewModifier {
+    let lines: Int
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    func body(content: Content) -> some View {
+        if dynamicTypeSize > .xLarge {
+            content.fixedSize(horizontal: false, vertical: true)
+        } else {
+            content.lineLimit(lines).truncationMode(.tail)
+        }
+    }
+}
+
 private struct PressFeedback: ViewModifier {
     let isPressed: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -171,17 +184,16 @@ extension View {
         background(Theme.canvas.ignoresSafeArea())
     }
 
-    /// The top of a main tab: a large title that leaves with the content and
-    /// no title in the bar afterwards. Content scrolls up under the status bar
-    /// and dissolves there, with only the glass buttons above it.
+    /// The top of a main tab is the system navigation bar, untouched: a large
+    /// title that becomes the bar's title on scroll, with the system's own
+    /// soft edge under it.
     func mainTabTitle() -> some View {
         navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Color.clear.frame(width: 1, height: 1).accessibilityHidden(true)
-                }
-            }
     }
+
+    /// A line of a row as the system lists set it: kept to `lines` and cut
+    /// with an ellipsis. Someone who enlarged the text gets all of it, wrapped.
+    func rowText(lines: Int = 1) -> some View { modifier(RowText(lines: lines)) }
 }
 
 // MARK: - Surfaces

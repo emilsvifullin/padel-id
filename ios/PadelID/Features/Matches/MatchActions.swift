@@ -196,7 +196,7 @@ enum MatchActions {
     }
 
     private static func subtitle(for match: MatchDetail) -> String {
-        "\(Format.score(match.sets, perspective: match.viewer.team ?? 1)) · \(Format.shortDate(match.playedAt))"
+        "\(Format.score(match.sets, perspective: match.viewer.team ?? 1)), \(Format.shortDate(match.playedAt))"
     }
 }
 

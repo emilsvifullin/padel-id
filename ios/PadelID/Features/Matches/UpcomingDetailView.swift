@@ -63,7 +63,7 @@ struct UpcomingDetailView: View {
                     }
                 }
             }
-            Section("Состав · \(match.participants.count) из 4") {
+            Section("Состав: \(match.participants.count) из 4") {
                 ForEach(match.participants) { member in
                     NavigationLink(value: Route.player(member.id)) {
                         PlayerRow(card: member.player) {

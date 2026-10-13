@@ -39,7 +39,7 @@ struct EventsView: View {
                 } else {
                     Text("Доступные занятия этого тренера. Условия и свободные места указаны в каждом событии.")
                         .font(.subheadline).foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .rowText()
                 }
             }
             if let error {
@@ -161,8 +161,8 @@ private struct EventCatalogRow: View {
             HStack(alignment: .top, spacing: 12) {
                 SymbolPlate(symbol: event.kind.symbol)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(event.title).font(.headline).fixedSize(horizontal: false, vertical: true)
-                    Text([event.format.title, event.priceTitle].compactMap { $0 }.joined(separator: " · "))
+                    Text(event.title).font(.headline).rowText()
+                    Text([event.format.title, event.priceTitle].compactMap { $0 }.joined(separator: ", "))
                         .font(.subheadline).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -170,8 +170,8 @@ private struct EventCatalogRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(event.startsAt, format: .dateTime.day().month(.wide).hour().minute())
                     .font(.display(.subheadline, weight: .bold))
-                Text([event.city.name, event.club?.name, event.location].compactMap { $0 }.joined(separator: " · "))
-                    .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Text([event.city.name, event.club?.name, event.location].compactMap { $0 }.joined(separator: ", "))
+                    .font(.subheadline).foregroundStyle(.secondary).rowText()
             }
             ViewThatFits(in: .horizontal) {
                 HStack { status; Spacer(minLength: 8); capacity }

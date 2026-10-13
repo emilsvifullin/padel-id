@@ -13,9 +13,9 @@ struct UpcomingMatchRow: View {
                 Text(match.startsAt, format: .dateTime.day().month(.wide).hour().minute())
                     .font(.display(prominent ? .title2 : .title3, weight: .bold))
                     .fixedSize(horizontal: false, vertical: true)
-                Text([match.city.name, match.club?.name, match.location].compactMap { $0 }.joined(separator: " · "))
+                Text([match.city.name, match.club?.name, match.location].compactMap { $0 }.joined(separator: ", "))
                     .font(.subheadline).foregroundStyle(Theme.supportingText)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .rowText()
             }
             if dynamicTypeSize.isAccessibilitySize {
                 VStack(alignment: .leading, spacing: 10) { lineUp; status; level }
@@ -60,7 +60,7 @@ struct UpcomingMatchRow: View {
     }
 
     private var level: some View {
-        Text("\(match.matchType == .ranked ? "Рейтинговый" : "Товарищеский") · \(Format.level(match.minLevel))–\(Format.level(match.maxLevel))")
+        Text("\(match.matchType == .ranked ? "Рейтинговый" : "Товарищеский"), уровень \(Format.level(match.minLevel))–\(Format.level(match.maxLevel))")
             .font(.footnote.weight(.medium)).monospacedDigit().foregroundStyle(Theme.supportingText)
     }
 

@@ -598,7 +598,7 @@ private struct PlayerProfileHeader: View {
 
     private var placeLine: String? {
         let parts = [profile.city?.name, profile.club?.name].compactMap { $0 }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        return parts.isEmpty ? nil : parts.joined(separator: ", ")
     }
 
     private var factsLine: String? {
@@ -612,7 +612,7 @@ private struct PlayerProfileHeader: View {
         if let since = profile.playingSince {
             parts.append("в паделе с \(since) года")
         }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        return parts.isEmpty ? nil : parts.joined(separator: ", ")
     }
 }
 

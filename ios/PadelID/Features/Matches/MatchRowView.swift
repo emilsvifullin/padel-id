@@ -127,7 +127,7 @@ struct MatchRowView: View {
         return Text(MatchesNames.shortPair(cards(team)))
             .font(isWinner ? Font.body.weight(.semibold) : Font.body)
             .foregroundStyle(isWinner ? Color.primary : Color.secondary)
-            .fixedSize(horizontal: false, vertical: true)
+            .rowText()
     }
 
     /// The scoreboard: a set the pair won sits on lime, a set it lost stays quiet.

@@ -241,7 +241,7 @@ private struct DNADetailDimensionCard: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 if let verifiedAt = state.coachVerifiedAt {
-                    Label("Подтверждено тренером · \(Format.date(verifiedAt))", systemImage: "checkmark.seal.fill")
+                    Label("Подтверждено тренером \(Format.date(verifiedAt))", systemImage: "checkmark.seal.fill")
                         .font(.footnote.weight(.medium))
                         .foregroundStyle(Theme.accent)
                 }

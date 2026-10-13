@@ -345,7 +345,7 @@ private struct RatingDetailSections: View {
                     Text("Рейтинговые матчи")
                 }
                 LabeledContent {
-                    Text(verbatim: "\(wins) из \(matchPoints.count) · \(Format.percent(Double(wins) / Double(matchPoints.count)))")
+                    Text(verbatim: "\(wins) из \(matchPoints.count), \(Format.percent(Double(wins) / Double(matchPoints.count)))")
                         .monospacedDigit()
                 } label: {
                     Text("Победы")
@@ -550,6 +550,6 @@ private struct RatingDetailChangeRow: View {
         if let expected = point.expectedWin {
             parts.append("Шансы были \(Format.percent(expected))")
         }
-        return parts.joined(separator: " · ")
+        return parts.joined(separator: ", ")
     }
 }

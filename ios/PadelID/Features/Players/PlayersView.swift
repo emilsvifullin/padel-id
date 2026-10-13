@@ -224,7 +224,7 @@ struct PlayersView: View {
         var parts: [String] = []
         if let username = card.username { parts.append("@" + username) }
         parts.append(Format.count(together, "общий матч", "общих матча", "общих матчей"))
-        return parts.joined(separator: " · ")
+        return parts.joined(separator: ", ")
     }
 
     // MARK: - Results
@@ -347,7 +347,7 @@ struct PlayersView: View {
         }
         if filter.reliableOnly { parts.append("надёжный рейтинг") }
         if filter.coachesOnly { parts.append("тренеры") }
-        return parts.joined(separator: " · ")
+        return parts.joined(separator: ", ")
     }
 
     private var resultsCountText: String? {

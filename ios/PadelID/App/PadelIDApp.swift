@@ -16,6 +16,9 @@ struct PadelIDApp: App {
                 // Section titles of lists and forms carry the same weight as
                 // the titles of the hand-built screens.
                 .headerProminence(.increased)
+                // Russian text set by its own rules breaks words by syllable
+                // ("уро-вень"); the system apps break between words.
+                .typesettingLanguage(Locale.Language(identifier: "en"))
                 .preferredColorScheme((AppAppearance(rawValue: appearance) ?? .automatic).colorScheme)
         }
         .backgroundTask(.appRefresh(NotificationService.refreshTaskIdentifier)) {

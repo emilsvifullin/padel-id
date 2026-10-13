@@ -159,7 +159,7 @@ struct MatchDetailScoreboard: View {
 
     private func sideText(_ player: MatchPlayer) -> String {
         let side = Narratives.sideShort(player.courtSide)
-        return player.player.id == viewerId ? "\(side) · вы" : side
+        return player.player.id == viewerId ? "\(side), вы" : side
     }
 
     private func scoreColumns(_ team: Int) -> some View {
@@ -651,7 +651,7 @@ struct MatchDetailMetaSection: View {
                 if let club = match.club {
                     metaRow("mappin.and.ellipse", [club.name, club.city].compactMap { $0 }.joined(separator: ", "))
                 }
-                metaRow(PadelSymbol.racket, "\(Narratives.matchType(match.matchType)) матч · \(Narratives.format(match.format))",
+                metaRow(PadelSymbol.racket, "\(Narratives.matchType(match.matchType)) матч, \(Narratives.format(match.format).lowercased())",
                         detail: match.matchType == .friendly ? "Не влияет на рейтинг" : nil)
                 if match.status == .confirmed, let confirmedAt = match.confirmedAt {
                     metaRow("checkmark.seal", "Подтверждён \(Format.date(confirmedAt))")

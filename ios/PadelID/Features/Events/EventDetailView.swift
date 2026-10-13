@@ -36,7 +36,7 @@ struct EventDetailView: View {
                         Text(value.startsAt, format: .dateTime.weekday(.wide).day().month(.wide).hour().minute())
                             .font(.headline)
                             .fixedSize(horizontal: false, vertical: true)
-                        Text([value.city.name, value.club?.name, value.location].compactMap { $0 }.joined(separator: " · "))
+                        Text([value.city.name, value.club?.name, value.location].compactMap { $0 }.joined(separator: ", "))
                             .font(.subheadline).foregroundStyle(.white.opacity(0.8))
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -172,7 +172,7 @@ struct EventDetailView: View {
     }
 
     @ViewBuilder private func tournament(_ value: SportEvent) -> some View {
-        Section("Раунды · \(value.currentRound) / \(value.roundCount)") {
+        Section("Раунд \(value.currentRound) из \(value.roundCount)") {
             Text("\(value.pointsPerGame) очков на игру. Итоги учитывают только счёт, подтверждённый всеми четырьмя игроками.")
                 .font(.subheadline).foregroundStyle(.secondary)
             if value.viewer.isOrganizer && value.currentRound < value.roundCount && value.startsAt <= .now && (value.status == .open || value.status == .running) {
@@ -183,7 +183,7 @@ struct EventDetailView: View {
             ForEach(value.games) { game in
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
-                        Text("Раунд \(game.round) · Корт \(game.court)").font(.subheadline.weight(.semibold))
+                        Text("Раунд \(game.round), корт \(game.court)").font(.subheadline.weight(.semibold))
                         Spacer(minLength: 8)
                         StatusPill(text: game.confirmed ? "Подтверждено" : "Подтверждений: \(game.confirmations.count) / 4",
                                    color: game.confirmed ? Theme.positive : Color.secondary,
@@ -217,7 +217,7 @@ struct EventDetailView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(standing.players.map(\.displayName).joined(separator: " + ")).font(.headline)
                             .fixedSize(horizontal: false, vertical: true)
-                        Text("Игр: \(standing.played) · Побед: \(standing.wins)")
+                        Text("Игр: \(standing.played), побед: \(standing.wins)")
                             .font(.subheadline).foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 8)

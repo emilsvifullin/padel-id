@@ -255,7 +255,7 @@ struct HomeView: View {
                             Text(next.title).font(.headline).fixedSize(horizontal: false, vertical: true)
                             Text(next.startsAt, format: .dateTime.day().month(.wide).hour().minute())
                                 .font(.subheadline)
-                            Text([next.city.name, next.club?.name, next.location].compactMap { $0 }.joined(separator: " · "))
+                            Text([next.city.name, next.club?.name, next.location].compactMap { $0 }.joined(separator: ", "))
                                 .font(.subheadline).foregroundStyle(Theme.supportingText)
                                 .fixedSize(horizontal: false, vertical: true)
                             Text(next.viewer.isOrganizer ? "Вы организуете" : "Вы записаны")

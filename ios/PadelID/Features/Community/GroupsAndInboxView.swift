@@ -110,13 +110,13 @@ private struct GroupRow: View {
         HStack(alignment: .top, spacing: 12) {
             SymbolPlate(symbol: group.visibility == "public" ? "person.3.fill" : "lock.fill")
             VStack(alignment: .leading, spacing: 3) {
-                Text(group.title).font(.headline).fixedSize(horizontal: false, vertical: true)
+                Text(group.title).font(.headline).rowText()
                 if let description = group.description, !description.isEmpty {
                     Text(description).font(.subheadline).foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .rowText(lines: 2)
                 }
                 Text(Format.count(group.memberCount, "участник", "участника", "участников")
-                     + (group.joined ? " · вы в группе" : ""))
+                     + (group.joined ? ", вы в группе" : ""))
                     .font(.footnote).foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -141,7 +141,7 @@ private struct NotificationRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(notification.title)
                     .font(notification.readAt == nil ? .body.weight(.semibold) : .body)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .rowText(lines: 2)
                 Text(notification.createdAt, format: .dateTime.day().month().hour().minute())
                     .font(.footnote).foregroundStyle(.secondary)
             }
@@ -177,7 +177,7 @@ struct ModerationReportsView: View {
         List {
             ForEach(reports.items) { report in
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(targetTitle(report.targetType) + " · " + reasonTitle(report.reason)).font(.headline)
+                    Text(targetTitle(report.targetType) + ", " + reasonTitle(report.reason).lowercased()).font(.headline)
                     if let author = report.content?.authorName { Text(author).font(.subheadline.bold()) }
                     if let body = report.content?.body {
                         Text(body).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)

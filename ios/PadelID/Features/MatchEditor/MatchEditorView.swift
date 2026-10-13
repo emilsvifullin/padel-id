@@ -470,7 +470,7 @@ struct MatchEditorView: View {
             Text("Ваш уровень")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            Text("Победа: \(deltaText(mine.ifTeam1Wins)) · Поражение: \(deltaText(mine.ifTeam2Wins))")
+            Text("Победа: \(deltaText(mine.ifTeam1Wins)), поражение: \(deltaText(mine.ifTeam2Wins))")
                 .font(.body.weight(.medium))
             if let entered = mine.withEnteredScore {
                 Text("С введённым счётом: \(deltaText(entered))")

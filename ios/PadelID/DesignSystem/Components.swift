@@ -307,7 +307,7 @@ struct PlayerRow<Trailing: View>: View {
         var parts: [String] = []
         if let username = card.username { parts.append("@\(username)") }
         if let city = card.city?.name { parts.append(city) }
-        return parts.joined(separator: " · ")
+        return parts.joined(separator: ", ")
     }
 }
 

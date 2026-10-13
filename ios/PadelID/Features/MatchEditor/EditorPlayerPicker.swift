@@ -262,7 +262,7 @@ struct EditorPlayerPicker: View {
         if let together = card.matchesTogether, together > 0 {
             parts.append("\(Format.matches(together)) вместе")
         }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        return parts.isEmpty ? nil : parts.joined(separator: ", ")
     }
 
     // MARK: Actions

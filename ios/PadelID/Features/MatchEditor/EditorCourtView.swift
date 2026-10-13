@@ -133,7 +133,7 @@ private struct EditorSlotTile: View {
 
     private var caption: String {
         let side = Narratives.sideShort(slot.side)
-        return isMe ? "Вы · \(side)" : side
+        return isMe ? "Вы, \(side.lowercased())" : side
     }
 
     @ViewBuilder

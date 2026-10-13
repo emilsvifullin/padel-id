@@ -403,7 +403,7 @@ struct MatchesView: View {
     }
 
     private var historyTitle: String {
-        filter == .all ? "История" : "История · \(filter.title.lowercased())"
+        filter == .all ? "История" : "История: \(filter.title.lowercased())"
     }
 
     private var historyEmptyText: String {
