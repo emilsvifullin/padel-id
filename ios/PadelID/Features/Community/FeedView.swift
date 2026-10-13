@@ -172,6 +172,7 @@ struct PostCreateView: View {
                 if let error { SettingsErrorRow(message: error) }
                 Section {
                     Button(pending == nil ? "Опубликовать" : "Повторить публикацию") { publish() }
+                        .buttonStyle(.padelPrimary).listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
                         .disabled(isWorking || !app.isOnline || (clubId != nil && app.me?.isAdmin != true) || (pending == nil && !(1...4000).contains(SettingsText.length(bodyText))))
                         .accessibilityIdentifier("post.publish")
                     if isWorking { ProgressView() }

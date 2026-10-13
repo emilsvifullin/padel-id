@@ -32,6 +32,7 @@ struct ReportContentView: View {
                 if let error { SettingsErrorRow(message: error) }
                 Section {
                     Button(pending == nil ? "Отправить жалобу" : "Повторить отправку") { send() }
+                        .buttonStyle(.padelPrimary).listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
                         .disabled(working || !app.isOnline || SettingsText.length(detail) > 500)
                     if working { ProgressView() }
                 } footer: { Text("Жалоба будет доступна модераторам. Её отправка не заменяет блокировку игрока.") }

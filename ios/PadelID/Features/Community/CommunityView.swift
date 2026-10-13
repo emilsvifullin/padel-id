@@ -259,6 +259,7 @@ struct ConversationCreateView: View {
                 if let error { SettingsErrorRow(message: error) }
                 Section {
                     Button(pending == nil ? "Создать" : "Повторить создание") { create() }
+                        .buttonStyle(.padelPrimary).listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
                         .disabled(isWorking || !app.isOnline || (pending == nil && (SettingsText.length(title) < 2 || SettingsText.length(title) > 80 || SettingsText.length(description) > 500 || selected.count > 30)))
                     if isWorking { ProgressView() }
                 } footer: {

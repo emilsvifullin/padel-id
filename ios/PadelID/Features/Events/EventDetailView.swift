@@ -285,6 +285,7 @@ private struct EventScoreView: View {
                             .disabled(working || !app.isOnline)
                     }
                     Button(pending == nil ? "Сохранить счёт" : "Повторить сохранение") { save() }
+                        .buttonStyle(.padelPrimary).listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
                         .disabled(working || needsReload || noLongerEditable || !app.isOnline || (!allowsTie && points * 2 == total))
                         .accessibilityIdentifier("eventScore.save")
                     if working { ProgressView() }
