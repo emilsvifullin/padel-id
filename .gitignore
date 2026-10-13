@@ -9,4 +9,3 @@ supabase/.temp/
 .DS_Store
 __pycache__/
 supabase/functions/gateway/_shared/
-server/deploy/yandex/build/
