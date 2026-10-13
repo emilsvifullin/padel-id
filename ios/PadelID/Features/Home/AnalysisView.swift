@@ -169,7 +169,6 @@ struct HomeLevelHero: View {
                         if !subtitle.isEmpty {
                             Text(subtitle)
                                 .font(.subheadline)
-                                .foregroundStyle(Theme.ink.opacity(0.7))
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
@@ -183,7 +182,6 @@ struct HomeLevelHero: View {
 
                 Text("Ваш уровень")
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(Theme.ink.opacity(0.7))
                     .padding(.top, 26)
                 LevelNumeral(level: level, size: 76)
                 if let level {
@@ -249,7 +247,7 @@ struct HomeLevelHero: View {
                 if rating.provisional {
                     Text("Предварительный рейтинг")
                         .font(.footnote)
-                        .foregroundStyle(Theme.ink.opacity(0.7))
+                        .foregroundStyle(Theme.inkSoft)
                 }
             }
             .fixedSize(horizontal: false, vertical: true)
@@ -264,7 +262,7 @@ struct HomeLevelHero: View {
                     .font(.subheadline.weight(.bold)).monospacedDigit()
                 Text("за 30 дней")
                     .font(.subheadline)
-                    .foregroundStyle(Theme.ink.opacity(0.7))
+                    .foregroundStyle(Theme.inkSoft)
             }
             .fixedSize()
         }

@@ -112,7 +112,7 @@ private extension WelcomeView {
                 .padding(.top, 6)
             Text("Игроки, общение и спортивный прогресс — в одном приложении.")
                 .font(.body)
-                .foregroundStyle(Theme.ink.opacity(0.72))
+                .foregroundStyle(Theme.inkSoft)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 12)
         }

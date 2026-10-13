@@ -199,7 +199,7 @@ struct ChatView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 Text(message.createdAt, format: .dateTime.day().month().hour().minute())
                     .font(.caption2)
-                    .foregroundStyle(mine ? AnyShapeStyle(Theme.ink.opacity(0.65)) : AnyShapeStyle(.secondary))
+                    .foregroundStyle(mine ? AnyShapeStyle(Theme.inkSoft) : AnyShapeStyle(.secondary))
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)

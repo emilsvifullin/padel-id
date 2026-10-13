@@ -174,13 +174,15 @@ struct AchievementsTests {
     @Test("Reached milestones come before the ones still ahead")
     func earnedFirst() {
         let list = Achievements.list(stats: stats(matches: 12, wins: 3), rating: nil)
-        let firstPending = list.firstIndex { !$0.isEarned } ?? list.count
-        #expect(list[..<firstPending].allSatisfy(\.isEarned))
-        #expect(list[firstPending...].allSatisfy { !$0.isEarned })
+        let earned = list.map(\.isEarned)
+        let sorted = earned.filter { $0 } + earned.filter { !$0 }
+        #expect(earned == sorted)
+        #expect(earned.contains(true) && earned.contains(false))
     }
 
     @Test("Nothing is earned before the first confirmed match")
     func emptyHistory() {
-        #expect(Achievements.list(stats: stats(matches: 0, wins: 0), rating: nil).allSatisfy { !$0.isEarned })
+        let earned = Achievements.list(stats: stats(matches: 0, wins: 0), rating: nil).filter(\.isEarned)
+        #expect(earned.isEmpty)
     }
 }

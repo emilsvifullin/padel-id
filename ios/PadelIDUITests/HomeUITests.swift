@@ -68,8 +68,10 @@ final class HomeUITests: PadelIDUITestCase {
                 // measure; every other category and all fully visible text
                 // stay strict.
                 guard issue.auditType == .contrast, let target = issue.element else { return false }
+                // The floating tab bar blurs what scrolls under it well above
+                // its own frame.
                 let top = self.app.navigationBars.firstMatch.frame.maxY
-                let bottom = self.app.tabBars.firstMatch.frame.minY
+                let bottom = min(self.app.tabBars.firstMatch.frame.minY - 16, self.app.windows.firstMatch.frame.maxY - 110)
                 if target.frame.minY < top || target.frame.maxY > bottom {
                     print("ACCESSIBILITY EDGE FRAGMENT: \(target.label), frame=\(target.frame), content=\(top)...\(bottom)")
                     return true

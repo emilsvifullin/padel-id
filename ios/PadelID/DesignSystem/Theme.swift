@@ -22,6 +22,8 @@ enum Theme {
     /// The icon's glyph colour.
     static let ink = Color(red: 0.027, green: 0.067, blue: 0.059)
     static let inkRaised = Color(red: 0.090, green: 0.165, blue: 0.145)
+    /// Supporting text on lime: still ink, a step quieter.
+    static let inkSoft = ink.opacity(0.86)
 
     // MARK: Neutrals
 

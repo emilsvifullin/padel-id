@@ -62,9 +62,8 @@ struct HomeView: View {
                 if let profile = home.value?.profile ?? app.me?.profile {
                     ToolbarItem(placement: .topBarTrailing) {
                         NavigationLink(value: Route.player(profile.id)) {
-                            AvatarView(profile: profile, size: 30)
+                            Label("Ваш профиль", systemImage: "person.crop.circle")
                         }
-                        .accessibilityLabel("Ваш профиль")
                         .accessibilityIdentifier("home.profile")
                     }
                 }
@@ -99,7 +98,7 @@ struct HomeView: View {
 
     private var findGame: some View {
         NavigationLink(value: Route.upcomingGames) {
-            HomeActionTile(title: "Найти игру", symbol: "magnifyingglass", isPrimary: true)
+            HomeActionTile(title: "Найти игру", symbol: "magnifyingglass")
         }
         .buttonStyle(.padelCard)
         .accessibilityIdentifier("home.findGame")
@@ -288,20 +287,19 @@ struct HomeView: View {
     }
 }
 
-/// One of the Home shortcuts.
+/// One of the Home shortcuts: a symbol and a title on a quiet surface, so the
+/// ID card above stays the one bright thing on the screen.
 private struct HomeActionTile: View {
     let title: String
     let symbol: String
-    var isPrimary = false
     @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 16) {
             Image(systemName: symbol)
-                .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(isPrimary ? Theme.ink : Theme.accent)
-                .frame(width: 40, height: 40)
-                .background(isPrimary ? AnyShapeStyle(Theme.lime) : AnyShapeStyle(Theme.accent.opacity(0.14)), in: .circle)
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(Theme.accent)
+                .frame(height: 28, alignment: .leading)
                 .accessibilityHidden(true)
             Text(title)
                 .font(.headline)
@@ -310,7 +308,7 @@ private struct HomeActionTile: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(16)
-        .frame(maxWidth: .infinity, minHeight: 112, maxHeight: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, minHeight: 104, maxHeight: .infinity, alignment: .topLeading)
         .background(Theme.surface, in: .rect(cornerRadius: 22, style: .continuous))
         .contentShape(.rect(cornerRadius: 22, style: .continuous))
         .opacity(isEnabled ? 1 : 0.5)
