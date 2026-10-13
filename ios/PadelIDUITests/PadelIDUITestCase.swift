@@ -88,7 +88,8 @@ class PadelIDUITestCase: XCTestCase {
     /// Starts a fresh stub server for the scenario and launches the app with a
     /// clean state pointed at it.
     @discardableResult
-    func launch(_ scenario: StubServer.Scenario, configure: (StubServer) -> Void = { _ in }) throws -> XCUIApplication {
+    func launch(_ scenario: StubServer.Scenario, arguments: [String] = [],
+                configure: (StubServer) -> Void = { _ in }) throws -> XCUIApplication {
         continueAfterFailure = false
         let server = StubServer(scenario: scenario)
         configure(server)
@@ -96,7 +97,7 @@ class PadelIDUITestCase: XCTestCase {
         self.server = server
 
         let app = XCUIApplication()
-        app.launchArguments = ["-padelid-uitest-reset-state"]
+        app.launchArguments = ["-padelid-uitest-reset-state"] + arguments
         app.launchEnvironment = ["PADELID_UITEST_API_BASE_URL": "http://localhost:\(server.port)"]
         self.app = app
 

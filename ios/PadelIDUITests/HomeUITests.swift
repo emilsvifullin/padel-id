@@ -37,9 +37,33 @@ final class HomeUITests: PadelIDUITestCase {
     /// The system accessibility audit on the two screens that carry the
     /// brand surfaces, in both themes: contrast, labels, hit regions, Dynamic
     /// Type and clipped text.
+    ///
+    /// Dynamic Type is also measured directly. The audit of the Xcode on the CI
+    /// runners reports text in a SwiftUI scroll view as not resizable when it
+    /// does resize, so the test first launches the app at the largest text
+    /// size and records how much room every label takes there. A Dynamic Type
+    /// finding is set aside only for a label that this measurement shows
+    /// growing; a label that does not grow, or was not measured, still fails.
     func testHomeAndAppearanceAccessibility() throws {
+        try launch(.existingUser, arguments: ["-UIPreferredContentSizeCategoryName", Self.largestTextSize])
+        signIn(); waitForHome()
+        require(element("home.level"), timeout: 15, "home.level")
+        let homeAtLargest = labelAreas()
+        selectTab("Профиль")
+        open(element("account.appearance"), screen: "Оформление")
+        let appearanceAtLargest = labelAreas()
+        app.terminate()
+        server.stop()
+
         try launch(.existingUser)
         signIn(); waitForHome()
+        // The measurement means something only if that launch really used a
+        // larger text size than this one.
+        require(element("home.level"), timeout: 15, "home.level")
+        let levelTitle = "Ваш уровень"
+        let levelTitleNow = try XCTUnwrap(labelAreas()[levelTitle], "level title on Home")
+        XCTAssertGreaterThanOrEqual(homeAtLargest[levelTitle] ?? 0, levelTitleNow * 1.15,
+                                    "the measurement launch ran at the largest text size")
         // Record every failure of a pass instead of stopping at the first.
         continueAfterFailure = true
         defer { continueAfterFailure = false }
@@ -47,29 +71,51 @@ final class HomeUITests: PadelIDUITestCase {
         open(element("account.appearance"), screen: "Оформление")
         for title in ["Тёмная", "Светлая"] {
             tap(button(label: title))
-            try auditVisibleScreen()
+            try auditVisibleScreen(atLargestTextSize: appearanceAtLargest)
             snap("appearance-accessibility-" + title)
             selectTab("Главная")
             require(element("home.level"), timeout: 15, "home.level")
-            try auditVisibleScreen()
+            try auditVisibleScreen(atLargestTextSize: homeAtLargest)
             snap("home-accessibility-" + title)
             selectTab("Профиль")
         }
     }
 
-    private func auditVisibleScreen() throws {
+    /// Above every text size the suite's simulators are configured with.
+    private static let largestTextSize = "UICTContentSizeCategoryAccessibilityXXXL"
+
+    /// The area each labelled text or button takes on the current screen.
+    private func labelAreas() -> [String: CGFloat] {
+        var areas: [String: CGFloat] = [:]
+        for query in [app.staticTexts, app.buttons] {
+            for candidate in query.allElementsBoundByIndex where candidate.exists && !candidate.label.isEmpty {
+                let frame = candidate.frame
+                areas[candidate.label] = max(areas[candidate.label] ?? 0, frame.width * frame.height)
+            }
+        }
+        return areas
+    }
+
+    private func auditVisibleScreen(atLargestTextSize largest: [String: CGFloat]) throws {
         let types: [XCUIAccessibilityAuditType] = [.dynamicType, .textClipped, .contrast, .sufficientElementDescription, .hitRegion]
         for type in types {
             try app.performAccessibilityAudit(for: type) { issue in
                 print("ACCESSIBILITY AUDIT: \(issue.compactDescription); target: \(issue.element?.debugDescription ?? "unknown")")
                 print("ACCESSIBILITY DETAIL: \(issue.detailedDescription)")
+                guard let target = issue.element else { return false }
+                if issue.auditType == .dynamicType {
+                    // Set aside only what the measurement launch proved to resize.
+                    let now = target.frame.width * target.frame.height
+                    guard now > 0, let grown = largest[target.label], grown >= now * 1.15 else { return false }
+                    print("ACCESSIBILITY MEASURED: \(target.label) takes \(Int(now)) pt² now and \(Int(grown)) pt² at the largest text size")
+                    return true
+                }
                 // The contrast audit samples the screenshot. Scroll content cut
                 // by the navigation or tab bar has no complete glyphs to
                 // measure; every other category and all fully visible text
-                // stay strict.
-                guard issue.auditType == .contrast, let target = issue.element else { return false }
-                // The floating tab bar blurs what scrolls under it well above
-                // its own frame.
+                // stay strict. The floating tab bar blurs what scrolls under
+                // it well above its own frame.
+                guard issue.auditType == .contrast else { return false }
                 let top = self.app.navigationBars.firstMatch.frame.maxY
                 let bottom = min(self.app.tabBars.firstMatch.frame.minY - 16, self.app.windows.firstMatch.frame.maxY - 110)
                 if target.frame.minY < top || target.frame.maxY > bottom {
