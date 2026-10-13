@@ -29,11 +29,6 @@ struct AccountView: View {
                         Label("Оформление", systemImage: "paintpalette")
                     }
                     .accessibilityIdentifier("account.appearance")
-                    NavigationLink {
-                        NetworkDiagnosticsView()
-                    } label: {
-                        Label("Проверка сети", systemImage: "network")
-                    }
                 }
                 styleSection
                 coachSection
@@ -164,6 +159,11 @@ struct AccountView: View {
                 Label("Как устроены рейтинг и Padel DNA", systemImage: "book")
             }
             .accessibilityIdentifier("account.aboutRating")
+            NavigationLink {
+                NetworkDiagnosticsView()
+            } label: {
+                Label("Проверка сети", systemImage: "network")
+            }
             LabeledContent("Версия", value: AppEnvironment.version)
             LabeledContent("Сборка", value: AppEnvironment.buildNumber)
         } header: {

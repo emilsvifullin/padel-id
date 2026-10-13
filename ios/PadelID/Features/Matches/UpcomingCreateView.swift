@@ -73,7 +73,7 @@ struct UpcomingCreateView: View {
                 }
             }
             .disabled(isWorking || hasSubmission)
-            .navigationTitle(isPrivate ? "Новая закрытая игра" : "Новая открытая игра")
+            .navigationTitle("Новая игра")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() }.disabled(isWorking) }

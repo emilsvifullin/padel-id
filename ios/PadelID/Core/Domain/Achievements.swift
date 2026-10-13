@@ -21,7 +21,7 @@ nonisolated enum Achievements {
     /// the next one that is not.
     static func list(stats: PlayerStats, rating: RatingSummary?) -> [Achievement] {
         var all: [Achievement] = []
-        all += ladder("matches", stats.matches, steps: [1, 10, 50, 100, 250], symbol: "tennis.racket") {
+        all += ladder("matches", stats.matches, steps: [1, 10, 50, 100, 250], symbol: "padel.racket") {
             $0 == 1 ? "Первый подтверждённый матч" : "\($0) подтверждённых матчей"
         }
         all += ladder("wins", stats.wins, steps: [1, 10, 25, 50, 100], symbol: "trophy.fill") {

@@ -201,7 +201,7 @@ final class SocialUITests: PadelIDUITestCase {
         selectTab("Матчи")
         open(element("matches.upcoming"), screen: "Предстоящие игры")
         tap(require(element("upcoming.create"), "create game"))
-        requireScreen("Новая открытая игра")
+        requireScreen("Новая игра")
         let place = require(element("upcoming.location"), "meeting place")
         scrollIntoView(place)
         place.tap()
@@ -214,7 +214,7 @@ final class SocialUITests: PadelIDUITestCase {
         XCTAssertFalse(element("upcoming.location").isEnabled, "An uncertain response must retain the originally submitted parameters")
         server.removeOverride("POST", "v1/upcoming-matches")
         tap(retry)
-        XCTAssertTrue(waitUntil(timeout: 15) { !app.navigationBars["Новая открытая игра"].exists })
+        XCTAssertTrue(waitUntil(timeout: 15) { !app.navigationBars["Новая игра"].exists })
         let requests = server.recorded("POST", "v1/upcoming-matches")
         XCTAssertGreaterThan(requests.count, 1)
         XCTAssertEqual(Set(requests.compactMap { $0.header("Idempotency-Key") }).count, 1)
@@ -239,7 +239,7 @@ final class SocialUITests: PadelIDUITestCase {
         open(game, screen: "Открытая игра")
         scrollIntoView(element("upcoming.result"))
         tap(require(element("upcoming.result"), "enter scheduled result"))
-        requireScreen("Внести результат")
+        requireScreen("Результат")
         snap("scheduled-result-lineup")
         for number in [1, 2] {
             tap(element("editor.set.\(number)"))
@@ -337,7 +337,7 @@ final class SocialUITests: PadelIDUITestCase {
         tap(require(app.segmentedControls.buttons["Турниры"], "tournament kind"))
         open(button(labelPrefix: "Перенос турнира"), screen: "Турнир")
         scrollIntoView(button(label: "Изменить время и условия"))
-        open(button(label: "Изменить время и условия"), screen: "Изменить событие")
+        open(button(label: "Изменить время и условия"), screen: "Событие")
         func editEventTitle(_ text: String) -> String {
             // Removing the review section can leave the form below this lazy row.
             scrollIntoView(element("eventEdit.title"), searchBelow: false)
@@ -375,7 +375,7 @@ final class SocialUITests: PadelIDUITestCase {
             server.setOverride("GET", "v1/events/" + path, .json(savedData))
         }
         let save = require(app.buttons["eventEdit.save"]); waitEnabled(save); tap(save)
-        XCTAssertTrue(waitUntil(timeout: 15) { !app.navigationBars["Изменить событие"].exists })
+        XCTAssertTrue(waitUntil(timeout: 15) { !app.navigationBars["Событие"].exists })
         let sent = paths.flatMap { server.recorded("PUT", "v1/events/" + $0) }
         XCTAssertEqual(sent.count, 2)
         XCTAssertEqual(sent.first?.jsonObject?["version"] as? Int, 1)

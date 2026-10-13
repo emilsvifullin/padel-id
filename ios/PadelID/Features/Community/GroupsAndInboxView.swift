@@ -25,7 +25,7 @@ struct GroupsView: View {
             CommunityCollectionFooter(collection: groups)
             if let error { SettingsErrorRow(message: error) }
         }
-        .navigationTitle("Сообщества")
+        .navigationTitle("Группы")
         .searchable(text: $query, prompt: "Найти группу")
         .toolbar { Button("Создать", systemImage: "plus") { creating = true } }
         .sheet(isPresented: $creating) { ConversationCreateView() }
@@ -159,7 +159,7 @@ private struct NotificationRow: View {
         case "reaction": "heart.fill"
         case "match": "checkmark.seal.fill"
         case "event": "calendar"
-        case let kind where kind.hasPrefix("game_"): "tennis.racket"
+        case let kind where kind.hasPrefix("game_"): PadelSymbol.racket
         case let kind where kind.hasPrefix("friend_"): "person.2.fill"
         default: "bell.fill"
         }

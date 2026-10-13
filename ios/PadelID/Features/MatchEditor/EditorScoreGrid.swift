@@ -144,9 +144,7 @@ struct EditorScoreGrid: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 6)
         }
-        .buttonBorderShape(.roundedRectangle(radius: Theme.smallCornerRadius))
-        .controlSize(.large)
-        .modifier(EditorScoreButtonStyle(isSelected: isSelected))
+        .buttonStyle(EditorScoreButtonStyle(isSelected: isSelected))
         .accessibilityLabel(Text(verbatim: "\(option.t1):\(option.t2)"))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityIdentifier("score.\(option.t1)-\(option.t2)")
@@ -243,16 +241,17 @@ struct EditorScoreGrid: View {
     }
 }
 
-/// Selected result: prominent; others: bordered.
-private struct EditorScoreButtonStyle: ViewModifier {
+/// A set result to pick: a plain card until chosen, then the icon's lime.
+private struct EditorScoreButtonStyle: ButtonStyle {
     let isSelected: Bool
 
-    @ViewBuilder
-    func body(content: Content) -> some View {
-        if isSelected {
-            content.buttonStyle(.padelProminent)
-        } else {
-            content.buttonStyle(.bordered)
-        }
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(isSelected ? Theme.ink : Color.primary)
+            .frame(minHeight: 52)
+            .background(isSelected ? AnyShapeStyle(Theme.lime) : AnyShapeStyle(Theme.surface),
+                        in: .rect(cornerRadius: Theme.smallCornerRadius, style: .continuous))
+            .contentShape(.rect(cornerRadius: Theme.smallCornerRadius, style: .continuous))
+            .opacity(configuration.isPressed ? 0.7 : 1)
     }
 }

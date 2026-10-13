@@ -91,7 +91,7 @@ struct EventEditView: View {
                 }
                 .disabled(working || pending != nil || needsReload || needsReview || !event.rosterIsOpen)
             }
-            .navigationTitle("Изменить событие")
+            .navigationTitle("Событие")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Закрыть") { dismiss() }.disabled(working) }

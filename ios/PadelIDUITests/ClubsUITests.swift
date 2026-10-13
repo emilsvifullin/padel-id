@@ -113,7 +113,7 @@ final class ClubsUITests: PadelIDUITestCase {
         }
         signIn(); waitForHome(); selectTab("Клубы")
         open(row("clubs.row", containing: clubName, timeout: 15), screen: "Клуб")
-        open(element("club.edit"), screen: "Информация о клубе")
+        open(element("club.edit"), screen: "О клубе")
         let reason = scrollIntoView(element("clubEditor.reason"))
         enter("Проверено по сведениям клуба", into: reason)
         tap(button(label: "Сохранить"))
@@ -121,7 +121,7 @@ final class ClubsUITests: PadelIDUITestCase {
         XCTAssertEqual(request?.jsonObject?["version"] as? Int, 2)
         XCTAssertTrue(request?.jsonObject?["latitude"] is NSNull)
         XCTAssertTrue(request?.jsonObject?["longitude"] is NSNull)
-        requireScreen("Информация о клубе")
+        requireScreen("О клубе")
         scrollIntoView(button(label: "Загрузить текущую информацию"))
         require(button(label: "Загрузить текущую информацию"), "conflict requires canonical reload")
         XCTAssertFalse(button(label: "Сохранить").isEnabled)

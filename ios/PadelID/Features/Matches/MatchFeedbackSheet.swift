@@ -68,7 +68,7 @@ struct MatchFeedbackSheet: View {
                 }
             }
             .disabled(isSubmitting)
-            .navigationTitle("Отметки игрокам")
+            .navigationTitle("Отметки")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

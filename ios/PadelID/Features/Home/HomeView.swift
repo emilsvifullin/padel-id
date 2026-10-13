@@ -83,22 +83,38 @@ struct HomeView: View {
         }
     }
 
-    /// Four ways into the game, two to a row; one to a row at accessibility sizes.
+    /// Looking for a game leads, creating one sits next to it, and the two
+    /// quieter destinations share a row below; one to a row at accessibility sizes.
     @ViewBuilder
     private var quickActions: some View {
         if dynamicTypeSize.isAccessibilitySize {
             VStack(spacing: 10) { findGame; createGame; sportsEvents; findPlayers }
         } else {
-            Grid(horizontalSpacing: 10, verticalSpacing: 10) {
-                GridRow { findGame; createGame }
-                GridRow { sportsEvents; findPlayers }
+            VStack(spacing: 10) {
+                HStack(spacing: 10) { findGame; createGame.fixedSize(horizontal: true, vertical: false) }
+                HStack(spacing: 10) { sportsEvents; findPlayers }
             }
         }
     }
 
     private var findGame: some View {
         NavigationLink(value: Route.upcomingGames) {
-            HomeActionTile(title: "Найти игру", symbol: "magnifyingglass")
+            HStack(spacing: 12) {
+                Image(systemName: "magnifyingglass")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(Theme.lime)
+                    .accessibilityHidden(true)
+                Text("Найти игру").font(.headline)
+                Spacer(minLength: 8)
+                Image(systemName: "arrow.right")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.white.opacity(0.7))
+                    .accessibilityHidden(true)
+            }
+            .padding(.horizontal, 18)
+            .frame(maxWidth: .infinity, minHeight: HomeActionMetrics.height)
+            .inkCard(cornerRadius: HomeActionMetrics.cornerRadius)
+            .contentShape(.rect(cornerRadius: HomeActionMetrics.cornerRadius, style: .continuous))
         }
         .buttonStyle(.padelCard)
         .accessibilityIdentifier("home.findGame")
@@ -106,10 +122,18 @@ struct HomeView: View {
 
     private var createGame: some View {
         Button { isCreating = true } label: {
-            HomeActionTile(title: "Создать игру", symbol: "plus")
+            Label("Создать", systemImage: "plus")
+                .font(.headline)
+                .foregroundStyle(Theme.ink)
+                .padding(.horizontal, 18)
+                .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : nil, minHeight: HomeActionMetrics.height)
+                .background(Theme.lime, in: .rect(cornerRadius: HomeActionMetrics.cornerRadius, style: .continuous))
+                .contentShape(.rect(cornerRadius: HomeActionMetrics.cornerRadius, style: .continuous))
+                .opacity(app.isOnline ? 1 : 0.5)
         }
         .buttonStyle(.padelCard)
         .disabled(!app.isOnline)
+        .accessibilityLabel("Создать игру")
         .accessibilityIdentifier("home.createGame")
     }
 
@@ -189,7 +213,7 @@ struct HomeView: View {
                 } else {
                     SectionContainer {
                         VStack(alignment: .leading, spacing: 8) {
-                            Label("Следующая игра — впереди", systemImage: "tennis.racket")
+                            Label("Следующая игра — впереди", image: PadelSymbol.racket)
                                 .font(.headline)
                             Text("Найдите открытую игру или соберите свою. Здесь появится ближайший матч, в котором вы участвуете.")
                                 .font(.subheadline).foregroundStyle(Theme.supportingText)
@@ -287,30 +311,33 @@ struct HomeView: View {
     }
 }
 
-/// One of the Home shortcuts: a symbol and a title on a quiet surface, so the
-/// ID card above stays the one bright thing on the screen.
+private enum HomeActionMetrics {
+    static let height: CGFloat = 58
+    static let cornerRadius: CGFloat = 22
+}
+
+/// A quieter destination on the Home: symbol and title in one line.
 private struct HomeActionTile: View {
     let title: String
     let symbol: String
-    @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        HStack(spacing: 10) {
             Image(systemName: symbol)
-                .font(.title3.weight(.semibold))
+                .font(.headline)
                 .foregroundStyle(Theme.accent)
-                .frame(height: 28, alignment: .leading)
+                .frame(width: 24)
                 .accessibilityHidden(true)
             Text(title)
-                .font(.headline)
+                .font(.subheadline.weight(.semibold))
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, minHeight: 104, maxHeight: .infinity, alignment: .topLeading)
-        .background(Theme.surface, in: .rect(cornerRadius: 22, style: .continuous))
-        .contentShape(.rect(cornerRadius: 22, style: .continuous))
-        .opacity(isEnabled ? 1 : 0.5)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, minHeight: HomeActionMetrics.height, maxHeight: .infinity)
+        .background(Theme.surface, in: .rect(cornerRadius: HomeActionMetrics.cornerRadius, style: .continuous))
+        .contentShape(.rect(cornerRadius: HomeActionMetrics.cornerRadius, style: .continuous))
     }
 }

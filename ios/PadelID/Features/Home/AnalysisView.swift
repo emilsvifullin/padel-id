@@ -104,16 +104,10 @@ private struct HomeDashboard: View {
         let isNewUser = matches == 0
         let insights = home.insights.compactMap { Narratives.insight($0) }
         return VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
-            VStack(alignment: .leading, spacing: 14) {
-                if model.home.isStale, let error = model.home.error {
-                    StaleDataBanner(error: error)
-                }
-                HomeLevelHero(meId: meId, profile: home.profile, rating: home.rating, matches: matches)
-                if !home.actionItems.isEmpty {
-                    HomeActionsRow(count: home.actionItems.count) {
-                        app.selectedTab = .matches
-                    }
-                }
+            // The player card and what awaits an answer live on the Home;
+            // this screen starts with the analysis itself.
+            if model.home.isStale, let error = model.home.error {
+                StaleDataBanner(error: error)
             }
             if isNewUser {
                 HomeWelcomeBlock {
@@ -280,44 +274,6 @@ struct HomeLevelHero: View {
 }
 
 // MARK: - Matches awaiting a response
-
-private struct HomeActionsRow: View {
-    let count: Int
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: "bell.badge.fill")
-                    .font(.title3)
-                    .foregroundStyle(Theme.attention)
-                    .accessibilityHidden(true)
-                Text(title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.tertiary)
-                    .accessibilityHidden(true)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-            .background(Theme.attention.opacity(0.14), in: .rect(cornerRadius: Theme.smallCornerRadius, style: .continuous))
-            .contentShape(.rect(cornerRadius: Theme.smallCornerRadius, style: .continuous))
-        }
-        .buttonStyle(.plain)
-        .accessibilityHint("Открывает раздел «Матчи»")
-        .accessibilityIdentifier("home.actions")
-    }
-
-    private var title: String {
-        "\(Format.matches(count)) \(Format.plural(count, "ждёт", "ждут", "ждут")) вашего ответа"
-    }
-}
 
 // MARK: - Card header
 

@@ -78,7 +78,7 @@ struct CoachAssessmentView: View {
                     }
                 }
             }
-            .navigationTitle("Оценка тренера")
+            .navigationTitle("Оценка")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

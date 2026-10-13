@@ -444,7 +444,7 @@ private struct RatingDetailSummary: View {
     private var reliabilityColumn: some View {
         if let rating {
             HStack(spacing: 12) {
-                ReliabilityRing(reliability: rating.reliability, size: 48)
+                ReliabilityMark(reliability: rating.reliability, size: 48)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(verbatim: "Надёжность \(rating.reliability)%")

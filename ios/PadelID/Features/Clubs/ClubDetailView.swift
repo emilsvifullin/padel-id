@@ -180,7 +180,7 @@ struct ClubDetailView: View {
             else if let nextOffset {
                 Button("Ещё игры") { Task { await loadGames(offset: nextOffset) } }.disabled(isLoading).accessibilityIdentifier("club.moreGames")
             } else if hasLoaded && games.isEmpty && error == nil {
-                ContentUnavailableView("Открытых игр пока нет", systemImage: "tennis.racket",
+                ContentUnavailableView("Открытых игр пока нет", image: PadelSymbol.racket,
                                        description: Text("Игры в этом клубе появятся здесь после публикации участниками."))
                     .accessibilityIdentifier("club.gamesEmpty")
             }

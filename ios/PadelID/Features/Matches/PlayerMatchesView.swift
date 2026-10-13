@@ -64,7 +64,7 @@ struct PlayerMatchesView: View {
             if pager.items.isEmpty {
                 ContentUnavailableView(
                     "Матчей пока нет",
-                    systemImage: "sportscourt",
+                    image: PadelSymbol.racket,
                     description: Text("Здесь появятся матчи, подтверждённые всеми участниками."))
             }
         }

@@ -198,9 +198,10 @@ struct RatingDetailTests {
         #expect(data.yDomain == 0...7)
     }
 
-    @Test("The native racket symbol exists in the target SDK")
-    func racketSymbol() {
-        #expect(UIImage(systemName: "tennis.racket") != nil)
+    @Test("The app's own racket and court symbols are in the bundle")
+    func ownSymbols() {
+        #expect(UIImage(named: PadelSymbol.racket) != nil)
+        #expect(UIImage(named: PadelSymbol.court) != nil)
     }
 }
 

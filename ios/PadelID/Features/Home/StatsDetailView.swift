@@ -327,7 +327,7 @@ private struct StatsAchievementsSection: View {
             Section {
                 ForEach(achievements) { achievement in
                     HStack(spacing: 12) {
-                        Image(systemName: achievement.symbol)
+                        Image(symbol: achievement.symbol)
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(achievement.isEarned ? Theme.ink : Color.secondary)
                             .frame(width: 40, height: 40)

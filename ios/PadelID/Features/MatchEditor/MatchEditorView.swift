@@ -54,7 +54,7 @@ struct MatchEditorView: View {
                     }
                 }
             }
-            .navigationTitle(model.isEditing ? "Изменить матч" : model.upcomingMatch != nil ? "Внести результат" : "Новый матч")
+            .navigationTitle(model.isEditing ? "Изменить матч" : model.upcomingMatch != nil ? "Результат" : "Новый матч")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
             .sheet(item: $pickingSlot) { slot in

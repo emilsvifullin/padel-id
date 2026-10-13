@@ -50,7 +50,7 @@ struct FeedView: View {
                 }
                 ForEach(posts.items) { post in
                     NavigationLink(value: Route.post(post.id)) {
-                        PostSummary(post: post)
+                        PostSummary(post: post, bodyLineLimit: 8)
                             .padding(18)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(Theme.surface, in: .rect(cornerRadius: Theme.cornerRadius, style: .continuous))
@@ -106,6 +106,8 @@ struct FeedView: View {
 /// A post as it reads in the feed and at the top of its own screen.
 struct PostSummary: View {
     let post: CommunityPost
+    /// The feed shows the start of a long post; the post's own screen shows all of it.
+    var bodyLineLimit: Int? = nil
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
@@ -127,6 +129,7 @@ struct PostSummary: View {
                     .accessibilityIdentifier("post.club")
             }
             Text(post.body)
+                .lineLimit(bodyLineLimit)
                 .foregroundStyle(.primary)
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)

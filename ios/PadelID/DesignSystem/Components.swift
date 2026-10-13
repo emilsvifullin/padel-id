@@ -72,8 +72,10 @@ struct DeltaText: View {
     }
 }
 
-/// Circular reliability indicator.
-struct ReliabilityRing: View {
+/// Rating reliability as the racket holes of the icon: the more of the six
+/// are filled, the more the level can be trusted. The same mark as on the
+/// player card of the Home.
+struct ReliabilityMark: View {
     let reliability: Int
     @ScaledMetric private var size: CGFloat
 
@@ -83,20 +85,12 @@ struct ReliabilityRing: View {
     }
 
     var body: some View {
-        ZStack {
-            Circle().stroke(Color.secondary.opacity(0.2), lineWidth: size * 0.11)
-            Circle()
-                .trim(from: 0, to: CGFloat(reliability) / 100)
-                .stroke(Theme.accent, style: StrokeStyle(lineWidth: size * 0.11, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-            Text("\(reliability)")
-                .font(.display(size: size * 0.3, weight: .bold))
-                .monospacedDigit()
-        }
-        .frame(width: size, height: size)
-        .accessibilityElement(children: .ignore)
-        // VoiceOver declines «%» itself (a hard-coded «процентов» did not).
-        .accessibilityLabel("Надёжность рейтинга " + String(reliability) + "%")
+        PerforationGrid(filled: PerforationGrid.holes(for: reliability), dot: size * 0.23, gap: size * 0.12,
+                        color: Theme.accent)
+            .frame(width: size, height: size)
+            .accessibilityElement(children: .ignore)
+            // VoiceOver declines «%» itself (a hard-coded «процентов» did not).
+            .accessibilityLabel("Надёжность рейтинга " + String(reliability) + "%")
     }
 }
 
@@ -419,6 +413,44 @@ struct FormResultDot: View {
 }
 
 // MARK: - Layout
+
+/// Small items in rows that wrap, like words in a line.
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 6
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let rows = arrange(subviews, width: proposal.width ?? .infinity)
+        let width = rows.map(\.width).max() ?? 0
+        let height = rows.map(\.height).reduce(0, +) + spacing * CGFloat(max(0, rows.count - 1))
+        return CGSize(width: proposal.width.map { min($0, width) } ?? width, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var y = bounds.minY
+        for row in arrange(subviews, width: bounds.width) {
+            var x = bounds.minX
+            for index in row.indices {
+                let size = subviews[index].sizeThatFits(ProposedViewSize(width: bounds.width, height: nil))
+                subviews[index].place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
+                x += size.width + spacing
+            }
+            y += row.height + spacing
+        }
+    }
+
+    private func arrange(_ subviews: Subviews, width: CGFloat) -> [(indices: [Int], width: CGFloat, height: CGFloat)] {
+        var rows: [(indices: [Int], width: CGFloat, height: CGFloat)] = []
+        for index in subviews.indices {
+            let size = subviews[index].sizeThatFits(ProposedViewSize(width: width, height: nil))
+            if let last = rows.last, last.width + spacing + size.width <= width {
+                rows[rows.count - 1] = (last.indices + [index], last.width + spacing + size.width, max(last.height, size.height))
+            } else {
+                rows.append(([index], size.width, size.height))
+            }
+        }
+        return rows
+    }
+}
 
 /// Places its subviews side by side in equal widths. Its ideal width is the
 /// widest subview's ideal width times the count, so inside

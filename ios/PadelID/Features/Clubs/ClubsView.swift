@@ -11,37 +11,21 @@ struct ClubsView: View {
     @State private var model = ClubsCatalogModel()
     @State private var prepared = false
     @State private var showsMap = false
+    @State private var isPickingCity = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         PadelNavigationStack {
             List {
                 Section {
-                    NavigationLink { CityPickerView(selection: $city) } label: {
-                        HStack(spacing: 12) {
-                            SymbolPlate(symbol: "mappin.and.ellipse")
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Город").font(.caption).foregroundStyle(.secondary)
-                                Text(city?.name ?? "Выберите город").font(.headline)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                        }
-                        .accessibilityElement(children: .combine)
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 10) { cityChip; Spacer(minLength: 0); modePicker.frame(width: 190) }
+                        VStack(alignment: .leading, spacing: 10) { cityChip; modePicker }
                     }
-                    .accessibilityIdentifier("clubs.city")
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
                 }
                 if let city {
-                    Section {
-                        Picker("Вид каталога", selection: $showsMap) {
-                            Text("Список").tag(false)
-                            Text("Карта").tag(true)
-                        }
-                        .pickerStyle(.segmented)
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                        .accessibilityIdentifier("clubs.mode")
-                    }
-                    .listSectionSpacing(.compact)
                     catalog(city)
                 } else {
                     ContentUnavailableView("Выберите город", systemImage: "building.2",
@@ -66,7 +50,9 @@ struct ClubsView: View {
                     }
                 }
             }
+            .navigationDestination(isPresented: $isPickingCity) { CityPickerView(selection: $city) }
             .navigationTitle("Клубы")
+            .navigationBarTitleDisplayMode(.large)
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Название или адрес клуба")
             .autocorrectionDisabled()
             .refreshable {
@@ -83,6 +69,39 @@ struct ClubsView: View {
         .task(id: "\(city?.id ?? 0).\(app.dataRevision)") { await model.load(city: city, using: app) }
         .task(id: "\(city?.id ?? 0).\(query).\(app.dataRevision)") {
             await model.search(city: city, query: query, using: app)
+        }
+    }
+
+    /// The city the catalog shows, as one compact control next to the view switch.
+    private var cityChip: some View {
+        Button { isPickingCity = true } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "mappin.and.ellipse").imageScale(.small).foregroundStyle(Theme.accent)
+                Text(city?.name ?? "Выберите город").lineLimit(1)
+                Image(systemName: "chevron.down").font(.caption2.weight(.bold)).foregroundStyle(.secondary)
+            }
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(Color.primary)
+            .padding(.horizontal, 14)
+            .frame(minHeight: 36)
+            .background(Theme.surface, in: .capsule)
+            .contentShape(.capsule)
+        }
+        .buttonStyle(.padelCard)
+        .accessibilityLabel("Город")
+        .accessibilityValue(city?.name ?? "Не выбран")
+        .accessibilityIdentifier("clubs.city")
+    }
+
+    @ViewBuilder
+    private var modePicker: some View {
+        if city != nil {
+            Picker("Вид каталога", selection: $showsMap) {
+                Text("Список").tag(false)
+                Text("Карта").tag(true)
+            }
+            .pickerStyle(.segmented)
+            .accessibilityIdentifier("clubs.mode")
         }
     }
 
@@ -156,23 +175,55 @@ private struct ClubCatalogRow: View {
     let club: ClubCatalogEntry
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            SymbolPlate(symbol: "sportscourt.fill")
-            VStack(alignment: .leading, spacing: 4) {
-                Text(club.name).font(.headline).fixedSize(horizontal: false, vertical: true)
-                if let address = club.address, !address.isEmpty {
-                    Text(address).font(.subheadline).foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 12) {
+                SymbolPlate(symbol: PadelSymbol.court)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(club.name).font(.headline).fixedSize(horizontal: false, vertical: true)
+                    if let address = club.address, !address.isEmpty {
+                        Text(address).font(.subheadline).foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
-                Label(Format.count(club.playersCount, "игрок", "игрока", "игроков") + " в сообществе",
-                      systemImage: "person.2.fill")
-                    .font(.footnote).foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            // What the club has, at a glance: courts, players, the first amenities.
+            FlowLayout(spacing: 6) { facts }
         }
         .padding(.vertical, 6)
         .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder
+    private var facts: some View {
+        if let courts = club.courtsCount, courts > 0 {
+            ClubFact(text: Format.count(courts, "корт", "корта", "кортов"), symbol: PadelSymbol.court)
+        }
+        ClubFact(text: Format.count(club.playersCount, "игрок", "игрока", "игроков"), symbol: "person.2.fill")
+        if club.bookingVerifiedAt != nil, club.bookingUrl != nil {
+            ClubFact(text: "Запись на сайте", symbol: "calendar")
+        }
+        ForEach((club.amenities ?? []).prefix(1), id: \.self) { amenity in
+            ClubFact(text: amenity, symbol: nil)
+        }
+    }
+}
+
+/// One fact about a club in the catalog row.
+private struct ClubFact: View {
+    let text: String
+    let symbol: String?
+
+    var body: some View {
+        HStack(spacing: 5) {
+            if let symbol { Image(symbol: symbol).imageScale(.small).accessibilityHidden(true) }
+            Text(text).lineLimit(1)
+        }
+        .font(.caption.weight(.medium))
+        .foregroundStyle(Theme.supportingText)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 5)
+        .background(Theme.inset, in: .capsule)
     }
 }
 
@@ -264,7 +315,7 @@ private struct ClubDirectoryMap: View {
                 if let location = club.coordinates {
                     Annotation(club.name, coordinate: CLLocationCoordinate2D(latitude: location.latitude, longitude: location.longitude)) {
                         NavigationLink(value: Route.club(club.club, city: city)) {
-                            Image(systemName: "tennis.racket")
+                            Image(PadelSymbol.racket)
                                 .font(.title3.bold()).padding(12)
                                 .foregroundStyle(Theme.ink).background(Theme.lime, in: .circle)
                         }

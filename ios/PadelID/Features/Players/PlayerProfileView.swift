@@ -201,10 +201,15 @@ struct PlayerProfileView: View {
 
     private func levelSummary(_ level: Double?) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            LevelNumeral(level: level, size: 44)
             if let level {
+                LevelNumeral(level: level, size: 44)
                 Text(LevelBand(level: level).title)
                     .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
+            } else {
+                // A dash set in the display face reads as a broken bar.
+                Text("Уровень пока недоступен")
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
         }
@@ -214,7 +219,7 @@ struct PlayerProfileView: View {
     private func reliabilitySummary(_ reliability: Int?) -> some View {
         if let reliability {
             HStack(spacing: 10) {
-                ReliabilityRing(reliability: reliability, size: 44)
+                ReliabilityMark(reliability: reliability, size: 44)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Надёжность " + String(reliability) + "%")
@@ -473,7 +478,7 @@ struct PlayerProfileView: View {
                     Button {
                         app.matchEditor = MatchEditorRequest(mode: .create(partner: nil, opponents: [value.profile.card]))
                     } label: {
-                        Label("Внести матч против игрока", systemImage: "sportscourt")
+                        Label("Внести матч против игрока", image: PadelSymbol.racket)
                     }
                     if value.viewer?.canAssess == true {
                         Button {

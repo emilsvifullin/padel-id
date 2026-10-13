@@ -23,6 +23,49 @@ private nonisolated enum MatchesHistoryFilter: String, CaseIterable, Identifiabl
     }
 }
 
+/// The two schedules behind the Matches tab, as cards rather than list rows:
+/// games to come and the trainings and tournaments.
+private struct MatchesDestinations: View {
+    @Environment(NavigationRouter.self) private var navigation
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    var body: some View {
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: 10)) : AnyLayout(HStackLayout(spacing: 10))
+        layout {
+            tile("Предстоящие игры", symbol: PadelSymbol.racket, route: .upcomingGames, id: "matches.upcoming")
+            tile("Тренировки и турниры", symbol: "trophy.fill", route: .sportsEvents, id: "matches.events")
+        }
+    }
+
+    private func tile(_ title: String, symbol: String, route: Route, id: String) -> some View {
+        Button { navigation.path.append(route) } label: {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    Image(symbol: symbol)
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(Theme.lime)
+                    Spacer()
+                    Image(systemName: "arrow.up.right")
+                        .font(.footnote.weight(.bold))
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+                .accessibilityHidden(true)
+                Text(title)
+                    .font(.headline)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, minHeight: 104, maxHeight: .infinity, alignment: .topLeading)
+            .inkCard(cornerRadius: 22)
+            .contentShape(.rect(cornerRadius: 22, style: .continuous))
+        }
+        .buttonStyle(.padelCard)
+        .accessibilityIdentifier(id)
+    }
+}
+
 /// Matches tab: unsent changes, matches awaiting the user's answer, matches
 /// awaiting the other players and the confirmed history.
 struct MatchesView: View {
@@ -76,10 +119,9 @@ struct MatchesView: View {
     private var list: some View {
         List {
             Section {
-                NavigationLink(value: Route.upcomingGames) { Label("Предстоящие игры", systemImage: "tennis.racket") }
-                    .accessibilityIdentifier("matches.upcoming")
-                NavigationLink(value: Route.sportsEvents) { Label("Тренировки и турниры", systemImage: "trophy") }
-                    .accessibilityIdentifier("matches.events")
+                MatchesDestinations()
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
             }
             if let error = staleError {
                 StaleDataBanner(error: error)
@@ -121,7 +163,7 @@ struct MatchesView: View {
 
             if isEverythingEmpty {
                 ContentUnavailableView {
-                    Label("Пока нет матчей", systemImage: "tennis.racket")
+                    Label("Пока нет матчей", image: PadelSymbol.racket)
                 } description: {
                     Text("Внесите первый матч — после подтверждения всеми игроками он появится в истории.")
                 } actions: {

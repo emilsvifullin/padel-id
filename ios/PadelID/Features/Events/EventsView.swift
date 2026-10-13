@@ -19,6 +19,7 @@ struct EventsView: View {
     private var hasLoaded: Bool { events.hasLoaded }
     @State private var isCreating = false
     @State private var prepared = false
+    @State private var isPickingCity = false
 
     var body: some View {
         List {
@@ -28,10 +29,10 @@ struct EventsView: View {
                         Picker("События", selection: $kind) {
                             ForEach(SportEventKind.allCases) { Text($0.title).tag($0) }
                         }.pickerStyle(.segmented).accessibilityIdentifier("events.kind")
-                        Picker("Участие", selection: $mine) {
-                            Text("Ближайшие").tag(false)
-                            Text("Мои").tag(true)
-                        }.pickerStyle(.segmented).accessibilityIdentifier("events.scope")
+                        ViewThatFits(in: .horizontal) {
+                            HStack(spacing: 10) { scopePicker; cityFilter }
+                            VStack(alignment: .leading, spacing: 10) { scopePicker; cityFilter }
+                        }
                     }
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
@@ -40,17 +41,6 @@ struct EventsView: View {
                         .font(.subheadline).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-            }
-            if organizerId == nil && !mine {
-                Section {
-                    Toggle("Все города", isOn: $allCities)
-                    if !allCities {
-                        NavigationLink { CityPickerView(selection: $city) } label: {
-                            LabeledContent("Город", value: city?.name ?? "Выберите")
-                        }
-                    }
-                }
-                .listSectionSpacing(.compact)
             }
             if let error {
                 Section {
@@ -85,6 +75,8 @@ struct EventsView: View {
             } }
         }
         .sheet(isPresented: $isCreating) { EventCreateView(initialKind: kind) }
+        .navigationDestination(isPresented: $isPickingCity) { CityPickerView(selection: $city) }
+        .onChange(of: city) { allCities = false }
         .refreshable { await load(offset: 0) }
         .onAppear {
             guard !prepared else { return }
@@ -104,6 +96,40 @@ struct EventsView: View {
             }
         }
         .padelRoutes()
+    }
+
+    private var scopePicker: some View {
+        Picker("Участие", selection: $mine) {
+            Text("Ближайшие").tag(false)
+            Text("Мои").tag(true)
+        }.pickerStyle(.segmented).accessibilityIdentifier("events.scope")
+    }
+
+    /// Where to look, next to whose events: the catalog narrows to one city
+    /// or opens to all of them. Own events are not tied to a city.
+    @ViewBuilder
+    private var cityFilter: some View {
+        if !mine {
+            Menu {
+                Button("Все города", systemImage: "globe") { allCities = true }
+                Button("Выбрать город", systemImage: "mappin.and.ellipse") { isPickingCity = true }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: allCities ? "globe" : "mappin.and.ellipse").imageScale(.small)
+                    Text(allCities ? "Все города" : city?.name ?? "Город").lineLimit(1)
+                    Image(systemName: "chevron.down").font(.caption2.weight(.bold)).foregroundStyle(.secondary)
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color.primary)
+                .padding(.horizontal, 14)
+                .frame(minHeight: 36)
+                .background(Theme.surface, in: .capsule)
+                .contentShape(.capsule)
+            }
+            .accessibilityLabel("Город")
+            .accessibilityValue(allCities ? "Все города" : city?.name ?? "Не выбран")
+            .accessibilityIdentifier("events.city")
+        }
     }
 
     private var taskKey: String { "\(filterKey).\(app.dataRevision).\(scenePhase)" }

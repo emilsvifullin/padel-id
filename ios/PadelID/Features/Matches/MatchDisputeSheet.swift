@@ -58,7 +58,7 @@ struct MatchDisputeSheet: View {
                 }
             }
             .disabled(isSubmitting)
-            .navigationTitle("Оспорить результат")
+            .navigationTitle("Оспорить")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

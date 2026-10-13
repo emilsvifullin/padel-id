@@ -651,7 +651,7 @@ struct MatchDetailMetaSection: View {
                 if let club = match.club {
                     metaRow("mappin.and.ellipse", [club.name, club.city].compactMap { $0 }.joined(separator: ", "))
                 }
-                metaRow("sportscourt", "\(Narratives.matchType(match.matchType)) матч · \(Narratives.format(match.format))",
+                metaRow(PadelSymbol.racket, "\(Narratives.matchType(match.matchType)) матч · \(Narratives.format(match.format))",
                         detail: match.matchType == .friendly ? "Не влияет на рейтинг" : nil)
                 if match.status == .confirmed, let confirmedAt = match.confirmedAt {
                     metaRow("checkmark.seal", "Подтверждён \(Format.date(confirmedAt))")
@@ -662,7 +662,7 @@ struct MatchDetailMetaSection: View {
 
     private func metaRow(_ symbol: String, _ text: String, detail: String? = nil) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
-            Image(systemName: symbol)
+            Image(symbol: symbol)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .frame(width: 24)

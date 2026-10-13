@@ -27,7 +27,7 @@ struct UpcomingListView: View {
                 NavigationLink(value: Route.upcoming(match.id)) { UpcomingMatchRow(match: match) }
             }
             if items.isEmpty && !isLoading && error == nil {
-                ContentUnavailableView(mine ? "Пока нет ваших игр" : "Открытых игр пока нет", systemImage: "tennis.racket",
+                ContentUnavailableView(mine ? "Пока нет ваших игр" : "Открытых игр пока нет", image: PadelSymbol.racket,
                                        description: Text("Опубликуйте игру и пригласите игроков занять свободные места."))
             }
             if let nextOffset {

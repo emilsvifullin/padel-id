@@ -35,7 +35,7 @@ nonisolated enum Format {
     }
 
     static func count(_ n: Int, _ one: String, _ few: String, _ many: String) -> String {
-        "\(n) \(plural(n, one, few, many))"
+        "\(n.formatted(.number.locale(locale))) \(plural(n, one, few, many))"
     }
 
     static func matches(_ n: Int) -> String { count(n, "матч", "матча", "матчей") }

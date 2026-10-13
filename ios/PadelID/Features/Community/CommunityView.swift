@@ -41,7 +41,7 @@ struct CommunityShortcuts: View {
     private func shortcut(_ title: String, symbol: String, route: Route, id: String) -> some View {
         NavigationLink(value: route) {
             VStack(spacing: 8) {
-                Image(systemName: symbol)
+                Image(symbol: symbol)
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(Theme.accent)
                     .frame(height: 24)
@@ -204,7 +204,7 @@ private struct ConversationRow: View {
         if conversation.kind == "direct", let peer = conversation.members.first(where: { $0.id != me })?.player {
             AvatarView(card: peer, size: 46)
         } else {
-            SymbolPlate(symbol: conversation.kind == "game" ? "tennis.racket" : "person.3.fill")
+            SymbolPlate(symbol: conversation.kind == "game" ? PadelSymbol.racket : "person.3.fill")
         }
     }
 }

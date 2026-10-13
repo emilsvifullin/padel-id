@@ -48,6 +48,8 @@ final class AppModel {
         sessionStore = api.sessionStore
         if AppEnvironment.shouldResetState {
             cache.purgeAll()
+            // A theme chosen by one UI test must not carry into the next.
+            UserDefaults.standard.removeObject(forKey: AppAppearance.storageKey)
         }
         api.onSessionInvalidated = { [weak self] in
             self?.handleSessionInvalidated()

@@ -2,6 +2,22 @@ import SwiftUI
 
 // Shapes and surfaces taken from the app icon.
 
+/// The app's own glyphs, drawn by `scripts/ios/make-symbols.py`: the system
+/// set only has a tennis racket and a pitch with a centre circle.
+enum PadelSymbol {
+    /// A padel racket with the six holes of the app icon: matches and games.
+    static let racket = "padel.racket"
+    /// A padel court from above: clubs and courts.
+    static let court = "padel.court"
+}
+
+extension Image {
+    /// A symbol by name: the app's own glyphs first, then the system set.
+    init(symbol name: String) {
+        self = name.hasPrefix("padel.") ? Image(name) : Image(systemName: name)
+    }
+}
+
 /// The racket face of the app icon: two rows of three holes. `filled` of the
 /// six are solid, the rest are rings, so a level reads without colour.
 struct PerforationGrid: View {
@@ -148,7 +164,7 @@ struct PadelChip: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                if let symbol { Image(systemName: symbol).imageScale(.small) }
+                if let symbol { Image(symbol: symbol).imageScale(.small) }
                 Text(title).lineLimit(1)
             }
             .font(.subheadline.weight(.semibold))
@@ -172,7 +188,7 @@ struct SymbolPlate: View {
     @ScaledMetric(relativeTo: .body) private var size: CGFloat = 40
 
     var body: some View {
-        Image(systemName: symbol)
+        Image(symbol: symbol)
             .font(.system(size: size * 0.42, weight: .semibold))
             .foregroundStyle(tint)
             .frame(width: size, height: size)

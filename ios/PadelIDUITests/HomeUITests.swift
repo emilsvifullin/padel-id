@@ -255,13 +255,13 @@ final class HomeUITests: PadelIDUITestCase {
         openAnalysis()
 
         let retry = require(button(label: "Повторить"), timeout: 25, "Повторить in the error state")
-        XCTAssertFalse(element("home.level").exists)
+        XCTAssertFalse(element("home.rating").exists)
         snap("error-state")
         XCTAssertFalse(server.recorded("GET", "v1/home").isEmpty)
 
         server.removeOverride("GET", "v1/home")
         tap(retry)
-        require(element("home.level"), timeout: 15, "home.level")
+        require(element("home.rating"), timeout: 15, "home.rating")
         snap("error-recovered")
     }
 

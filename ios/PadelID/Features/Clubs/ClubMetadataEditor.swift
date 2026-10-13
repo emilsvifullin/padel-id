@@ -66,7 +66,7 @@ struct ClubMetadataEditor: View {
                 }
             }
             .disabled(working).scrollContentBackground(.hidden).background(Theme.canvas)
-            .navigationTitle("Информация о клубе").navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("О клубе").navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() }.disabled(working) }
                 ToolbarItem(placement: .confirmationAction) {
