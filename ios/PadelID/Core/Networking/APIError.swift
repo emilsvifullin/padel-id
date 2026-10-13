@@ -48,7 +48,9 @@ nonisolated struct APIError: Error, Hashable, Sendable, LocalizedError {
     var message: String {
         switch kind {
         case .network:
-            return "Нет подключения к интернету. Проверьте сеть и попробуйте снова."
+            // A blocked route fails the same way as no connection at all, so
+            // the copy must hold when the device itself is online.
+            return "Не удалось связаться с сервером. Проверьте подключение и попробуйте снова."
         case .decoding:
             return "Не удалось обработать ответ сервера. Обновите приложение или попробуйте позже."
         case .server:

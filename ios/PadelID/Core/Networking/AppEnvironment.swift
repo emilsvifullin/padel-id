@@ -33,8 +33,9 @@ nonisolated enum AppEnvironment {
         return productionAPI
     }
 
-    /// Empty until a second instance of the gateway has been deployed and
-    /// verified. The client never calls Supabase Auth or Data API directly.
+    /// Other hostnames of the same gateway. Carriers block them independently,
+    /// so the route selector probes each one. The client never calls Supabase
+    /// Auth or Data API directly.
     static var apiFallbackURLs: [URL] {
         if isUITesting { return [] }
         guard let raw = Bundle.main.object(forInfoDictionaryKey: "PadelIDAPIFallbackURL") as? String,

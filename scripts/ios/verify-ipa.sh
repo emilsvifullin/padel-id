@@ -9,8 +9,8 @@ set -euo pipefail
 
 ipa="$1"
 expected_version="$2"
-expected_api="${3:-https://padel-id-gamma.vercel.app}"
-expected_fallback="${4:-}"
+expected_api="${3:-https://api-padel.shiftregister.ru}"
+expected_fallback="${4:-https://padel-id-gamma.vercel.app}"
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 

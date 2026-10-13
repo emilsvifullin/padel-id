@@ -21,8 +21,8 @@ settings:
     LOCALIZATION_PREFERS_STRING_CATALOGS: YES
     SWIFT_EMIT_LOC_STRINGS: NO
     DEAD_CODE_STRIPPING: YES
-    PADELID_API_BASE_URL: "https://padel-id-gamma.vercel.app"
-    PADELID_API_FALLBACK_URL: ""
+    PADELID_API_BASE_URL: "https://api-padel.shiftregister.ru"
+    PADELID_API_FALLBACK_URL: "https://padel-id-gamma.vercel.app"
     PADELID_PUSH_ENABLED: NO
     PADELID_APNS_ENVIRONMENT: production
     TARGETED_DEVICE_FAMILY: "1"
