@@ -11,8 +11,6 @@ const STORAGE = process.env.E2E_SUPABASE_URL ?? "http://127.0.0.1:54321";
 const KEY = process.env.E2E_SUPABASE_PUBLISHABLE_KEY;
 const DATABASE = process.env.E2E_DATABASE_URL ?? "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
 const PASSWORD = "Padel-avatar-2026";
-// The local gateway under test decides this with PADELID_MIN_CLIENT_BUILD (below 3: supported).
-const previousClientSupported = Number.parseInt(process.env.PADELID_MIN_CLIENT_BUILD ?? "1", 10) < 3;
 interface Account { id: string; token: string; email: string; }
 
 describe.runIf(RUN)("private avatars over real Auth and Storage", () => {
@@ -86,12 +84,7 @@ describe.runIf(RUN)("private avatars over real Auth and Storage", () => {
     const foreignUpload = await fetch(STORAGE + `/storage/v1/object/avatars/${owner.id}/foreignphoto123.jpg`, {
       method: "POST", headers: { authorization: `Bearer ${viewer.token}`, apikey: KEY!, "content-type": "image/jpeg" }, body: jpeg });
     expect(foreignUpload.ok).toBe(false);
-    // Padel ID 1.1.0 has no session to send. The gateway reads for it with its
-    // own secret; nobody else can use that door into Storage.
-    expect((await gateway(path)).status).toBe(previousClientSupported ? 200 : 401);
-    const forged = await fetch(STORAGE + "/storage/v1/object/authenticated/avatars/" + path, {
-      headers: { apikey: KEY!, "x-padelid-gateway": "g".repeat(48) }, cache: "no-store" });
-    expect(forged.ok).toBe(false);
+    expect((await gateway(path)).status).toBe(401);
     expect((await gateway(path, viewer)).status).toBe(200);
     for (const user of [owner, viewer]) {
       const signed = await fetch(STORAGE + "/storage/v1/object/sign/avatars/" + path, { method: "POST", headers: {
@@ -107,8 +100,6 @@ describe.runIf(RUN)("private avatars over real Auth and Storage", () => {
     ok(await api("PATCH", "/v1/me", owner, { discoverable: false }));
     expect((await storage("authenticated/avatars/" + path, viewer)).ok).toBe(false);
     expect((await gateway(path, viewer)).status).toBe(404);
-    // A hidden profile is hidden from the previous client too.
-    expect((await gateway(path)).status).toBe(previousClientSupported ? 404 : 401);
     expect((await storage("authenticated/avatars/" + path, owner)).status).toBe(200);
     ok(await api("PATCH", "/v1/me", owner, { discoverable: true }));
     ok(await api("PUT", `/v1/social/blocks/${owner.id}`, viewer));
@@ -124,9 +115,7 @@ describe.runIf(RUN)("private avatars over real Auth and Storage", () => {
     expect(stored.status).toBe(200);
     expect((await storage("authenticated/avatars/" + leftover, owner)).status).toBe(200);
     expect((await storage("authenticated/avatars/" + leftover, viewer)).ok).toBe(false);
-    expect((await gateway(leftover)).status).toBe(previousClientSupported ? 404 : 401);
     ok(await api("DELETE", "/v1/me/avatar", owner));
-    expect((await gateway(path)).status).toBe(previousClientSupported ? 404 : 401);
     expect((await storage("authenticated/avatars/" + path, viewer)).ok).toBe(false);
     const current = await upload();
     await db.query("update auth.sessions set not_after=now()-interval '1 second' where user_id=$1", [viewer.id]);

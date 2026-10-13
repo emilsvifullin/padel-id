@@ -235,22 +235,6 @@ export class Upstream {
     }
   }
 
-  /**
-   * Reads the current photo of a player who is not hidden, for a client that
-   * has no session to present (Padel ID 1.1.0). Storage allows it only with
-   * the gateway secret; see the avatar_gateway_access policy.
-   */
-  async fetchAvatarForPreviousClient(path: string): Promise<Response> {
-    try {
-      return await this.fetchImpl(`${this.config.supabaseUrl}/storage/v1/object/authenticated/avatars/${path}`, {
-        headers: this.headers(undefined, { "x-padelid-gateway": this.config.gatewaySecret }),
-        signal: AbortSignal.timeout(this.config.upstreamTimeoutMs),
-      });
-    } catch {
-      throw apiError("service_unavailable");
-    }
-  }
-
   /** Gateway-authenticated rate limit check; fails open if the database is unreachable. */
   async rateLimit(bucket: string, limit: number, windowSeconds: number): Promise<boolean> {
     try {

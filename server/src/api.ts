@@ -129,9 +129,6 @@ function idempotencyKey(c: Context<Env>): string {
   return value.toLowerCase();
 }
 
-/** The first iOS build that sends its session when it loads an avatar (1.2.0). */
-export const SESSION_AVATAR_BUILD = 3;
-
 function clientIp(c: Context<Env>): string {
   const real = c.req.header("x-real-ip") ?? c.req.header("x-vercel-forwarded-for") ?? c.req.header("x-forwarded-for") ?? "";
   // Bounded so that rate-limit buckets stay within the database's 200 characters.
@@ -800,32 +797,19 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
   // ---------------------------------------------------------------------
 
   app.get("/v1/avatars/:owner/:file", async (c) => {
+    const token = bearer(c);
     const owner = c.req.param("owner");
     const file = c.req.param("file");
     if (!UUID_RE.test(owner) || !AVATAR_FILE_RE.test(file)) throw apiError("not_found");
-    const path = `${owner.toLowerCase()}/${file}`;
-    // Padel ID 1.1.0 loads avatars without a session. While that build is
-    // supported it gets the current photo of players who are not hidden; a
-    // request that carries a session always takes the strict path below.
-    const previousClient = c.req.header("authorization") === undefined
-      && resolveDeps().config.minClientBuild < SESSION_AVATAR_BUILD;
-    let res: Response;
-    if (previousClient) {
-      res = await up().fetchAvatarForPreviousClient(path);
-    } else {
-      const token = bearer(c);
-      await up().rpc("player_profile", { p_player: owner.toLowerCase() }, token);
-      res = await up().fetchAvatar(path, token);
-    }
+    await up().rpc("player_profile", { p_player: owner.toLowerCase() }, token);
+    const res = await up().fetchAvatar(`${owner.toLowerCase()}/${file}`, token);
     if (res.status === 404 || res.status === 400) throw apiError("not_found");
     if (!res.ok || !res.body) throw apiError("service_unavailable");
     return new Response(res.body, {
       status: 200,
       headers: {
         "content-type": "image/jpeg",
-        // 1.1.0 keeps what it downloads; a short lifetime bounds how long a
-        // photo outlives a profile that was hidden afterwards.
-        "cache-control": previousClient ? "private, max-age=300" : "private, no-store",
+        "cache-control": "private, no-store",
         "x-content-type-options": "nosniff",
       },
     });
