@@ -36,7 +36,15 @@ async function boundedBody(stream: ReadableStream<Uint8Array> | null, signal: Ab
   return result;
 }
 
-export function createEdgeRelay(fetcher: typeof fetch = fetch, deadlineMs = 15_000) {
+export interface RelayIdentity {
+  /** The key configured on the API as PADELID_RELAY_KEY. */
+  key: string;
+  /** The caller address as the hosting platform reports it, never a client header. */
+  address: (request: Request) => string | undefined;
+}
+
+/** `identity` lets the API rate-limit by the real caller instead of by this relay. */
+export function createEdgeRelay(fetcher: typeof fetch = fetch, deadlineMs = 15_000, identity?: RelayIdentity) {
   return async (request: Request): Promise<Response> => {
     const headers = new Headers({ "cache-control": "no-store", "x-content-type-options": "nosniff",
       "x-request-id": crypto.randomUUID(), "x-padelid-edge-mode": "relay" });
@@ -53,7 +61,13 @@ export function createEdgeRelay(fetcher: typeof fetch = fetch, deadlineMs = 15_0
       if (value !== null) forwarded.set(name, value);
     }
     // Client-supplied forwarding/platform headers cannot establish identity.
-    // Vercel sees this relay as the caller; its shared IP rate limits still apply.
+    // Without `identity` the API sees this relay as the caller and all its
+    // users share one address budget.
+    const address = identity?.address(request);
+    if (identity && address) {
+      forwarded.set("x-padelid-relay-key", identity.key);
+      forwarded.set("x-padelid-relay-ip", address);
+    }
     const controller = new AbortController();
     const deadline = setTimeout(() => controller.abort(), deadlineMs);
     try {

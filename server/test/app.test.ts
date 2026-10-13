@@ -21,7 +21,7 @@ interface Call {
 
 type Handler = (call: Call) => { status: number; body?: unknown } | Promise<{ status: number; body?: unknown }>;
 
-function harness(handler: Handler) {
+function harness(handler: Handler, configuration: Config = config) {
   const calls: Call[] = [];
   const fakeFetch: FetchFn = async (input, init) => {
     const headers: Record<string, string> = {};
@@ -42,7 +42,7 @@ function harness(handler: Handler) {
       headers: { "content-type": "application/json" },
     });
   };
-  const app = createApp(() => ({ config, upstream: new Upstream(config, fakeFetch) }));
+  const app = createApp(() => ({ config: configuration, upstream: new Upstream(configuration, fakeFetch) }));
   const request = (path: string, init: RequestInit = {}) => app.request(path, init);
   return { calls, request };
 }
@@ -311,6 +311,25 @@ describe("authentication", () => {
     // Other accounts are unaffected.
     const other = await h.request("/v1/auth/login", json({ email: "boris@example.com", password: "x" }, { "x-real-ip": "10.0.1.1" }));
     expect(other.status).toBe(401);
+  });
+
+  it("uses the address a relay reports only when the relay presents the configured key", async () => {
+    const relayKey = "k".repeat(40);
+    const attempt = async (configuration: Config, headers: Record<string, string>) => {
+      const limiter = memoryLimiter();
+      const h = harness(routeTo({
+        "/rpc/bff_rate_limit": limiter.handler,
+        "grant_type=password": () => ({ status: 400, body: { error_code: "invalid_credentials" } }),
+      }), configuration);
+      await h.request("/v1/auth/login", json({ email: "anna@example.com", password: "x" }, { "x-real-ip": "198.51.100.1", ...headers }));
+      return [...limiter.hits.keys()].find((key) => key.startsWith("login:ip:"));
+    };
+    const relayed = { "x-padelid-relay-ip": "203.0.113.7" };
+    expect(await attempt({ ...config, relayKey }, { ...relayed, "x-padelid-relay-key": relayKey })).toContain("203.0.113.7");
+    // A wrong key, an unconfigured API and a non-address all fall back to the platform's caller.
+    expect(await attempt({ ...config, relayKey }, { ...relayed, "x-padelid-relay-key": "k".repeat(39) + "x" })).toContain("198.51.100.1");
+    expect(await attempt(config, { ...relayed, "x-padelid-relay-key": relayKey })).toContain("198.51.100.1");
+    expect(await attempt({ ...config, relayKey }, { "x-padelid-relay-ip": "not-an-address", "x-padelid-relay-key": relayKey })).toContain("198.51.100.1");
   });
 
   it("keeps rate-limit buckets short for long addresses", async () => {

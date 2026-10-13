@@ -1,4 +1,5 @@
-import { createHash } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
+import { isIP } from "node:net";
 import { Buffer } from "node:buffer";
 import { Hono, type Context } from "hono";
 import { bodyLimit } from "hono/body-limit";
@@ -129,7 +130,27 @@ function idempotencyKey(c: Context<Env>): string {
   return value.toLowerCase();
 }
 
-function clientIp(c: Context<Env>): string {
+/** Header names shared with the relay (src/edge-relay.ts). */
+export const RELAY_KEY_HEADER = "x-padelid-relay-key";
+export const RELAY_ADDRESS_HEADER = "x-padelid-relay-ip";
+
+/**
+ * The address a relay saw, when the relay proves it holds the configured key.
+ * Without the key these headers are client input and are ignored, so nobody
+ * can pick their own rate-limit bucket.
+ */
+function relayedIp(c: Context<Env>, relayKey: string | undefined): string | undefined {
+  const presented = c.req.header(RELAY_KEY_HEADER);
+  const address = c.req.header(RELAY_ADDRESS_HEADER);
+  if (!relayKey || !presented || !address || !isIP(address)) return undefined;
+  const expected = createHash("sha256").update(relayKey).digest();
+  const actual = createHash("sha256").update(presented).digest();
+  return timingSafeEqual(expected, actual) ? address : undefined;
+}
+
+function clientIp(c: Context<Env>, relayKey?: string): string {
+  const relayed = relayedIp(c, relayKey);
+  if (relayed) return relayed;
   const real = c.req.header("x-real-ip") ?? c.req.header("x-vercel-forwarded-for") ?? c.req.header("x-forwarded-for") ?? "";
   // Bounded so that rate-limit buckets stay within the database's 200 characters.
   return (real.split(",")[0]?.trim() || "unknown").slice(0, 64);
@@ -267,7 +288,7 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
   // checks per user (10 per 15 minutes, failed attempts included); this
   // bounds one client across accounts.
   async function limitPasswordAttempts(c: Context<Env>): Promise<void> {
-    await limit(`password:ip:${clientIp(c)}`, PASSWORD_ATTEMPTS_PER_IP, 900);
+    await limit(`password:ip:${clientIp(c, resolveDeps().config.relayKey)}`, PASSWORD_ATTEMPTS_PER_IP, 900);
   }
 
   // ---------------------------------------------------------------------
@@ -293,7 +314,7 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
 
   app.post("/v1/auth/signup", async (c) => {
     const body = await parseJson(c, schemas.signup);
-    await limit(`signup:ip:${clientIp(c)}`, resolveDeps().config.signupsPerHour, 3600);
+    await limit(`signup:ip:${clientIp(c, resolveDeps().config.relayKey)}`, resolveDeps().config.signupsPerHour, 3600);
     const created = await up().account<{ user_id: string; recovery_key: string }>("signup", {
       email: body.email,
       password: body.password,
@@ -310,7 +331,7 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
 
   app.post("/v1/auth/login", async (c) => {
     const body = await parseJson(c, schemas.login);
-    const ip = clientIp(c);
+    const ip = clientIp(c, resolveDeps().config.relayKey);
     const email = emailKey(body.email);
     await limit(`login:ip:${ip}`, 30, 600);
     // Per email *and* IP, so that attempts from elsewhere cannot lock the owner
@@ -323,7 +344,7 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
 
   app.post("/v1/auth/refresh", async (c) => {
     const body = await parseJson(c, schemas.refresh);
-    await limit(`refresh:ip:${clientIp(c)}`, 300, 600);
+    await limit(`refresh:ip:${clientIp(c, resolveDeps().config.relayKey)}`, 300, 600);
     const session = await up().refreshGrant(body.refresh_token);
     return c.json(sessionBody(session));
   });
@@ -340,7 +361,7 @@ export function createApp(resolveDeps: () => Deps): Hono<Env> {
 
   app.post("/v1/auth/recover", async (c) => {
     const body = await parseJson(c, schemas.recover);
-    await limit(`recover:ip:${clientIp(c)}`, 10, 3600);
+    await limit(`recover:ip:${clientIp(c, resolveDeps().config.relayKey)}`, 10, 3600);
     await limit(`recover:email:${emailKey(body.email)}`, 5, 3600);
     const result = await up().account<{ recovery_key: string }>("recover", {
       email: body.email,
