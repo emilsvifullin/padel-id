@@ -31,7 +31,7 @@ struct UpcomingDetailView: View {
         .task(id: app.dataRevision) { await detail.load(using: app) }
         .sensoryFeedback(.success, trigger: successCount)
         .sensoryFeedback(.error, trigger: failureCount)
-        .sheet(isPresented: $isInviting) { UpcomingInviteView(matchId: matchId).presentationDetents([.medium, .large]).presentationDragIndicator(.visible) }
+        .sheet(isPresented: $isInviting) { UpcomingInviteView(matchId: matchId).compactSheet() }
         .alert(confirmation == "cancel" ? "Отменить игру?" : "Отменить участие?", isPresented: Binding(
             get: { confirmation != nil }, set: { if !$0 { confirmation = nil } }), presenting: confirmation) { action in
             Button(action == "cancel" ? "Отменить игру" : "Отменить участие", role: .destructive) {

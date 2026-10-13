@@ -11,6 +11,7 @@ struct ClubsView: View {
     @State private var model = ClubsCatalogModel()
     @State private var prepared = false
     @State private var showsMap = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         PadelNavigationStack {
@@ -50,6 +51,21 @@ struct ClubsView: View {
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
             .background(Theme.canvas)
+            // The map stays in place above the list: a map inside the scrolling
+            // list would take every drag that starts on it.
+            .safeAreaInset(edge: .top, spacing: 0) {
+                if showsMap, let city, model.cityID == city.id {
+                    let clubs = model.visibleClubs(city: city, query: query)
+                    if clubs.contains(where: { $0.coordinates != nil }) {
+                        ClubDirectoryMap(clubs: clubs, city: city)
+                            .frame(height: dynamicTypeSize.isAccessibilitySize ? 200 : 260)
+                            .clipShape(.rect(cornerRadius: Theme.cornerRadius, style: .continuous))
+                            .padding(.horizontal, Theme.horizontalPadding)
+                            .padding(.bottom, 8)
+                            .background(Theme.canvas)
+                    }
+                }
+            }
             .navigationTitle("Клубы")
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Название или адрес клуба")
             .autocorrectionDisabled()
@@ -92,16 +108,10 @@ struct ClubsView: View {
                 }
             }
             if !clubs.isEmpty {
-                if showsMap {
+                if showsMap, !clubs.contains(where: { $0.coordinates != nil }) {
                     Section {
-                        if clubs.contains(where: { $0.coordinates != nil }) {
-                            ClubDirectoryMap(clubs: clubs, city: city)
-                                .frame(height: 340)
-                                .listRowInsets(EdgeInsets())
-                        } else {
-                            Text("У этих клубов ещё не опубликованы координаты. Адреса можно посмотреть в карточках.")
-                                .font(.subheadline).foregroundStyle(.secondary)
-                        }
+                        Text("У этих клубов ещё не опубликованы координаты. Адреса можно посмотреть в карточках.")
+                            .font(.subheadline).foregroundStyle(.secondary)
                     }
                 }
                 Section(query.isEmpty ? "Клубы города" : "Результаты поиска") {

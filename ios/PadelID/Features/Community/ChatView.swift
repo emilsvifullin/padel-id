@@ -170,7 +170,7 @@ struct ChatView: View {
                 }.accessibilityLabel("Участники чата")
             }
         }
-        .sheet(item: $report) { ReportContentView(target: $0).presentationDetents([.medium, .large]).presentationDragIndicator(.visible) }
+        .sheet(item: $report) { ReportContentView(target: $0).compactSheet() }
         .task(id: scenePhase) {
             guard scenePhase == .active else { return }
             await model.load(using: app)

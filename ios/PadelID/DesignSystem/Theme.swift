@@ -135,7 +135,21 @@ private struct PressFeedback: ViewModifier {
     }
 }
 
+/// A short task opens at half height; at accessibility text sizes its form no
+/// longer fits there, so it opens full height.
+private struct CompactSheet: ViewModifier {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    func body(content: Content) -> some View {
+        content
+            .presentationDetents(dynamicTypeSize.isAccessibilitySize ? [.large] : [.medium, .large])
+            .presentationDragIndicator(.visible)
+    }
+}
+
 extension View {
+    func compactSheet() -> some View { modifier(CompactSheet()) }
+
     func padelAnimation<Value: Equatable>(_ animation: Animation = Motion.standard, value: Value) -> some View {
         modifier(ReduceMotionAnimation(animation: animation, value: value))
     }

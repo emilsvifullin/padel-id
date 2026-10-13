@@ -127,7 +127,7 @@ struct EventDetailView: View {
         .sheet(item: $score) { game in
             if let value = event.value {
                 EventScoreView(eventId: eventId, game: game, total: value.pointsPerGame, allowsTie: value.format != .kingCourt)
-                    .presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
+                    .compactSheet()
             }
         }
         .sheet(isPresented: $editing) {

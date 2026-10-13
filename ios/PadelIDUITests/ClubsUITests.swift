@@ -84,7 +84,9 @@ final class ClubsUITests: PadelIDUITestCase {
         }
         signIn(); waitForHome(); selectTab("Клубы")
         tap(element("clubs.mode").buttons["Карта"])
-        // The list is the accessible alternative to spatial map controls.
+        // The list is the accessible alternative to spatial map controls. On a
+        // small screen with large text it starts below the map.
+        scrollIntoView(element("clubs.row"))
         open(row("clubs.row", containing: clubName, timeout: 15), screen: "Клуб")
         waitForRequest("GET", "v1/clubs/1")
         scrollIntoView(element("club.map"))
