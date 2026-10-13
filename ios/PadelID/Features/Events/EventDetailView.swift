@@ -13,6 +13,8 @@ struct EventDetailView: View {
     @State private var cancelled = false
     @State private var removing: SportEventRegistration?
     @State private var editing = false
+    @State private var successCount = 0
+    @State private var failureCount = 0
     init(eventId: UUID) {
         self.eventId = eventId
         _event = State(initialValue: Resource(cacheKey: nil) { .get("v1/events/\(eventId)") })
@@ -111,6 +113,8 @@ struct EventDetailView: View {
         }
         .navigationTitle(event.value?.kind.singular ?? "Событие")
         .navigationBarTitleDisplayMode(.inline)
+        .sensoryFeedback(.success, trigger: successCount)
+        .sensoryFeedback(.error, trigger: failureCount)
         .refreshable { await event.load(using: app) }
         .task(id: "\(app.dataRevision):\(scenePhase)") {
             guard scenePhase == .active else { return }
@@ -123,6 +127,7 @@ struct EventDetailView: View {
         .sheet(item: $score) { game in
             if let value = event.value {
                 EventScoreView(eventId: eventId, game: game, total: value.pointsPerGame, allowsTie: value.format != .kingCourt)
+                    .presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
             }
         }
         .sheet(isPresented: $editing) {
@@ -235,8 +240,10 @@ struct EventDetailView: View {
             do {
                 let value = try await app.api.send(endpoint, as: SportEvent.self)
                 event.replace(with: value); app.dataDidChange()
+                successCount += 1
             } catch let failure as APIError {
                 self.error = failure.message
+                failureCount += 1
                 await event.load(using: app)
             } catch { self.error = "Действие не подтверждено. Обновите событие и повторите." }
         }

@@ -6,6 +6,9 @@ import Observation
 @Observable
 final class NavigationRouter {
     var path: [Route] = []
+    /// Routes that have a card on screen to grow from. Plain rows keep the
+    /// standard push.
+    @ObservationIgnored var zoomSources: Set<Route> = []
 
     /// A late response must not reopen a screen the user already left.
     func push(_ route: Route, from source: [Route]) {
@@ -16,6 +19,7 @@ final class NavigationRouter {
 
 struct PadelNavigationStack<Content: View>: View {
     @State private var router = NavigationRouter()
+    @Namespace private var zoom
     @ViewBuilder let content: () -> Content
 
     var body: some View {
@@ -24,6 +28,51 @@ struct PadelNavigationStack<Content: View>: View {
             content()
         }
         .environment(router)
+        .environment(\.zoomNamespace, zoom)
+    }
+}
+
+extension EnvironmentValues {
+    /// The namespace cards and their destinations share inside one stack.
+    @Entry var zoomNamespace: Namespace.ID?
+}
+
+private struct ZoomSource: ViewModifier {
+    let route: Route
+    @Environment(\.zoomNamespace) private var namespace
+    @Environment(NavigationRouter.self) private var router: NavigationRouter?
+
+    func body(content: Content) -> some View {
+        if let namespace, let router {
+            content
+                .matchedTransitionSource(id: route, in: namespace)
+                .onAppear { router.zoomSources.insert(route) }
+                .onDisappear { if !router.path.contains(route) { router.zoomSources.remove(route) } }
+        } else {
+            content
+        }
+    }
+}
+
+private struct ZoomDestination: ViewModifier {
+    let route: Route
+    @Environment(\.zoomNamespace) private var namespace
+    @Environment(NavigationRouter.self) private var router: NavigationRouter?
+
+    func body(content: Content) -> some View {
+        if let namespace, let router, router.zoomSources.contains(route) {
+            content.navigationTransition(.zoom(sourceID: route, in: namespace))
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    /// A card its destination grows out of. The system swaps the zoom for a
+    /// cross-fade under Reduce Motion.
+    func zoomSource(_ route: Route) -> some View {
+        modifier(ZoomSource(route: route))
     }
 }
 
@@ -64,6 +113,7 @@ extension View {
     /// Registers all shared push destinations on a NavigationStack.
     func padelRoutes() -> some View {
         navigationDestination(for: Route.self) { route in
+            Group {
             switch route {
             case .player(let id): PlayerProfileView(playerId: id)
             case .match(let id): MatchDetailView(matchId: id)
@@ -95,6 +145,8 @@ extension View {
             case .post(let id): PostDetailView(id: id)
             case .event(let id): EventDetailView(eventId: id)
             }
+            }
+            .modifier(ZoomDestination(route: route))
         }
     }
 }

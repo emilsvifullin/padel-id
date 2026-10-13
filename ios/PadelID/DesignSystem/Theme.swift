@@ -69,17 +69,14 @@ enum Theme {
         return palette[hash % palette.count]
     }
 
-    /// Expanded SF Pro in navigation titles. Fonts only: bar backgrounds stay
-    /// the system's glass.
+    /// Expanded SF Pro in large navigation titles. Inline titles keep the
+    /// system face: between two bar buttons the wider one truncates. Fonts
+    /// only — bar backgrounds stay the system's glass.
     @MainActor
     static func applyNavigationTypography() {
-        func font(_ style: UIFont.TextStyle, size: CGFloat, weight: UIFont.Weight) -> UIFont {
-            UIFontMetrics(forTextStyle: style)
-                .scaledFont(for: .systemFont(ofSize: size, weight: weight, width: .expanded), maximumPointSize: size * 1.5)
-        }
-        let bar = UINavigationBar.appearance()
-        bar.largeTitleTextAttributes = [.font: font(.largeTitle, size: 32, weight: .bold)]
-        bar.titleTextAttributes = [.font: font(.headline, size: 16, weight: .semibold)]
+        let font = UIFontMetrics(forTextStyle: .largeTitle)
+            .scaledFont(for: .systemFont(ofSize: 32, weight: .bold, width: .expanded), maximumPointSize: 44)
+        UINavigationBar.appearance().largeTitleTextAttributes = [.font: font]
     }
 }
 

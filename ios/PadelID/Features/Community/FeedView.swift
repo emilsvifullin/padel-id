@@ -51,6 +51,7 @@ struct FeedView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(Theme.surface, in: .rect(cornerRadius: Theme.cornerRadius, style: .continuous))
                             .contentShape(.rect(cornerRadius: Theme.cornerRadius, style: .continuous))
+                            .zoomSource(.post(post.id))
                     }
                     .buttonStyle(.padelCard)
                     .accessibilityIdentifier("feed.post")
@@ -275,7 +276,7 @@ struct PostDetailView: View {
             }
         }
         .refreshable { await load() }
-        .sheet(item: $report) { ReportContentView(target: $0) }
+        .sheet(item: $report) { ReportContentView(target: $0).presentationDetents([.medium, .large]).presentationDragIndicator(.visible) }
         .alert("Удалить публикацию?", isPresented: $confirmingDelete) {
             Button("Удалить", role: .destructive) { removePost() }
             Button("Отмена", role: .cancel) {}
@@ -291,6 +292,8 @@ struct PostDetailView: View {
                     react(value.myReaction == "like" ? nil : "like")
                 } label: {
                     Label(liked ? "Нравится · \(value.reactionCount)" : "Нравится", systemImage: liked ? "heart.fill" : "heart")
+                        .symbolEffect(.bounce, value: liked)
+                        .contentTransition(.symbolEffect(.replace))
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(liked ? Theme.negative : Color.primary)
                         .padding(.horizontal, 14).frame(minHeight: 40)

@@ -9,6 +9,8 @@ struct UpcomingDetailView: View {
     @State private var error: String?
     @State private var confirmation: String?
     @State private var isInviting = false
+    @State private var successCount = 0
+    @State private var failureCount = 0
 
     init(matchId: UUID) {
         self.matchId = matchId
@@ -27,7 +29,9 @@ struct UpcomingDetailView: View {
         .navigationTitle(detail.value?.visibility == "private" ? "Закрытая игра" : "Открытая игра")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: app.dataRevision) { await detail.load(using: app) }
-        .sheet(isPresented: $isInviting) { UpcomingInviteView(matchId: matchId) }
+        .sensoryFeedback(.success, trigger: successCount)
+        .sensoryFeedback(.error, trigger: failureCount)
+        .sheet(isPresented: $isInviting) { UpcomingInviteView(matchId: matchId).presentationDetents([.medium, .large]).presentationDragIndicator(.visible) }
         .alert(confirmation == "cancel" ? "Отменить игру?" : "Отменить участие?", isPresented: Binding(
             get: { confirmation != nil }, set: { if !$0 { confirmation = nil } }), presenting: confirmation) { action in
             Button(action == "cancel" ? "Отменить игру" : "Отменить участие", role: .destructive) {
@@ -186,9 +190,11 @@ struct UpcomingDetailView: View {
                 }
                 detail.replace(with: fresh, data: data, app: app)
                 app.dataDidChange()
+                successCount += 1
                 Announce.post(action == "join" && fresh.viewer.participation == "pending" ? "Заявка отправлена организатору" : "Игра обновлена")
             } catch let failure as APIError {
                 error = failure.message
+                failureCount += 1
                 Announce.post(failure.message)
                 await detail.load(using: app)
             } catch { self.error = "Не удалось обновить игру. Попробуйте снова." }

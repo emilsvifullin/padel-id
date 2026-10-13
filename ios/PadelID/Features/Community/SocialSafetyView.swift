@@ -95,7 +95,7 @@ struct SocialPlayerActions: View {
             }.disabled(working)
             if let error { SettingsErrorRow(message: error) }
         }
-        .sheet(item: $report) { ReportContentView(target: $0) }
+        .sheet(item: $report) { ReportContentView(target: $0).presentationDetents([.medium, .large]).presentationDragIndicator(.visible) }
         .alert("Заблокировать игрока?", isPresented: $confirmingBlock) {
             Button("Заблокировать", role: .destructive) { block() }
             Button("Отмена", role: .cancel) {}

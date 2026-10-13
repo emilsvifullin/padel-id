@@ -9,22 +9,34 @@ struct PerforationGrid: View {
     var dot: CGFloat = 8
     var gap: CGFloat = 5
     var color: Color = Theme.ink
+    /// Fills the holes one after another the first time the grid appears.
+    var fillsIn = false
+    @State private var shown = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        VStack(spacing: gap) {
+        let visible = fillsIn && !reduceMotion ? min(shown, filled) : filled
+        return VStack(spacing: gap) {
             ForEach(0..<2, id: \.self) { row in
                 HStack(spacing: gap) {
                     ForEach(0..<3, id: \.self) { column in
                         let index = row * 3 + column
                         Circle()
-                            .fill(index < filled ? color : .clear)
-                            .strokeBorder(color.opacity(index < filled ? 0 : 0.35), lineWidth: max(1, dot * 0.16))
+                            .fill(index < visible ? color : .clear)
+                            .strokeBorder(color.opacity(index < visible ? 0 : 0.35), lineWidth: max(1, dot * 0.16))
                             .frame(width: dot, height: dot)
                     }
                 }
             }
         }
         .accessibilityHidden(true)
+        .task(id: filled) {
+            guard fillsIn, !reduceMotion else { return }
+            for count in shown...max(shown, filled) {
+                withAnimation(Motion.quick) { shown = count }
+                try? await Task.sleep(for: .milliseconds(70))
+            }
+        }
     }
 
     /// Six holes for a 0–100 value; any non-zero value fills at least one.

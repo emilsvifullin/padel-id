@@ -36,6 +36,7 @@ struct PlayersView: View {
                 PlayersFilterSheet(filter: filter, myCity: myCity) { newFilter in
                     filter = newFilter
                 }
+                .presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
             }
             .sensoryFeedback(.selection, trigger: sort)
             .padelRoutes()

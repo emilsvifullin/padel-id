@@ -202,6 +202,7 @@ struct HomeLevelHero: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .limeCard(cornerRadius: 30)
             .contentShape(.rect(cornerRadius: 30, style: .continuous))
+            .zoomSource(.rating(meId))
         }
         .buttonStyle(.padelCard)
         .accessibilityElement(children: .ignore)
@@ -241,7 +242,7 @@ struct HomeLevelHero: View {
 
     private func reliability(_ rating: RatingSummary) -> some View {
         HStack(spacing: 10) {
-            PerforationGrid(filled: PerforationGrid.holes(for: rating.reliability), dot: 8, gap: 4)
+            PerforationGrid(filled: PerforationGrid.holes(for: rating.reliability), dot: 8, gap: 4, fillsIn: true)
             VStack(alignment: .leading, spacing: 1) {
                 Text(verbatim: "Надёжность \(rating.reliability)%")
                     .font(.subheadline.weight(.semibold))

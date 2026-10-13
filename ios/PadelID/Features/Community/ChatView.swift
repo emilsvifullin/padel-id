@@ -120,6 +120,7 @@ struct ChatView: View {
     @State private var model: ChatModel
     @State private var draft = ""
     @State private var report: ReportTarget?
+    @State private var sentCount = 0
     init(id: UUID) { _model = State(initialValue: ChatModel(id: id)) }
 
     var body: some View {
@@ -134,6 +135,7 @@ struct ChatView: View {
                     }
                     ForEach(model.messages) { message in
                         messageRow(message).id(message.id)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                     if let error = model.error { SettingsErrorRow(message: error) }
                     if model.isLoading { ProgressView().frame(maxWidth: .infinity) }
@@ -153,9 +155,10 @@ struct ChatView: View {
                             canSend: !model.isSending && app.isOnline && (1...4000).contains(SettingsText.length(draft))
                                 && model.conversation != nil,
                             draftIdentifier: "chat.draft", sendIdentifier: "chat.send") {
-                    Task { if await model.send(draft, using: app) { draft = "" } }
+                    Task { if await model.send(draft, using: app) { draft = ""; sentCount += 1 } }
                 }
             }
+            .sensoryFeedback(.impact(weight: .light), trigger: sentCount)
         }
         .navigationTitle(model.conversation?.title ?? "Сообщения")
         .navigationBarTitleDisplayMode(.inline)
@@ -167,7 +170,7 @@ struct ChatView: View {
                 }.accessibilityLabel("Участники чата")
             }
         }
-        .sheet(item: $report) { ReportContentView(target: $0) }
+        .sheet(item: $report) { ReportContentView(target: $0).presentationDetents([.medium, .large]).presentationDragIndicator(.visible) }
         .task(id: scenePhase) {
             guard scenePhase == .active else { return }
             await model.load(using: app)

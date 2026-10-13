@@ -183,8 +183,9 @@ struct HomeView: View {
                     .min(by: { $0.startsAt < $1.startsAt }) {
                     NavigationLink(value: Route.upcoming(match.id)) {
                         SectionContainer { UpcomingMatchRow(match: match) }
+                            .zoomSource(.upcoming(match.id))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.padelCard)
                     .accessibilityIdentifier("home.upcoming")
                 } else {
                     SectionContainer {
