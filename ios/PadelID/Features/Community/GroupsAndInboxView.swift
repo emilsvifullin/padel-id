@@ -131,7 +131,7 @@ private struct NotificationRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            SymbolPlate(symbol: symbol, tint: notification.readAt == nil ? Theme.accent : Color.secondary)
+            SymbolPlate(symbol: symbol, tint: notification.readAt == nil ? nil : Color.secondary)
                 .overlay(alignment: .topTrailing) {
                     if notification.readAt == nil {
                         Circle().fill(Theme.negative).frame(width: 10, height: 10)

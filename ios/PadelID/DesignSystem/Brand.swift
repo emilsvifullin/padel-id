@@ -184,15 +184,17 @@ struct PadelChip: View {
 /// A symbol on a round tinted plate, the leading mark of rows and tiles.
 struct SymbolPlate: View {
     let symbol: String
-    var tint: Color = Theme.accent
+    /// A meaning of its own (attention, read) tints the plate; without one it
+    /// carries the icon's colours, ink on lime, in both themes.
+    var tint: Color?
     @ScaledMetric(relativeTo: .body) private var size: CGFloat = 40
 
     var body: some View {
         Image(symbol: symbol)
             .font(.system(size: size * 0.42, weight: .semibold))
-            .foregroundStyle(tint)
+            .foregroundStyle(tint ?? Theme.ink)
             .frame(width: size, height: size)
-            .background(tint.opacity(0.14), in: .circle)
+            .background(tint.map { AnyShapeStyle($0.opacity(0.14)) } ?? AnyShapeStyle(Theme.lime), in: .circle)
             .accessibilityHidden(true)
     }
 }

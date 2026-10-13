@@ -18,9 +18,12 @@ struct ClubsView: View {
         PadelNavigationStack {
             List {
                 Section {
-                    ViewThatFits(in: .horizontal) {
-                        HStack(spacing: 10) { cityChip; Spacer(minLength: 0); modePicker.frame(width: 190) }
-                        VStack(alignment: .leading, spacing: 10) { cityChip; modePicker }
+                    VStack(alignment: .leading, spacing: 10) {
+                        searchField
+                        ViewThatFits(in: .horizontal) {
+                            HStack(spacing: 10) { cityChip; Spacer(minLength: 0); modePicker.frame(width: 190) }
+                            VStack(alignment: .leading, spacing: 10) { cityChip; modePicker }
+                        }
                     }
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
@@ -37,24 +40,11 @@ struct ClubsView: View {
             .background(Theme.canvas)
             // The map stays in place above the list: a map inside the scrolling
             // list would take every drag that starts on it.
-            .safeAreaInset(edge: .top, spacing: 0) {
-                if showsMap, let city, model.cityID == city.id {
-                    let clubs = model.visibleClubs(city: city, query: query)
-                    if clubs.contains(where: { $0.coordinates != nil }) {
-                        ClubDirectoryMap(clubs: clubs, city: city)
-                            .frame(height: dynamicTypeSize.isAccessibilitySize ? 200 : 260)
-                            .clipShape(.rect(cornerRadius: Theme.cornerRadius, style: .continuous))
-                            .padding(.horizontal, Theme.horizontalPadding)
-                            .padding(.bottom, 8)
-                            .background(Theme.canvas)
-                    }
-                }
-            }
+            .modifier(PinnedClubMap(clubs: mapClubs, city: city,
+                                    height: dynamicTypeSize.isAccessibilitySize ? 200 : 260))
             .navigationDestination(isPresented: $isPickingCity) { CityPickerView(selection: $city) }
             .navigationTitle("Клубы")
             .navigationBarTitleDisplayMode(.large)
-            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Название или адрес клуба")
-            .autocorrectionDisabled()
             .refreshable {
                 await model.load(city: city, using: app)
                 await model.search(city: city, query: query, using: app, debounce: false)
@@ -70,6 +60,37 @@ struct ClubsView: View {
         .task(id: "\(city?.id ?? 0).\(query).\(app.dataRevision)") {
             await model.search(city: city, query: query, using: app)
         }
+    }
+
+    /// The search sits in the content, not in the navigation bar: a search bar
+    /// there keeps this tab's large title collapsed on iOS 27.
+    private var searchField: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass").foregroundStyle(.secondary).accessibilityHidden(true)
+            TextField("Название или адрес клуба", text: $searchText)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.search)
+                .accessibilityIdentifier("clubs.search")
+            if !searchText.isEmpty {
+                Button { searchText = "" } label: {
+                    Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Очистить поиск")
+            }
+        }
+        .padding(.horizontal, 14)
+        .frame(minHeight: 44)
+        .background(Theme.surface, in: .capsule)
+    }
+
+    /// Clubs to pin on the map: none unless the map is chosen and has
+    /// something to show.
+    private var mapClubs: [ClubCatalogEntry] {
+        guard showsMap, let city, model.cityID == city.id else { return [] }
+        let clubs = model.visibleClubs(city: city, query: query)
+        return clubs.contains(where: { $0.coordinates != nil }) ? clubs : []
     }
 
     /// The city the catalog shows, as one compact control next to the view switch.
@@ -171,27 +192,76 @@ struct ClubsView: View {
     }
 }
 
+/// Keeps the map above the list while it has clubs to show. Without a map
+/// there is no inset at all: an empty one keeps the large title collapsed.
+private struct PinnedClubMap: ViewModifier {
+    let clubs: [ClubCatalogEntry]
+    let city: NamedRef?
+    let height: CGFloat
+
+    func body(content: Content) -> some View {
+        if let city, !clubs.isEmpty {
+            content.safeAreaInset(edge: .top, spacing: 0) {
+                ClubDirectoryMap(clubs: clubs, city: city)
+                    .frame(height: height)
+                    .clipShape(.rect(cornerRadius: Theme.cornerRadius, style: .continuous))
+                    .padding(.horizontal, Theme.horizontalPadding)
+                    .padding(.bottom, 8)
+                    .background(Theme.canvas)
+            }
+        } else {
+            content
+        }
+    }
+}
+
 private struct ClubCatalogRow: View {
     let club: ClubCatalogEntry
 
+    @ScaledMetric(relativeTo: .body) private var tile: CGFloat = 60
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top, spacing: 12) {
-                SymbolPlate(symbol: PadelSymbol.court)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(club.name).font(.headline).fixedSize(horizontal: false, vertical: true)
-                    if let address = club.address, !address.isEmpty {
-                        Text(address).font(.subheadline).foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+        HStack(alignment: .top, spacing: 14) {
+            leading
+            VStack(alignment: .leading, spacing: 6) {
+                Text(club.name).font(.headline).fixedSize(horizontal: false, vertical: true)
+                if let address = club.address, !address.isEmpty {
+                    Text(address).font(.subheadline).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                // What the club has, at a glance: courts, players, the first amenities.
+                FlowLayout(spacing: 6) { facts }
             }
-            // What the club has, at a glance: courts, players, the first amenities.
-            FlowLayout(spacing: 6) { facts }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, 6)
         .accessibilityElement(children: .combine)
+    }
+
+    /// The club's first photo; until it has one, a court on the icon's graphite.
+    @ViewBuilder
+    private var leading: some View {
+        Group {
+            if let photo = club.photos.first {
+                AsyncImage(url: photo) { phase in
+                    if let image = phase.image { image.resizable().scaledToFill() } else { placeholder }
+                }
+            } else {
+                placeholder
+            }
+        }
+        .frame(width: tile, height: tile)
+        .clipShape(.rect(cornerRadius: 16, style: .continuous))
+        .accessibilityHidden(true)
+    }
+
+    private var placeholder: some View {
+        ZStack {
+            InkSurface()
+            Image(PadelSymbol.court)
+                .font(.system(size: tile * 0.4, weight: .semibold))
+                .foregroundStyle(Theme.lime)
+        }
     }
 
     @ViewBuilder

@@ -98,6 +98,7 @@ struct AppearanceSettingsView: View {
     @AppStorage(AppAppearance.storageKey) private var appearance = AppAppearance.automatic.rawValue
     @Environment(\.scenePhase) private var scenePhase
     @State private var icons = AppIconSelection()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Form {
@@ -179,6 +180,18 @@ struct AppearanceSettingsView: View {
         }
         .contentMargins(.bottom, 24, for: .scrollContent)
         .navigationTitle("Оформление")
+        // Every screen changes colour at once: dissolve into the new theme
+        // instead of cutting to it.
+        .onChange(of: appearance) {
+            guard !reduceMotion else { return }
+            let fade = CATransition()
+            fade.type = .fade
+            fade.duration = 0.3
+            fade.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            for scene in UIApplication.shared.connectedScenes {
+                (scene as? UIWindowScene)?.keyWindow?.layer.add(fade, forKey: "theme")
+            }
+        }
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { icons.refresh() }

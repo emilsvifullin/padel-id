@@ -13,6 +13,9 @@ struct PadelIDApp: App {
             RootView()
                 .environment(app)
                 .tint(Theme.accent)
+                // Section titles of lists and forms carry the same weight as
+                // the titles of the hand-built screens.
+                .headerProminence(.increased)
                 .preferredColorScheme((AppAppearance(rawValue: appearance) ?? .automatic).colorScheme)
         }
         .backgroundTask(.appRefresh(NotificationService.refreshTaskIdentifier)) {
