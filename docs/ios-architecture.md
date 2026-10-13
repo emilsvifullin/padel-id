@@ -39,8 +39,8 @@ Core/Auth       Keychain, SessionStore
 Core/Services   NotificationService
 DesignSystem    Theme (tokens, type, motion, surfaces, button styles),
                 Brand (PerforationGrid, LimeSurface, InkSurface, limeCard,
-                inkCard, PerforationLoader, PadelChip, SymbolPlate, Chevron,
-                PadelEmptyState, ComposerBar), Components (LevelNumeral,
+                inkCard, PerforationLoader, PadelSymbol, SymbolPlate, Chevron,
+                ComposerBar), Components (LevelNumeral,
                 LevelChip, DeltaText, ReliabilityRing, AvatarView, RemoteImage,
                 PlayerRow, StatusPill, OfflineBanner, StaleDataBanner,
                 LoadingView, ErrorStateView, FormResultDot, EqualWidthHStack,
@@ -253,8 +253,7 @@ The language comes from the app icon; the neutrals come from the system.
   `.accessibilityAddTraits(.isHeader)`).
 * Haptics with `.sensoryFeedback` on meaningful events (confirm success,
   dispute warning, selection changes in pickers, joining and sending).
-* Empty states use `ContentUnavailableView` or `PadelEmptyState` with one
-  clear action at most.
+* Empty states use `ContentUnavailableView` with one clear action at most.
 * No placeholder copy, no "coming soon", no buttons without an action, no
   debug UI.
 

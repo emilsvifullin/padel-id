@@ -154,33 +154,6 @@ struct PerforationLoader: View {
 
 // MARK: - Chips
 
-/// A filter or option that is either chosen or not. Chosen is ink on lime.
-struct PadelChip: View {
-    let title: String
-    var symbol: String?
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                if let symbol { Image(symbol: symbol).imageScale(.small) }
-                Text(title).lineLimit(1)
-            }
-            .font(.subheadline.weight(.semibold))
-            .padding(.horizontal, 14)
-            .frame(minHeight: 36)
-            .foregroundStyle(isSelected ? Theme.ink : Color.primary)
-            .background(isSelected ? AnyShapeStyle(Theme.lime) : AnyShapeStyle(Theme.surface), in: .capsule)
-            .contentShape(.capsule)
-        }
-        .buttonStyle(.padelCard)
-        .padelAnimation(Motion.quick, value: isSelected)
-        .sensoryFeedback(.selection, trigger: isSelected)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-    }
-}
-
 /// A symbol on a round tinted plate, the leading mark of rows and tiles.
 struct SymbolPlate: View {
     let symbol: String
@@ -210,38 +183,6 @@ struct Chevron: View {
 }
 
 // MARK: - Empty states
-
-/// Nothing here yet: what this place is for, and the one thing to do about it.
-struct PadelEmptyState<Actions: View>: View {
-    let symbol: String
-    let title: String
-    let message: String
-    @ViewBuilder var actions: Actions
-
-    init(symbol: String, title: String, message: String, @ViewBuilder actions: () -> Actions = { EmptyView() }) {
-        self.symbol = symbol
-        self.title = title
-        self.message = message
-        self.actions = actions()
-    }
-
-    var body: some View {
-        VStack(spacing: 14) {
-            SymbolPlate(symbol: symbol)
-            VStack(spacing: 6) {
-                Text(title).font(.headline).multilineTextAlignment(.center)
-                Text(message)
-                    .font(.subheadline).foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            actions
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 28)
-        .padding(.horizontal, 20)
-    }
-}
 
 // MARK: - Composer
 
