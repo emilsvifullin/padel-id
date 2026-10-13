@@ -1,8 +1,6 @@
-Padel ID 1.2.0 turns the app into a social and sports platform, rebuilds its interface on a design system taken from the app icon, and fixes reachability on home networks. Accounts, rating maths, four-player confirmation and the result outbox are unchanged.
+Padel ID 1.2.0 turns the app into a social and sports platform and rebuilds its interface on a design system taken from the app icon. Accounts, rating maths, four-player confirmation and the result outbox are unchanged.
 
 ## What changes
-
-**Network.** Direct measurements on the owner's networks show the carrier drops TCP to the Vercel addresses that `padel-id-gamma.vercel.app` resolves to, while `api-padel.shiftregister.ru` (same project) resolves to reachable ones. The build now uses the reachable hostname first and keeps the other as a fallback route; the fallback setting accepts several origins. The transport error no longer claims the device is offline. A relay can report the caller address to the API under a shared key (`PADELID_RELAY_KEY`), which a further entry point for mobile data needs.
 
 **Design.** Lime carries ink in both themes (player ID card, primary actions, chosen values, own chat bubbles, won sets), the racket's six perforation dots show rating reliability and act as the loader, large titles and numerals use expanded SF Pro. Neutrals are the system grouped colours, so lists, forms, sheets and bars stay native; Liquid Glass is kept to navigation and floating bars. Cards grow into their screens, actions confirm with haptics, everything stands still under Reduce Motion. Rules: `docs/ios-architecture.md`, "Visual language".
 
@@ -15,7 +13,7 @@ Padel ID 1.2.0 turns the app into a social and sports platform, rebuilds its int
 - Remote push: the app is sideloaded with a free Apple ID, which cannot carry the APNs entitlement. The code is present, the build flag is off.
 - Photos in posts.
 - In-app court booking; only a verified link to the club's own service.
-- MegaFon mobile data without VPN still fails for both hostnames; it needs a third entry point (see `docs/verification/network-audit-1.2.0.md`).
+- Access without VPN. The build talks to the same single API origin as 1.1.0; on some Russian networks it still works only through VPN. The owner deferred this to a later stage. Measurements and the prepared but undeployed relay (branch `network/ingress-relay`) are in `docs/verification/network-audit-1.2.0.md`. The only network-facing change that ships is the wording of the transport error, which no longer claims the device is offline.
 
 ## Verification
 
