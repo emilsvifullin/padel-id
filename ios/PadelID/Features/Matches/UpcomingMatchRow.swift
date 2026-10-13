@@ -3,13 +3,15 @@ import SwiftUI
 /// A planned game at a glance: when, where, who is in and how many places are left.
 struct UpcomingMatchRow: View {
     let match: UpcomingMatch
+    /// The game's own screen leads with a larger date.
+    var prominent = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(match.startsAt, format: .dateTime.day().month(.wide).hour().minute())
-                    .font(.display(.title3, weight: .bold))
+                    .font(.display(prominent ? .title2 : .title3, weight: .bold))
                     .fixedSize(horizontal: false, vertical: true)
                 Text([match.city.name, match.club?.name, match.location].compactMap { $0 }.joined(separator: " · "))
                     .font(.subheadline).foregroundStyle(.secondary)
@@ -34,16 +36,19 @@ struct UpcomingMatchRow: View {
 
     /// The four places of a padel game: taken ones show the player, free ones a dashed ring.
     private var lineUp: some View {
-        HStack(spacing: -8) {
-            ForEach(Array(match.participants.prefix(4).enumerated()), id: \.offset) { _, participant in
-                AvatarView(card: participant.player, size: 34)
-                    .overlay(Circle().strokeBorder(Theme.surface, lineWidth: 2))
+        HStack(spacing: 6) {
+            HStack(spacing: -8) {
+                ForEach(Array(match.participants.prefix(4).enumerated()), id: \.offset) { _, participant in
+                    AvatarView(card: participant.player, size: 34)
+                        .overlay(Circle().strokeBorder(Theme.surface, lineWidth: 2))
+                }
             }
-            ForEach(0..<max(0, min(4, match.spotsLeft)), id: \.self) { _ in
-                Circle()
-                    .strokeBorder(Color.secondary.opacity(0.5), style: StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
-                    .background(Theme.surface, in: .circle)
-                    .frame(width: 34, height: 34)
+            HStack(spacing: 4) {
+                ForEach(0..<max(0, min(4, match.spotsLeft)), id: \.self) { _ in
+                    Circle()
+                        .strokeBorder(Color.secondary.opacity(0.45), style: StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
+                        .frame(width: 30, height: 30)
+                }
             }
         }
         .accessibilityHidden(true)

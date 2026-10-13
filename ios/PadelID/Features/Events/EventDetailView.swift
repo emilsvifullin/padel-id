@@ -22,21 +22,48 @@ struct EventDetailView: View {
         List {
             if let value = event.value {
                 Section {
-                    Text(value.title).font(.title2.bold())
-                    Label(value.status.title, systemImage: value.kind.symbol).foregroundStyle(Theme.accent)
-                    Text(value.description)
-                    Text(value.startsAt, format: .dateTime.day().month(.wide).hour().minute())
+                    VStack(alignment: .leading, spacing: 10) {
+                        Label(value.status.title, systemImage: value.kind.symbol)
+                            .font(.caption.weight(.semibold))
+                            .padding(.horizontal, 10).padding(.vertical, 6)
+                            .foregroundStyle(Theme.ink)
+                            .background(Theme.lime, in: .capsule)
+                            .padding(.bottom, 18)
+                        Text(value.title).font(.display(.title2, weight: .bold))
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(value.startsAt, format: .dateTime.weekday(.wide).day().month(.wide).hour().minute())
+                            .font(.headline)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text([value.city.name, value.club?.name, value.location].compactMap { $0 }.joined(separator: " · "))
+                            .font(.subheadline).foregroundStyle(.white.opacity(0.8))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(22)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .inkCard()
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                    .accessibilityElement(children: .combine)
+                }
+                Section {
+                    if !value.description.isEmpty {
+                        Text(value.description).fixedSize(horizontal: false, vertical: true)
+                    }
                     LabeledContent("Продолжительность", value: "\(value.durationMinutes) мин")
-                    Text([value.city.name, value.club?.name, value.location].compactMap { $0 }.joined(separator: " · "))
                     if let price = value.priceTitle { LabeledContent("Стоимость участия", value: price) }
-                    if let specialization = value.specialization { Text(specialization) }
+                    if let specialization = value.specialization { LabeledContent("Тема", value: specialization) }
                     NavigationLink(value: Route.player(value.organizer.id)) { PlayerRow(card: value.organizer, subtitle: "Организатор") }
                 }
                 Section {
                     LabeledContent("Формат", value: value.format.title)
                     Text(value.format.explanation).font(.subheadline).foregroundStyle(.secondary)
                     LabeledContent("Уровень", value: "\(Format.level(value.minLevel))–\(Format.level(value.maxLevel))")
-                    LabeledContent("Места", value: "\(value.registeredCount) / \(value.capacity)")
+                    VStack(alignment: .leading, spacing: 8) {
+                        LabeledContent("Места", value: "\(value.registeredCount) / \(value.capacity)")
+                        ProgressView(value: Double(min(value.registeredCount, value.capacity)), total: Double(max(value.capacity, 1)))
+                            .tint(Theme.accent)
+                            .accessibilityHidden(true)
+                    }
                     if value.rosterIsOpen {
                         registration(value)
                     } else if value.viewer.registration != nil {
@@ -134,6 +161,7 @@ struct EventDetailView: View {
                 if let failure = friends.error { SettingsErrorRow(message: failure.message) }
             }
             Button("Записаться") { register(partner: value.format == .roundRobin ? partner : nil) }
+                .buttonStyle(.padelPrimary)
                 .disabled(working || !app.isOnline || value.registeredCount >= value.capacity || (value.format == .roundRobin && partner == nil))
         }
     }
@@ -148,12 +176,18 @@ struct EventDetailView: View {
                 }.disabled(working || !app.isOnline || (value.currentRound == 0 && (value.registeredCount != value.capacity || value.registrations.contains { $0.status != "accepted" })) || value.games.contains { !$0.confirmed })
             }
             ForEach(value.games) { game in
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Раунд \(game.round) · Корт \(game.court)").font(.headline)
-                    Text(game.team1.map(\.displayName).joined(separator: " + "))
-                    Text(game.score).font(.title3.bold()).monospacedDigit()
-                    Text(game.team2.map(\.displayName).joined(separator: " + "))
-                    Text(game.confirmed ? "Подтверждено" : "Подтверждений: \(game.confirmations.count) / 4").font(.caption).foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text("Раунд \(game.round) · Корт \(game.court)").font(.subheadline.weight(.semibold))
+                        Spacer(minLength: 8)
+                        StatusPill(text: game.confirmed ? "Подтверждено" : "Подтверждений: \(game.confirmations.count) / 4",
+                                   color: game.confirmed ? Theme.positive : Color.secondary,
+                                   symbol: game.confirmed ? "checkmark" : nil)
+                    }
+                    EventGameLine(names: game.team1.map(\.displayName), points: game.points1,
+                                  leads: (game.points1 ?? 0) > (game.points2 ?? 0))
+                    EventGameLine(names: game.team2.map(\.displayName), points: game.points2,
+                                  leads: (game.points2 ?? 0) > (game.points1 ?? 0))
                     if !game.confirmed && value.status == .running {
                         if value.viewer.isOrganizer || app.me.map({ game.playerIDs.contains($0.userId) }) == true {
                             Button(game.points1 == nil ? "Внести счёт" : "Исправить счёт") { score = game }.disabled(working || !app.isOnline)
@@ -169,11 +203,24 @@ struct EventDetailView: View {
         }
         Section("Таблица результатов") {
             ForEach(value.standings) { standing in
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("\(standing.rank). " + standing.players.map(\.displayName).joined(separator: " + ")).font(.headline)
-                    Text("Очков: \(standing.points) · Игр: \(standing.played) · Побед: \(standing.wins)")
-                        .font(.subheadline).foregroundStyle(.secondary)
+                HStack(spacing: 12) {
+                    Text("\(standing.rank)")
+                        .font(.display(.subheadline, weight: .bold)).monospacedDigit()
+                        .foregroundStyle(standing.rank == 1 ? Theme.ink : Color.primary)
+                        .frame(width: 32, height: 32)
+                        .background(standing.rank == 1 ? AnyShapeStyle(Theme.lime) : AnyShapeStyle(Theme.inset), in: .circle)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(standing.players.map(\.displayName).joined(separator: " + ")).font(.headline)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text("Игр: \(standing.played) · Побед: \(standing.wins)")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 8)
+                    Text("\(standing.points)").font(.display(.title3, weight: .bold)).monospacedDigit()
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(standing.rank). " + standing.players.map(\.displayName).joined(separator: " + ")
+                    + ". Очков: \(standing.points), игр: \(standing.played), побед: \(standing.wins)")
             }
             Text("Очки турнира не меняют спортивный рейтинг Padel ID.").font(.footnote).foregroundStyle(.secondary)
         }
@@ -282,5 +329,29 @@ private struct EventScoreView: View {
                                     : "Счёт изменился. Загружена актуальная версия; проверьте значения перед сохранением."
         } catch let failure as APIError { error = failure.message }
         catch { self.error = "Не удалось загрузить актуальный счёт. Повторите обновление." }
+    }
+}
+
+/// One pair of a tournament game with its points, the leading pair on lime.
+private struct EventGameLine: View {
+    let names: [String]
+    let points: Int?
+    let leads: Bool
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Text(names.joined(separator: " + "))
+                .font(leads ? .body.weight(.semibold) : .body)
+                .foregroundStyle(leads || points == nil ? Color.primary : Color.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text(points.map(String.init) ?? "–")
+                .font(.display(.subheadline, weight: .bold)).monospacedDigit()
+                .foregroundStyle(leads ? Theme.ink : Color.secondary)
+                .frame(minWidth: 40, minHeight: 32)
+                .background(leads ? AnyShapeStyle(Theme.lime) : AnyShapeStyle(Theme.inset), in: .rect(cornerRadius: 9, style: .continuous))
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(names.joined(separator: " и ") + (points.map { ", очков: \($0)" } ?? ", счёт не внесён"))
     }
 }

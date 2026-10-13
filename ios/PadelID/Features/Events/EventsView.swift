@@ -24,26 +24,33 @@ struct EventsView: View {
         List {
             Section {
                 if organizerId == nil {
-                    Picker("События", selection: $kind) {
-                        ForEach(SportEventKind.allCases) { Text($0.title).tag($0) }
-                    }.pickerStyle(.segmented).accessibilityIdentifier("events.kind")
-                    Picker("Участие", selection: $mine) {
-                        Text("Ближайшие").tag(false)
-                        Text("Мои").tag(true)
-                    }.pickerStyle(.segmented).accessibilityIdentifier("events.scope")
-                    if !mine {
-                        Toggle("Все города", isOn: $allCities)
-                        if !allCities {
-                            NavigationLink { CityPickerView(selection: $city) } label: {
-                                LabeledContent("Город", value: city?.name ?? "Выберите")
-                            }
-                        }
+                    VStack(spacing: 10) {
+                        Picker("События", selection: $kind) {
+                            ForEach(SportEventKind.allCases) { Text($0.title).tag($0) }
+                        }.pickerStyle(.segmented).accessibilityIdentifier("events.kind")
+                        Picker("Участие", selection: $mine) {
+                            Text("Ближайшие").tag(false)
+                            Text("Мои").tag(true)
+                        }.pickerStyle(.segmented).accessibilityIdentifier("events.scope")
                     }
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
                 } else {
                     Text("Доступные занятия этого тренера. Условия и свободные места указаны в каждом событии.")
                         .font(.subheadline).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+            }
+            if organizerId == nil && !mine {
+                Section {
+                    Toggle("Все города", isOn: $allCities)
+                    if !allCities {
+                        NavigationLink { CityPickerView(selection: $city) } label: {
+                            LabeledContent("Город", value: city?.name ?? "Выберите")
+                        }
+                    }
+                }
+                .listSectionSpacing(.compact)
             }
             if let error {
                 Section {
@@ -120,20 +127,26 @@ struct EventsView: View {
 
 }
 
+/// A training or tournament in the catalog: what, when, where and how full.
 private struct EventCatalogRow: View {
     let event: SportEvent
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
-                Image(systemName: event.kind.symbol).font(.title2).foregroundStyle(Theme.accent).accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 4) {
+                SymbolPlate(symbol: event.kind.symbol)
+                VStack(alignment: .leading, spacing: 3) {
                     Text(event.title).font(.headline).fixedSize(horizontal: false, vertical: true)
-                    Text(event.format.title).font(.subheadline).foregroundStyle(.secondary)
+                    Text([event.format.title, event.priceTitle].compactMap { $0 }.joined(separator: " · "))
+                        .font(.subheadline).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            Text(event.startsAt, format: .dateTime.day().month(.wide).hour().minute()).font(.subheadline.weight(.semibold))
-            Text([event.city.name, event.club?.name, event.location].compactMap { $0 }.joined(separator: " · "))
-                .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(event.startsAt, format: .dateTime.day().month(.wide).hour().minute())
+                    .font(.display(.subheadline, weight: .bold))
+                Text([event.city.name, event.club?.name, event.location].compactMap { $0 }.joined(separator: " · "))
+                    .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
             ViewThatFits(in: .horizontal) {
                 HStack { status; Spacer(minLength: 8); capacity }
                 VStack(alignment: .leading, spacing: 6) { status; capacity }
@@ -145,6 +158,13 @@ private struct EventCatalogRow: View {
         .padding(.vertical, 8)
         .accessibilityElement(children: .combine)
     }
-    private var status: some View { StatusPill(text: event.status.title, color: event.status == .cancelled ? Theme.negative : Theme.accent) }
-    private var capacity: some View { Text("\(event.registeredCount) / \(event.capacity) мест").font(.caption).monospacedDigit() }
+    private var status: some View {
+        StatusPill(text: event.viewer.registration == "accepted" ? "Вы записаны" : event.status.title,
+                   color: event.status == .cancelled ? Theme.negative : Theme.accent,
+                   symbol: event.viewer.registration == "accepted" ? "checkmark" : nil)
+    }
+    private var capacity: some View {
+        Text("\(event.registeredCount) / \(event.capacity) мест")
+            .font(.footnote.weight(.medium)).monospacedDigit().foregroundStyle(.secondary)
+    }
 }

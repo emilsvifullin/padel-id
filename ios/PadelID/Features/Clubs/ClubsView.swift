@@ -17,14 +17,30 @@ struct ClubsView: View {
             List {
                 Section {
                     NavigationLink { CityPickerView(selection: $city) } label: {
-                        Label {
-                            LabeledContent("Город", value: city?.name ?? "Выберите город")
-                        } icon: { Image(systemName: "mappin.and.ellipse") }
+                        HStack(spacing: 12) {
+                            SymbolPlate(symbol: "mappin.and.ellipse")
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Город").font(.caption).foregroundStyle(.secondary)
+                                Text(city?.name ?? "Выберите город").font(.headline)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        .accessibilityElement(children: .combine)
                     }
                     .accessibilityIdentifier("clubs.city")
                 }
                 if let city {
-                    Section { Toggle("Клубы на карте", isOn: $showsMap) }
+                    Section {
+                        Picker("Вид каталога", selection: $showsMap) {
+                            Text("Список").tag(false)
+                            Text("Карта").tag(true)
+                        }
+                        .pickerStyle(.segmented)
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                        .accessibilityIdentifier("clubs.mode")
+                    }
+                    .listSectionSpacing(.compact)
                     catalog(city)
                 } else {
                     ContentUnavailableView("Выберите город", systemImage: "building.2",
@@ -80,7 +96,7 @@ struct ClubsView: View {
                     Section {
                         if clubs.contains(where: { $0.coordinates != nil }) {
                             ClubDirectoryMap(clubs: clubs, city: city)
-                                .frame(height: 260)
+                                .frame(height: 340)
                                 .listRowInsets(EdgeInsets())
                         } else {
                             Text("У этих клубов ещё не опубликованы координаты. Адреса можно посмотреть в карточках.")
@@ -131,19 +147,16 @@ private struct ClubCatalogRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "building.2")
-                .font(.title3).foregroundStyle(Theme.accent)
-                .frame(width: 44, height: 44)
-                .background(Theme.accent.opacity(0.09), in: .rect(cornerRadius: 12))
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 5) {
+            SymbolPlate(symbol: "sportscourt.fill")
+            VStack(alignment: .leading, spacing: 4) {
                 Text(club.name).font(.headline).fixedSize(horizontal: false, vertical: true)
                 if let address = club.address, !address.isEmpty {
                     Text(address).font(.subheadline).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Text(Format.count(club.playersCount, "игрок", "игрока", "игроков") + " в сообществе")
-                    .font(.subheadline).foregroundStyle(.secondary)
+                Label(Format.count(club.playersCount, "игрок", "игрока", "игроков") + " в сообществе",
+                      systemImage: "person.2.fill")
+                    .font(.footnote).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

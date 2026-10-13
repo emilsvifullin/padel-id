@@ -16,7 +16,11 @@ struct UpcomingListView: View {
                 Picker("Игры", selection: $mine) {
                     Text("Открытые").tag(false)
                     Text("Мои").tag(true)
-                }.pickerStyle(.segmented).accessibilityIdentifier("upcoming.scope")
+                }
+                .pickerStyle(.segmented)
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+                .accessibilityIdentifier("upcoming.scope")
             }
             if let error { StaleDataBanner(error: error) }
             ForEach(items) { match in

@@ -45,8 +45,14 @@ struct UpcomingDetailView: View {
             if detail.isStale, let error = detail.error { StaleDataBanner(error: error) }
             if let error { SettingsErrorRow(message: error) }
             Section {
-                UpcomingMatchRow(match: match)
-                if let note = match.note, !note.isEmpty { Text(note) }
+                UpcomingMatchRow(match: match, prominent: true)
+                    .padding(22)
+                    .inkCard()
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            }
+            Section {
+                if let note = match.note, !note.isEmpty { Text(note).fixedSize(horizontal: false, vertical: true) }
                 NavigationLink(value: Route.player(match.organizer.id)) {
                     PlayerRow(card: match.organizer, subtitle: "Организатор") {
                         LevelChip(level: match.organizer.level, reliability: match.organizer.reliability)
@@ -130,6 +136,7 @@ struct UpcomingDetailView: View {
         } else if match.viewer.participation == "invited" {
             Label("Вас пригласили", systemImage: "envelope.open")
             Button("Принять приглашение") { perform("invitations/respond", body: ["decision":"accepted"]) }
+                .buttonStyle(.padelPrimary)
                 .disabled(match.spotsLeft == 0 || !app.isOnline || isWorking)
             Button("Отклонить", role: .destructive) { perform("invitations/respond", body: ["decision":"declined"]) }
                 .disabled(!app.isOnline || isWorking)
@@ -146,7 +153,7 @@ struct UpcomingDetailView: View {
             Button("Выйти из листа ожидания", role: .destructive) { perform("leave") }.disabled(!app.isOnline || isWorking)
         } else if match.viewer.canJoin {
             Button(match.viewer.admission == "auto" ? "Занять место" : "Подать заявку") { perform("join") }
-                .buttonStyle(.padelProminent).disabled(!app.isOnline || isWorking)
+                .buttonStyle(.padelPrimary).disabled(!app.isOnline || isWorking)
                 .accessibilityIdentifier("upcoming.join")
         } else if match.viewer.admission == "out_of_range" {
             Text("Ваш подтверждённый уровень вне диапазона этой игры.").foregroundStyle(.secondary)

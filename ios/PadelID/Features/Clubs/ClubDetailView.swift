@@ -73,9 +73,9 @@ struct ClubDetailView: View {
 
     private var header: some View {
         Section {
-            VStack(alignment: .leading, spacing: 14) {
-                Image(systemName: "building.2.fill").font(.largeTitle).foregroundStyle(Theme.lime).accessibilityHidden(true)
-                Text(club.name).font(.title2.bold()).fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 10) {
+                PerforationGrid(dot: 9, gap: 5, color: Theme.lime).padding(.bottom, 26)
+                Text(club.name).font(.display(.title2, weight: .bold)).fixedSize(horizontal: false, vertical: true)
                 Label(city.name, systemImage: "mappin.and.ellipse").font(.subheadline)
                 Text(Format.count(club.playersCount, "игрок", "игрока", "игроков") + " в сообществе клуба")
                     .font(.subheadline).foregroundStyle(.white.opacity(0.8)).fixedSize(horizontal: false, vertical: true)
