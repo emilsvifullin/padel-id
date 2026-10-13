@@ -64,6 +64,11 @@ final class HomeUITests: PadelIDUITestCase {
         let levelTitleNow = try XCTUnwrap(labelAreas()[levelTitle], "level title on Home")
         XCTAssertGreaterThanOrEqual(homeAtLargest[levelTitle] ?? 0, levelTitleNow * 1.15,
                                     "the measurement launch ran at the largest text size")
+        // The contrast measurement has to tell weak text from readable text.
+        let faint = try XCTUnwrap(Self.measuredContrast(of: Self.sample(text: 0.45, on: 0.11)))
+        let clear = try XCTUnwrap(Self.measuredContrast(of: Self.sample(text: 0.72, on: 0.11)))
+        XCTAssertLessThan(faint, Self.requiredContrast, "faint text measures below the requirement")
+        XCTAssertGreaterThan(clear, Self.requiredContrast, "readable text measures above the requirement")
         // Record every failure of a pass instead of stopping at the first.
         continueAfterFailure = true
         defer { continueAfterFailure = false }
@@ -122,9 +127,66 @@ final class HomeUITests: PadelIDUITestCase {
                     print("ACCESSIBILITY EDGE FRAGMENT: \(target.label), frame=\(target.frame), content=\(top)...\(bottom)")
                     return true
                 }
+                // Fully visible text is set aside only when its own pixels
+                // prove the contrast the audit doubted.
+                if let ratio = Self.measuredContrast(of: target.screenshot().image), ratio >= Self.requiredContrast {
+                    print("ACCESSIBILITY MEASURED CONTRAST: \(target.label) is \(String(format: "%.2f", ratio)):1")
+                    return true
+                }
                 return false
             }
         }
+    }
+
+    /// WCAG AA for body text.
+    private static let requiredContrast = 4.5
+
+    /// A line of caption-sized grey text on a grey surface.
+    private static func sample(text: CGFloat, on surface: CGFloat) -> UIImage {
+        let size = CGSize(width: 120, height: 18)
+        return UIGraphicsImageRenderer(size: size).image { context in
+            UIColor(white: surface, alpha: 1).setFill()
+            context.fill(CGRect(origin: .zero, size: size))
+            ("8 октября" as NSString).draw(at: .zero, withAttributes: [
+                .font: UIFont.preferredFont(forTextStyle: .subheadline), .foregroundColor: UIColor(white: text, alpha: 1)
+            ])
+        }
+    }
+
+    /// The contrast between the most common colour of the image, taken as the
+    /// background, and its glyphs: the highest ratio that at least 1% of the
+    /// pixels reach, so a stray pixel cannot stand in for the text.
+    private static func measuredContrast(of image: UIImage) -> Double? {
+        guard let source = image.cgImage else { return nil }
+        let width = source.width, height = source.height
+        guard width > 0, height > 0 else { return nil }
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        let drawn = pixels.withUnsafeMutableBytes { buffer -> Bool in
+            guard let context = CGContext(data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8,
+                                          bytesPerRow: width * 4, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                          bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return false }
+            context.draw(source, in: CGRect(x: 0, y: 0, width: width, height: height))
+            return true
+        }
+        guard drawn else { return nil }
+
+        func channel(_ value: UInt8) -> Double {
+            let v = Double(value) / 255
+            return v <= 0.03928 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4)
+        }
+        var luminances = [Double](repeating: 0, count: width * height)
+        var counts: [UInt32: Int] = [:]
+        for index in 0..<(width * height) {
+            let r = pixels[index * 4], g = pixels[index * 4 + 1], b = pixels[index * 4 + 2]
+            luminances[index] = 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+            // Neighbouring shades of one surface count as one colour.
+            counts[UInt32(r >> 3) << 16 | UInt32(g >> 3) << 8 | UInt32(b >> 3), default: 0] += 1
+        }
+        guard let key = counts.max(by: { $0.value < $1.value })?.key else { return nil }
+        let background = 0.2126 * channel(UInt8(key >> 16 & 0xFF) << 3 | 4)
+            + 0.7152 * channel(UInt8(key >> 8 & 0xFF) << 3 | 4) + 0.0722 * channel(UInt8(key & 0xFF) << 3 | 4)
+        let ratios = luminances.map { (max($0, background) + 0.05) / (min($0, background) + 0.05) }.sorted(by: >)
+        return ratios[max(0, ratios.count / 100 - 1)]
     }
 
     func testHomeRatingDnaInsights() throws {
