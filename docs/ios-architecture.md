@@ -41,9 +41,9 @@ DesignSystem    Theme (tokens, type, motion, surfaces, button styles),
                 Brand (PerforationGrid, LimeSurface, InkSurface, limeCard,
                 inkCard, PerforationLoader, PadelSymbol, SymbolPlate, Chevron,
                 ComposerBar), Components (LevelNumeral,
-                LevelChip, DeltaText, ReliabilityRing, AvatarView, RemoteImage,
+                LevelChip, DeltaText, ReliabilityMark, AvatarView, RemoteImage,
                 PlayerRow, StatusPill, OfflineBanner, StaleDataBanner,
-                LoadingView, ErrorStateView, FormResultDot, EqualWidthHStack,
+                LoadingView, ErrorStateView, FormResultDot, EqualWidthHStack, FlowLayout,
                 Announce), DNAHexagon, RatingChart
 Features/<Area> screens of one area
 ```
