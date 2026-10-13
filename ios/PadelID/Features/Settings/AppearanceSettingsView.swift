@@ -179,7 +179,7 @@ struct AppearanceSettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("appearance.icon.help")
             }
-        }
+        }.closeToBar()
         .contentMargins(.bottom, 24, for: .scrollContent)
         .navigationTitle("Оформление")
         // Every screen changes colour at once: dissolve into the new theme

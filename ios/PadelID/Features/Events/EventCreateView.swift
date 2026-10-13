@@ -102,7 +102,7 @@ struct EventCreateView: View {
                 } header: { Text("Условия участия") } footer: {
                     Text("Стоимость указывает организатор. Оплату и использование корта участники согласуют с ним напрямую.")
                 }
-            }
+            }.closeToBar()
             .disabled(isWorking || submitted != nil)
             .navigationTitle(kind == .training ? "Новая тренировка" : "Новый турнир")
             .navigationBarTitleDisplayMode(.inline)

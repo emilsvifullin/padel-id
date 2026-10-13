@@ -80,7 +80,7 @@ struct CoachApplicationView: View {
             if application?.status != .revoked {
                 editableSections(application)
             }
-        }
+        }.closeToBar()
         .disabled(isSubmitting)
         .refreshable { await resource.load(using: app) }
     }

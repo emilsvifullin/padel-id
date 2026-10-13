@@ -53,7 +53,7 @@ struct StatsDetailView: View {
                 StatsDetailSections(stats: stats, isMe: isMe)
                 StatsAchievementsSection(achievements: Achievements.list(stats: stats, rating: value.rating))
             }
-            .listStyle(.insetGrouped)
+            .listStyle(.insetGrouped).closeToBar()
             .scrollContentBackground(.hidden)
             .refreshable { [player = self.player, app = self.app] in
                 await player.load(using: app)

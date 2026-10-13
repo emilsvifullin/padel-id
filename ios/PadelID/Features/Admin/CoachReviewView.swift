@@ -18,7 +18,7 @@ struct CoachReviewView: View {
             }
             content
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.insetGrouped).closeToBar()
         .navigationTitle("Заявки тренеров")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: status) { await load(status) }
@@ -263,7 +263,7 @@ private struct AdminReviewDecisionSheet: View {
                         SettingsErrorRow(message: error.message)
                     }
                 }
-            }
+            }.closeToBar()
             .disabled(isSubmitting)
             .navigationTitle(AdminReviewCopy.title(request.action))
             .navigationBarTitleDisplayMode(.inline)

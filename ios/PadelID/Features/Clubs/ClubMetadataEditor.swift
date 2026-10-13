@@ -64,7 +64,7 @@ struct ClubMetadataEditor: View {
                         }
                     }
                 }
-            }
+            }.closeToBar()
             .disabled(working).scrollContentBackground(.hidden).background(Theme.canvas)
             .navigationTitle("О клубе").navigationBarTitleDisplayMode(.inline)
             .toolbar {

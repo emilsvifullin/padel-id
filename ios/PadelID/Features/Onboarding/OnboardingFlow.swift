@@ -414,7 +414,7 @@ private struct OnboardingStepScreen<Content: View>: View {
                         .listRowBackground(Color.clear)
                 }
                 content
-            }
+            }.closeToBar()
             .scrollDismissesKeyboard(.interactively)
             .onChange(of: scrollRequest) {
                 withAnimation(reduceMotion ? nil : .smooth) {

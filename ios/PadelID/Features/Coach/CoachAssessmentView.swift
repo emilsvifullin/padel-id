@@ -77,7 +77,7 @@ struct CoachAssessmentView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-            }
+            }.closeToBar()
             .navigationTitle("Оценка")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -237,6 +237,9 @@ The language comes from the app icon; the neutrals come from the system.
   (`.tabBarMinimizeBehavior(.never)`). On a main tab the search field lives
   in the content: a search bar in the navigation bar keeps the large title
   collapsed on iOS 27.
+* Every `List` and `Form` takes `.closeToBar()`: content starts 8 pt under
+  the bar on every screen, not after the system's wide gap. A sheet's root is
+  `SheetNavigationStack`, which carries the typesetting setting into it.
 * Standard navigation bars and toolbars, `.sheet` with a medium detent for
   short tasks, `.confirmationDialog` for destructive multi-option choices,
   `.alert` for binary discard/cancel/delete confirmations and errors (this

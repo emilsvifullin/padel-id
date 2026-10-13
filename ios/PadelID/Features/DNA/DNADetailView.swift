@@ -361,7 +361,7 @@ private struct DNADetailSelfAssessmentSheet: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-            }
+            }.closeToBar()
             .navigationTitle("Самооценка")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

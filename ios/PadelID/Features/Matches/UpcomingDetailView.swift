@@ -123,7 +123,7 @@ struct UpcomingDetailView: View {
                     }
                 }
             }
-        }
+        }.closeToBar()
         .refreshable { await detail.load(using: app) }
     }
 

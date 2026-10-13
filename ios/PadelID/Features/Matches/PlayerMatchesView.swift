@@ -56,7 +56,7 @@ struct PlayerMatchesView: View {
                 }
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.insetGrouped).closeToBar()
         .refreshable {
             await pager.load(using: app, reset: true)
         }

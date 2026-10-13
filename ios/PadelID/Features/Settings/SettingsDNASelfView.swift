@@ -49,7 +49,7 @@ struct SettingsDNASelfView: View {
                         .foregroundStyle(Theme.negative)
                 }
             }
-        }
+        }.closeToBar()
         .disabled(isSaving)
         .navigationTitle("Самооценка")
         .navigationBarTitleDisplayMode(.inline)

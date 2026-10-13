@@ -20,7 +20,7 @@ struct PlayersView: View {
                     browseSections
                 }
             }
-            .listStyle(.insetGrouped)
+            .listStyle(.insetGrouped).closeToBar()
             .overlay {
                 if !isResultsMode {
                     browseOverlay

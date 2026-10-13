@@ -46,8 +46,7 @@ struct AccountView: View {
                 signOutSection
                 deleteSection
             }
-            .listStyle(.insetGrouped)
-            .contentMargins(.top, 8, for: .scrollContent)
+            .listStyle(.insetGrouped).closeToBar()
             .navigationTitle("Профиль")
             .mainTabTitle()
             .padelRoutes()

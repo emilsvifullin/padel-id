@@ -72,7 +72,7 @@ struct SecurityView: View {
                      : "Нужно подключение к интернету.")
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.insetGrouped).closeToBar()
         .navigationTitle("Безопасность")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -163,7 +163,7 @@ struct ChangeEmailView: View {
                 SettingsActionButton(title: "Изменить почту", isWorking: isSubmitting, action: submit)
                     .disabled(!canSubmit)
             }
-        }
+        }.closeToBar()
         .disabled(isSubmitting)
         .navigationTitle("Почта")
         .navigationBarTitleDisplayMode(.inline)
@@ -283,7 +283,7 @@ struct ChangePasswordView: View {
             } footer: {
                 Text("После смены пароля другие устройства выйдут из аккаунта.")
             }
-        }
+        }.closeToBar()
         .disabled(isSubmitting)
         .navigationTitle("Пароль")
         .navigationBarTitleDisplayMode(.inline)
@@ -379,7 +379,7 @@ private struct SecurityRecoveryKeyView: View {
                 SettingsActionButton(title: "Создать новый ключ", isWorking: isSubmitting, action: submit)
                     .disabled(!canSubmit)
             }
-        }
+        }.closeToBar()
         .disabled(isSubmitting)
         .navigationTitle("Ключ восстановления")
         .navigationBarTitleDisplayMode(.inline)

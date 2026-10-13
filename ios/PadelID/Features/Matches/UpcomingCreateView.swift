@@ -71,7 +71,7 @@ struct UpcomingCreateView: View {
                 } header: { Text("Постоянная игра") } footer: {
                     Text("Все даты должны быть в пределах 180 дней. Каждый состав собирается отдельно; приглашение не резервирует место. В закрытые игры вы приглашаете друзей после создания.")
                 }
-            }
+            }.closeToBar()
             .disabled(isWorking || hasSubmission)
             .navigationTitle("Новая игра")
             .navigationBarTitleDisplayMode(.inline)

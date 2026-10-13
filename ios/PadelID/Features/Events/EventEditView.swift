@@ -90,7 +90,7 @@ struct EventEditView: View {
                     }
                 }
                 .disabled(working || pending != nil || needsReload || needsReview || !event.rosterIsOpen)
-            }
+            }.closeToBar()
             .navigationTitle("Событие")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -32,7 +32,7 @@ struct FriendsView: View {
                     ErrorStateView(error: error) { Task { await friends.load(using: app) } }
                 } else { ProgressView() }
             }
-            .listStyle(.insetGrouped)
+            .listStyle(.insetGrouped).closeToBar()
             .navigationTitle("Друзья")
             .refreshable { await friends.load(using: app) }
     }

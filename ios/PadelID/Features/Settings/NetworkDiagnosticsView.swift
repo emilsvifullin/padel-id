@@ -125,7 +125,7 @@ struct NetworkDiagnosticsView: View {
                 Text("Успешная проверка соединения не заменяет регистрацию, вход и остальные сценарии приложения.")
                     .foregroundStyle(.secondary)
             }
-        }
+        }.closeToBar()
         .navigationTitle("Проверка сети")
         .navigationBarTitleDisplayMode(.inline)
     }

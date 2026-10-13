@@ -374,7 +374,7 @@ struct ConversationMembersView: View {
                 }
             }
             if let error { SettingsErrorRow(message: error) }
-        }
+        }.closeToBar()
         .navigationTitle("Участники")
         .task(id: app.dataRevision) { await current.load(using: app) }
         .sheet(isPresented: $adding) {
@@ -389,7 +389,7 @@ struct ConversationMembersView: View {
                     if friends.isLoading { ProgressView() }
                     if let failure = friends.error { SettingsErrorRow(message: failure.message) }
                     if let error { SettingsErrorRow(message: error) }
-                }
+                }.closeToBar()
                 .navigationTitle("Добавить друзей")
                 .toolbar { Button("Готово") { adding = false } }
                 .task { await friends.load(using: app) }

@@ -24,7 +24,7 @@ struct GroupsView: View {
             }
             CommunityCollectionFooter(collection: groups)
             if let error { SettingsErrorRow(message: error) }
-        }
+        }.closeToBar()
         .navigationTitle("Группы")
         .searchable(text: $query, prompt: "Найти группу")
         .toolbar { Button("Создать", systemImage: "plus") { creating = true } }
@@ -64,7 +64,7 @@ struct SocialInboxView: View {
             }
             CommunityCollectionFooter(collection: notifications)
             if let error { SettingsErrorRow(message: error) }
-        }
+        }.closeToBar()
         .navigationTitle("Уведомления")
         .toolbar { Button("Прочитать все") { markRead() }.disabled(working || !app.isOnline) }
         .task(id: "\(app.dataRevision):\(scenePhase):\(app.isOnline)") {
@@ -203,7 +203,7 @@ struct ModerationReportsView: View {
             }
             CommunityCollectionFooter(collection: reports)
             if let error { SettingsErrorRow(message: error) }
-        }
+        }.closeToBar()
         .navigationTitle("Жалобы")
         .task { await reports.load(using: app) }
         .refreshable { await reports.load(using: app) }

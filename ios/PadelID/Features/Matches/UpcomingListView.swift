@@ -34,7 +34,7 @@ struct UpcomingListView: View {
                 Button("Ещё игры") { Task { await load(offset: nextOffset) } }.disabled(isLoading)
             }
             if isLoading { ProgressView() }
-        }
+        }.closeToBar()
         .navigationTitle("Предстоящие игры")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

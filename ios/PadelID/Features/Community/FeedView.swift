@@ -180,7 +180,7 @@ struct PostCreateView: View {
                         .accessibilityIdentifier("post.publish")
                     if isWorking { ProgressView() }
                 }
-            }
+            }.closeToBar()
             .navigationTitle(clubId == nil ? "Публикация" : "Новость клуба")
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() } } }
         }

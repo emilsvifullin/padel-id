@@ -51,7 +51,7 @@ struct ClubDetailView: View {
             } else { Section { ProgressView("Загружаем информацию…") } }
             gameSection
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.insetGrouped).closeToBar()
         .scrollContentBackground(.hidden)
         .background(Theme.canvas)
         .navigationTitle("Клуб")

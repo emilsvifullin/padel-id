@@ -66,7 +66,7 @@ struct MatchFeedbackSheet: View {
                     }
                     .font(.footnote)
                 }
-            }
+            }.closeToBar()
             .disabled(isSubmitting)
             .navigationTitle("Отметки")
             .navigationBarTitleDisplayMode(.inline)

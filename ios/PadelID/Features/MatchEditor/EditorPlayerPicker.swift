@@ -54,7 +54,7 @@ struct EditorPlayerPicker: View {
                     searchContent(for: text)
                 }
             }
-            .listStyle(.insetGrouped)
+            .listStyle(.insetGrouped).closeToBar()
             .scrollDismissesKeyboard(.immediately)
             .safeAreaBar(edge: .top, spacing: 0) {
                 searchField

@@ -144,7 +144,7 @@ struct ConversationsView: View {
                 }
             }
             CommunityCollectionFooter(collection: conversations)
-        }
+        }.closeToBar()
         .navigationTitle("Сообщения")
         .toolbar { Button("Новый чат", systemImage: "square.and.pencil") { creating = true } }
         .sheet(isPresented: $creating) { ConversationCreateView() }
@@ -268,7 +268,7 @@ struct ConversationCreateView: View {
                 } footer: {
                     Text(publicGroup ? "Открытую группу смогут найти и вступить другие игроки." : "Закрытая группа доступна только участникам. Пригласить можно ваших друзей.")
                 }
-            }
+            }.closeToBar()
             .navigationTitle("Новая группа")
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() } } }
             .task { await friends.load(using: app) }

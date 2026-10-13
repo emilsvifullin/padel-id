@@ -25,7 +25,7 @@ struct UpcomingInviteView: View {
                     if let failure = friends.error { SettingsErrorRow(message: failure.message) }
                     if let error { SettingsErrorRow(message: error) }
                 } footer: { Text("Друг сам принимает приглашение. До принятия место остаётся свободным.") }
-            }
+            }.closeToBar()
             .navigationTitle("Пригласить друзей")
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Готово") { dismiss() } } }
             .task { await friends.load(using: app) }

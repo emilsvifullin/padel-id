@@ -57,7 +57,7 @@ struct DeleteAccountView: View {
                     Text("Профиль и личные данные будут удалены без возможности восстановления.")
                 }
             }
-        }
+        }.closeToBar()
         .disabled(isDeleting)
         .navigationTitle("Удаление аккаунта")
         .navigationBarTitleDisplayMode(.inline)

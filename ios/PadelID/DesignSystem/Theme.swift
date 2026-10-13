@@ -172,6 +172,12 @@ extension View {
         contentShape(.rect(cornerRadius: Theme.cornerRadius, style: .continuous))
     }
 
+    /// A list or a form starts right under the bar, like the content of the
+    /// hand-built screens, instead of leaving the system's wide gap there.
+    func closeToBar() -> some View {
+        contentMargins(.top, 8, for: .scrollContent)
+    }
+
     /// The canvas behind a scrolling screen; lists and forms keep their rows.
     func padelCanvas() -> some View {
         background(Theme.canvas.ignoresSafeArea())

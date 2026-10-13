@@ -110,7 +110,7 @@ struct EventDetailView: View {
             } else { ProgressView() }
             if let error { SettingsErrorRow(message: error) }
             if working { ProgressView() }
-        }
+        }.closeToBar()
         .navigationTitle(event.value?.kind.singular ?? "Событие")
         .navigationBarTitleDisplayMode(.inline)
         .sensoryFeedback(.success, trigger: successCount)
@@ -290,7 +290,7 @@ private struct EventScoreView: View {
                         .accessibilityIdentifier("eventScore.save")
                     if working { ProgressView() }
                 }
-            }
+            }.closeToBar()
             .navigationTitle("Счёт раунда")
             .toolbar { Button("Закрыть") { dismiss() }.disabled(working) }
             .onAppear { points = game.points1 ?? total / 2 }

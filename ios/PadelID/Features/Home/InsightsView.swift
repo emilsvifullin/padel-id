@@ -49,7 +49,7 @@ struct InsightsView: View {
                     }
                 }
             }
-            .listStyle(.insetGrouped)
+            .listStyle(.insetGrouped).closeToBar()
             .scrollContentBackground(.hidden)
             .listSectionSpacing(.compact)
             .refreshable { [home = self.home, app = self.app] in

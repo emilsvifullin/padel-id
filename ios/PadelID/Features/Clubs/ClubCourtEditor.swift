@@ -54,7 +54,7 @@ struct ClubCourtEditor: View {
                         }
                     }
                 }
-            }
+            }.closeToBar()
             .disabled(working).scrollContentBackground(.hidden).background(Theme.canvas)
             .navigationTitle(court == nil ? "Добавить корт" : "Изменить корт").navigationBarTitleDisplayMode(.inline)
             .toolbar {

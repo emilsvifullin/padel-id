@@ -63,7 +63,7 @@ struct EventsView: View {
                 Button("Ещё события") { Task { await load(offset: nextOffset) } }.disabled(isLoading)
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.insetGrouped).closeToBar()
         .scrollContentBackground(.hidden)
         .background(Theme.canvas)
         .navigationTitle(organizerId == nil ? "Тренировки и турниры" : "Занятия тренера")

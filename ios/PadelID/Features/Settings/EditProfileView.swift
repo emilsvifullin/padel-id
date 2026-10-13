@@ -73,7 +73,7 @@ struct EditProfileView: View {
                 gameSection
                 bioSection
                 visibilitySection
-            }
+            }.closeToBar()
             .disabled(isSaving)
             .onChange(of: failureCount) {
                 withAnimation(reduceMotion ? nil : .smooth) {

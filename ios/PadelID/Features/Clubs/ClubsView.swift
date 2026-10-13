@@ -32,7 +32,7 @@ struct ClubsView: View {
                                            description: Text("Найдите клубы и игры там, где планируете играть."))
                 }
             }
-            .listStyle(.insetGrouped)
+            .listStyle(.insetGrouped).closeToBar()
             .scrollContentBackground(.hidden)
             .background(Theme.canvas)
             // The map stays in place above the list: a map inside the scrolling

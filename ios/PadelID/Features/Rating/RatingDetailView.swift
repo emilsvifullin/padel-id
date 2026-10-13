@@ -35,7 +35,7 @@ struct RatingDetailView: View {
             }
             content(histories[range])
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.insetGrouped).closeToBar()
         // The chart and the totals arrive together: let them fade in
         // instead of replacing the placeholder in one frame.
         .animation(reduceMotion ? nil : Motion.standard, value: histories[range].value != nil)

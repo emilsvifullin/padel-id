@@ -43,7 +43,7 @@ struct MatchEditorView: View {
                     if let previewKey {
                         previewSection(for: previewKey)
                     }
-                }
+                }.closeToBar()
                 .scrollDismissesKeyboard(.interactively)
                 .onChange(of: model.failureCount) {
                     withAnimation(reduceMotion ? nil : .smooth) {

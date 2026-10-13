@@ -36,7 +36,7 @@ struct ReportContentView: View {
                         .disabled(working || !app.isOnline || SettingsText.length(detail) > 500)
                     if working { ProgressView() }
                 } footer: { Text("Жалоба будет доступна модераторам. Её отправка не заменяет блокировку игрока.") }
-            }
+            }.closeToBar()
             .navigationTitle("Жалоба")
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() } } }
         }
@@ -164,7 +164,7 @@ struct SocialPrivacyView: View {
             }
             if working { ProgressView() }
             if let error { SettingsErrorRow(message: error); Button("Повторить") { Task { await load() } } }
-        }
+        }.closeToBar()
         .navigationTitle("Приватность")
         .task { await load() }
     }
@@ -206,7 +206,7 @@ struct SocialPlayersListView: View {
             }
             CommunityCollectionFooter(collection: players)
             if let error { SettingsErrorRow(message: error) }
-        }
+        }.closeToBar()
         .navigationTitle(blocked ? "Блокировки" : "Подписки")
         .task { await players.load(using: app) }
     }

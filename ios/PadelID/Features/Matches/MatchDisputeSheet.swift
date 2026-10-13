@@ -56,7 +56,7 @@ struct MatchDisputeSheet: View {
                         }
                     }
                 }
-            }
+            }.closeToBar()
             .disabled(isSubmitting)
             .navigationTitle("Оспорить")
             .navigationBarTitleDisplayMode(.inline)

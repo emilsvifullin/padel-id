@@ -66,7 +66,7 @@ struct PlayersFilterSheet: View {
                     }
                     .disabled(isDefault)
                 }
-            }
+            }.closeToBar()
             .navigationTitle("Фильтры")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
