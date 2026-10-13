@@ -199,12 +199,26 @@ The language comes from the app icon; the neutrals come from the system.
   green in Light, lime in Dark. `inkCard` is the graphite of the alternate
   icon, used for the header of a profile, a club, a game and an event.
 * **The six perforation dots** of the racket (`PerforationGrid`) are the mark:
-  they show rating reliability on the ID card and pulse as the loader. Do
-  not use them as decoration elsewhere.
+  they show rating reliability everywhere it appears (`ReliabilityMark`, and
+  the ID card) and pulse as the loader. Do not use them as decoration
+  elsewhere.
+* **The app's own symbols** (`PadelSymbol.racket`, `PadelSymbol.court`) stand
+  for matches and games and for clubs and courts: the system set only has a
+  tennis racket and a pitch with a centre circle. They are custom symbol
+  assets drawn by `scripts/ios/make-symbols.py`; use `Image(symbol:)` where a
+  symbol name is passed around. A `SymbolPlate` without a tint of its own
+  carries ink on lime; segmented controls select in lime with ink text.
 * **Type**: system fonts and Dynamic Type text styles only. Large navigation
   titles, section headers, level and score numerals use the expanded face
   (`Font.display`); inline titles and body text use the standard one.
   Numerals also take `.monospacedDigit()`.
+* **Text is set the way the system lists set it.** A row's title is one line
+  cut with an ellipsis (`.rowText()`, `.rowText(lines: 2)` for a supporting
+  line); it wraps in full only above the default text sizes. Words do not
+  break by syllable (the app sets its typesetting language so that Russian
+  is not hyphenated). Facts are joined with commas and colons or given a
+  line each, never with middle dots. A sheet's title must fit between its
+  two buttons: keep it to about twelve characters.
 * **Liquid Glass** is for navigation and for controls that float above
   content: system bars and the tab bar (automatic), toolbar buttons
   (automatic), bottom action bars in `.safeAreaBar(edge: .bottom)` with
@@ -215,6 +229,13 @@ The language comes from the app icon; the neutrals come from the system.
   that opens a screen declares `.zoomSource(route)` and the destination
   grows out of it; plain rows keep the standard push. `PadelCardButtonStyle`
   gives every tappable card the same press response.
+* **Follow the system; do not invent chrome.** Navigation bars are the
+  system's, untouched: a main tab has a large title (`.mainTabTitle()`) that
+  becomes the bar's title on scroll, with the system's soft scroll edge. No
+  hard edges, hidden titles or hand-made fades. The tab bar never collapses
+  (`.tabBarMinimizeBehavior(.never)`). On a main tab the search field lives
+  in the content: a search bar in the navigation bar keeps the large title
+  collapsed on iOS 27.
 * Standard navigation bars and toolbars, `.sheet` with a medium detent for
   short tasks, `.confirmationDialog` for destructive multi-option choices,
   `.alert` for binary discard/cancel/delete confirmations and errors (this
@@ -225,8 +246,9 @@ The language comes from the app icon; the neutrals come from the system.
   `Theme.sectionSpacing` between sections, 12–18 inside containers.
   Touch targets ≥ 44 pt.
 * Every screen supports Light/Dark, Dynamic Type up to accessibility sizes
-  (no fixed heights for text; allow wrapping; use `ViewThatFits`, `Grid` or
-  vertical stacks when horizontal layouts would truncate), VoiceOver (labels
+  (no fixed heights for text; body text and anything above the default sizes
+  wraps; use `ViewThatFits`, `Grid`, `FlowLayout` or vertical stacks when a
+  horizontal layout would not fit), VoiceOver (labels
   for icon-only buttons, combined row elements, headers marked with
   `.accessibilityAddTraits(.isHeader)`).
 * Haptics with `.sensoryFeedback` on meaningful events (confirm success,
