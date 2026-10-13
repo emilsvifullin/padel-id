@@ -54,17 +54,18 @@ final class SectionsTourUITests: PadelIDUITestCase {
         }
         let groupChat = "c3c3c3c3-0000-4000-8000-000000000001", gameChat = "c3c3c3c3-0000-4000-8000-000000000002"
         let thread = [
-            message(1, chatID, dima, "Привет! В субботу играем?", "2026-10-12T09:00:00Z"),
+            message(1, chatID, dima, "Привет! В субботу играем?", "2026-10-11T18:40:00Z"),
             message(2, chatID, me, pick("Да, в 10:00 в Лужниках. Корт уже забронирован.",
                                         "Да. Адрес: https://maps.example.com/moscow/leningradsky-prospekt/severnaya-zvezda-padel-club-entrance-b"),
-                    "2026-10-12T09:02:00Z"),
+                    "2026-10-11T18:42:00Z"),
             message(3, chatID, dima, "Супер. Я возьму новые мячи, ты — хорошее настроение.", "2026-10-12T09:03:00Z"),
             message(4, chatID, me, pick("Договорились 🎾", "Ок"), "2026-10-12T09:05:00Z"),
         ]
         let groupTitle = pick("Падел по выходным", "Любители падела Северо-Западного округа и Ленинградской области")
         let conversations: [[String: Any]] = [
             ["id": chatID, "kind": "direct", "title": dimaName, "visibility": "private", "created_at": "2026-10-10T10:00:00Z",
-             "updated_at": "2026-10-12T09:05:00Z", "members": [["player": dima, "role": "member"]], "unread_count": 0, "latest_message": thread[3]],
+             "updated_at": "2026-10-12T09:05:00Z", "members": [["player": dima, "role": "member", "last_read_id": 2]], "unread_count": 0,
+             "latest_message": thread[3]],
             ["id": groupChat, "kind": "group", "title": groupTitle, "visibility": "private", "created_at": "2026-10-01T10:00:00Z",
              "updated_at": "2026-10-12T08:40:00Z",
              "members": [["player": dima, "role": "owner"], ["player": anna, "role": "member"], ["player": igor, "role": "member"]],

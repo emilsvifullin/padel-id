@@ -126,21 +126,29 @@ struct ChatView: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 10) {
+                LazyVStack(alignment: .leading, spacing: 0) {
                     if model.before != nil {
                         Button("Ранние сообщения") { Task { await model.load(using: app, older: true) } }
                             .font(.subheadline.weight(.semibold))
                             .frame(maxWidth: .infinity, minHeight: 44)
                             .disabled(model.isLoading)
                     }
-                    ForEach(model.messages) { message in
-                        messageRow(message).id(message.id)
+                    ForEach(Array(model.messages.enumerated()), id: \.element.id) { index, message in
+                        let previous = index > 0 ? model.messages[index - 1] : nil
+                        let next = index + 1 < model.messages.count ? model.messages[index + 1] : nil
+                        let opensDay = previous.map { !Calendar.current.isDate($0.createdAt, inSameDayAs: message.createdAt) } ?? true
+                        if opensDay { dayHeader(message.createdAt) }
+                        messageRow(message,
+                                   opensRun: opensDay || previous?.sender.id != message.sender.id,
+                                   closesRun: next.map { $0.sender.id != message.sender.id
+                                       || !Calendar.current.isDate($0.createdAt, inSameDayAs: message.createdAt) } ?? true)
+                            .id(message.id)
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
-                    if let error = model.error { SettingsErrorRow(message: error) }
-                    if model.isLoading { ProgressView().frame(maxWidth: .infinity) }
+                    if let error = model.error { SettingsErrorRow(message: error).padding(.top, 10) }
+                    if model.isLoading { ProgressView().frame(maxWidth: .infinity).padding(.top, 10) }
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, 12)
                 .padding(.vertical, 12)
                 .padelAnimation(Motion.quick, value: model.messages.last?.id)
             }
@@ -165,9 +173,27 @@ struct ChatView: View {
         .toolbar(.hidden, for: .tabBar)
         .toolbar {
             if let conversation = model.conversation {
-                NavigationLink(value: Route.conversationMembers(conversation.id)) {
-                    Image(systemName: "person.2")
-                }.accessibilityLabel("Участники чата")
+                // Who the chat is with, and under the name what is known for
+                // certain about it.
+                ToolbarItem(placement: .principal) {
+                    VStack(spacing: 1) {
+                        Text(conversation.title).font(.headline).lineLimit(1)
+                        if let subtitle = subtitle(conversation) {
+                            Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        }
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink(value: Route.conversationMembers(conversation.id)) {
+                        if conversation.kind == "direct", let partner = partner(conversation) {
+                            AvatarView(card: partner, size: 30)
+                        } else {
+                            Image(systemName: "person.2")
+                        }
+                    }
+                    .accessibilityLabel("Участники чата")
+                }
             }
         }
         .sheet(item: $report) { ReportContentView(target: $0).compactSheet() }
@@ -181,42 +207,109 @@ struct ChatView: View {
         }
     }
 
+    private func partner(_ conversation: Conversation) -> PlayerCard? {
+        conversation.members.first { $0.player.id != app.me?.userId }?.player
+    }
+
+    private func subtitle(_ conversation: Conversation) -> String? {
+        switch conversation.kind {
+        case "direct": partner(conversation)?.username.map { "@" + $0 }
+        case "game": "Чат игры"
+        default: Format.count(conversation.members.count, "участник", "участника", "участников")
+        }
+    }
+
+    /// The furthest message anyone else in the chat has read.
+    private var readByOthers: Int64 {
+        model.conversation?.members.filter { $0.player.id != app.me?.userId }.compactMap(\.lastReadId).max() ?? 0
+    }
+
+    /// The day a run of messages belongs to, once, centred above them.
+    private func dayHeader(_ date: Date) -> some View {
+        Text(Self.dayTitle(date))
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(Theme.inset, in: .capsule)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    static func dayTitle(_ date: Date, now: Date = .now, calendar: Calendar = .current) -> String {
+        if calendar.isDate(date, inSameDayAs: now) { return "Сегодня" }
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) {
+            return "Вчера"
+        }
+        let sameYear = calendar.component(.year, from: date) == calendar.component(.year, from: now)
+        let style = sameYear ? Date.FormatStyle().day().month(.wide) : Date.FormatStyle().day().month(.wide).year()
+        return date.formatted(style.locale(Format.locale))
+    }
+
     /// The viewer's own lines sit on lime to the right, everyone else's on a
-    /// surface to the left. A group names the sender of each line; a chat
-    /// between two people does not, as its title already does.
-    private func messageRow(_ message: ChatMessage) -> some View {
+    /// surface to the left; each carries the time it was sent, and the
+    /// viewer's own show whether they were read. Lines one person sends in a
+    /// row sit close together. A group names the sender above the first of
+    /// them and shows the avatar beside the last; a chat between two people
+    /// does neither, as its title already says who it is.
+    private func messageRow(_ message: ChatMessage, opensRun: Bool, closesRun: Bool) -> some View {
         let mine = message.sender.id == app.me?.userId
-        let namesSender = !mine && model.conversation?.kind != "direct"
-        return HStack(alignment: .bottom, spacing: 8) {
-            if mine { Spacer(minLength: 44) } else if namesSender { AvatarView(card: message.sender, size: 30) }
-            VStack(alignment: .leading, spacing: 4) {
-                if namesSender {
+        let inGroup = !mine && model.conversation?.kind != "direct"
+        let time = message.createdAt.formatted(Date.FormatStyle().hour().minute().locale(Format.locale))
+        let read = mine && message.id <= readByOthers
+        let detail = mine ? Theme.ink.opacity(0.62) : Color.secondary
+        // The time sits at the end of the last line; an invisible copy of it
+        // after the text keeps that corner free.
+        let reserved = Text(verbatim: "   " + time + (mine ? "     " : "")).font(.caption2).foregroundStyle(.clear)
+        return HStack(alignment: .bottom, spacing: 6) {
+            if mine { Spacer(minLength: 48) }
+            if inGroup {
+                if closesRun { AvatarView(card: message.sender, size: 28) } else { Color.clear.frame(width: 28, height: 1) }
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                if inGroup, opensRun {
                     NavigationLink(value: Route.player(message.sender.id)) {
-                        Text(message.sender.displayName).font(.caption.bold()).foregroundStyle(Theme.accent)
+                        Text(message.sender.displayName).font(.caption.bold()).foregroundStyle(Theme.accent).lineLimit(1)
                     }
                     .buttonStyle(.plain)
                 }
-                Text(message.deleted ? "Сообщение скрыто" : message.body)
+                Text("\(Text(message.deleted ? "Сообщение скрыто" : message.body))\(reserved)")
                     .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(message.createdAt, format: .dateTime.day().month().hour().minute())
-                    .font(.caption2)
-                    .foregroundStyle(mine ? AnyShapeStyle(Theme.inkSoft) : AnyShapeStyle(.secondary))
+                    .overlay(alignment: .bottomTrailing) {
+                        HStack(spacing: 3) {
+                            Text(time)
+                            if mine {
+                                // One mark: the server has it. Two: someone read it.
+                                HStack(spacing: -4.5) {
+                                    Image(systemName: "checkmark")
+                                    if read { Image(systemName: "checkmark") }
+                                }
+                                .accessibilityElement()
+                                .accessibilityLabel(read ? "Прочитано" : "Отправлено")
+                            }
+                        }
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(detail)
+                    }
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
             .foregroundStyle(mine ? Theme.ink : Color.primary)
             .background(mine ? AnyShapeStyle(Theme.lime) : AnyShapeStyle(Theme.surface),
-                        in: UnevenRoundedRectangle(topLeadingRadius: 20, bottomLeadingRadius: mine ? 20 : 6,
-                                                   bottomTrailingRadius: mine ? 6 : 20, topTrailingRadius: 20, style: .continuous))
+                        in: UnevenRoundedRectangle(topLeadingRadius: 18, bottomLeadingRadius: mine || !closesRun ? 18 : 6,
+                                                   bottomTrailingRadius: mine && closesRun ? 6 : 18, topTrailingRadius: 18,
+                                                   style: .continuous))
             .contextMenu {
                 if !mine {
                     Button("Пожаловаться", systemImage: "flag") { report = ReportTarget(type: "message", id: String(message.id)) }
                 }
             }
-            if !mine { Spacer(minLength: 44) }
+            if !mine { Spacer(minLength: 48) }
         }
         .frame(maxWidth: .infinity, alignment: mine ? .trailing : .leading)
+        .padding(.top, opensRun ? 8 : 2)
     }
 }
 

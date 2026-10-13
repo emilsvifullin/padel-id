@@ -8,6 +8,8 @@ nonisolated struct CommunityPage<Item: Decodable & Sendable>: Decodable, Sendabl
 nonisolated struct ConversationMember: Codable, Hashable, Sendable, Identifiable {
     let player: PlayerCard
     let role: String
+    /// The last message of the conversation this member has read.
+    let lastReadId: Int64?
     var id: UUID { player.id }
 }
 
