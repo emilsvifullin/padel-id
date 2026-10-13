@@ -32,9 +32,10 @@ jobs:
   test:
     name: ${{ matrix.name }}
     runs-on: macos-26
-    # Hosted UI automation can take about an hour; leave time to export the
-    # result bundle even when the bounded UI step times out.
-    timeout-minutes: 110
+    # Hosted UI automation takes up to an hour and a half on the large-text
+    # configurations; leave time to export the result bundle even when the
+    # bounded UI step times out.
+    timeout-minutes: 150
     strategy:
       fail-fast: false
       matrix:
@@ -108,7 +109,7 @@ jobs:
             2>&1 | tee "$RUNNER_TEMP/unit.log"
 
       - name: UI tests
-        timeout-minutes: 85
+        timeout-minutes: 120
         working-directory: ios
         run: |
           set -o pipefail

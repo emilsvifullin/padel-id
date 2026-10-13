@@ -168,6 +168,8 @@ final class CommunityReleaseUITests: PadelIDUITestCase {
         }
         for icon in ["lime", "charcoal", "ball"] { scrollIntoView(element("appearance.icon." + icon)) }
         snap("appearance-icons")
+        // The icon confirmation is answered below, by this test alone.
+        stopHandlingSystemAlerts()
         for icon in ["lime", "charcoal", "ball", "lime"] {
             let option = element("appearance.icon." + icon)
             scrollIntoView(option)
@@ -178,8 +180,9 @@ final class CommunityReleaseUITests: PadelIDUITestCase {
             // Wait for UIKit completion before leaving the app. The system
             // alert and selected state can arrive before the operation ends.
             XCTAssertTrue(waitUntil(timeout: 30) {
-                if springboard.alerts.firstMatch.exists {
-                    springboard.alerts.firstMatch.buttons.firstMatch.tap()
+                let confirm = springboard.alerts.firstMatch.buttons.firstMatch
+                if confirm.exists && confirm.isHittable {
+                    confirm.tap()
                 }
                 return option.isEnabled && (option.value as? String) == "Выбрана"
             }, option.debugDescription)
@@ -213,8 +216,9 @@ final class CommunityReleaseUITests: PadelIDUITestCase {
     private func dismissIconConfirmation() {
         // The OS presents this alert in SpringBoard, outside the application.
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        if springboard.alerts.firstMatch.waitForExistence(timeout: 3) {
-            springboard.alerts.firstMatch.buttons.firstMatch.tap()
+        let confirm = springboard.alerts.firstMatch.buttons.firstMatch
+        if confirm.waitForExistence(timeout: 3), confirm.isHittable {
+            confirm.tap()
         }
     }
 }

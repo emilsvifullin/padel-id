@@ -40,7 +40,7 @@ struct HomeView: View {
                         SectionContainer {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("Спортивный прогресс").font(.headline)
-                                Text(error.message).font(.subheadline).foregroundStyle(.secondary)
+                                Text(error.message).font(.subheadline).foregroundStyle(Theme.supportingText)
                                 Button("Повторить") { Task { await loadHome() } }
                             }
                         }
@@ -142,7 +142,7 @@ struct HomeView: View {
                                 Text("Результат матча").font(.headline)
                                     .fixedSize(horizontal: false, vertical: true)
                                 Text(match.playedAt, format: .dateTime.day().month(.wide))
-                                    .font(.subheadline).foregroundStyle(.secondary)
+                                    .font(.subheadline).foregroundStyle(Theme.supportingText)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .layoutPriority(1)
@@ -192,7 +192,7 @@ struct HomeView: View {
                             Label("Следующая игра — впереди", systemImage: "tennis.racket")
                                 .font(.headline)
                             Text("Найдите открытую игру или соберите свою. Здесь появится ближайший матч, в котором вы участвуете.")
-                                .font(.subheadline).foregroundStyle(.secondary)
+                                .font(.subheadline).foregroundStyle(Theme.supportingText)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
@@ -201,7 +201,7 @@ struct HomeView: View {
             } else if let error = upcoming.error {
                 SectionContainer {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text(error.message).font(.subheadline).foregroundStyle(.secondary)
+                        Text(error.message).font(.subheadline).foregroundStyle(Theme.supportingText)
                         Button("Повторить") { Task { await upcoming.load(using: app) } }
                     }
                 }
@@ -232,10 +232,10 @@ struct HomeView: View {
                             Text(next.startsAt, format: .dateTime.day().month(.wide).hour().minute())
                                 .font(.subheadline)
                             Text([next.city.name, next.club?.name, next.location].compactMap { $0 }.joined(separator: " · "))
-                                .font(.subheadline).foregroundStyle(.secondary)
+                                .font(.subheadline).foregroundStyle(Theme.supportingText)
                                 .fixedSize(horizontal: false, vertical: true)
                             Text(next.viewer.isOrganizer ? "Вы организуете" : "Вы записаны")
-                                .font(.caption).foregroundStyle(.secondary)
+                                .font(.caption).foregroundStyle(Theme.supportingText)
                         }
                     }
                 }
@@ -246,7 +246,7 @@ struct HomeView: View {
             SectionContainer {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Тренировки и турниры").font(.headline)
-                    Text(error.message).font(.subheadline).foregroundStyle(.secondary)
+                    Text(error.message).font(.subheadline).foregroundStyle(Theme.supportingText)
                     Button("Обновить события") { Task { await events.load(using: app) } }
                 }
             }

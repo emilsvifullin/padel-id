@@ -110,6 +110,16 @@ class PadelIDUITestCase: XCTestCase {
         return app
     }
 
+    /// Leaves system alerts to the test itself from here on. With the monitor
+    /// active, XCTest answers an alert while preparing a tap on that same
+    /// alert, and the tap then fails because the alert is gone.
+    func stopHandlingSystemAlerts() {
+        if let interruptionMonitor {
+            removeUIInterruptionMonitor(interruptionMonitor)
+        }
+        interruptionMonitor = nil
+    }
+
     /// Allows the notification permission, declines saving the password and
     /// confirms any other system alert.
     static func acceptSystemAlert(_ alert: XCUIElement) -> Bool {
