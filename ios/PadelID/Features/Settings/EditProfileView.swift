@@ -143,9 +143,9 @@ struct EditProfileView: View {
                     .overlay(alignment: .bottomTrailing) {
                         Image(systemName: "camera.fill")
                             .font(.body.weight(.semibold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Theme.ink)
                             .padding(9)
-                            .background(Theme.accent, in: .circle)
+                            .background(Theme.lime, in: .circle)
                             .accessibilityHidden(true)
                     }
                     .contentShape(.circle)

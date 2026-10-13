@@ -110,9 +110,9 @@ private struct SharedDNAAssessmentControl: View {
                         .monospacedDigit()
                         .lineLimit(1)
                         .minimumScaleFactor(0.6)
-                        .foregroundStyle(isSelected ? Color.white : Color.primary)
+                        .foregroundStyle(isSelected ? Theme.ink : Color.primary)
                         .frame(maxWidth: .infinity, minHeight: 44)
-                        .background(isSelected ? Theme.accent : Color(.tertiarySystemFill),
+                        .background(isSelected ? Theme.lime : Color(.tertiarySystemFill),
                                     in: .rect(cornerRadius: 12, style: .continuous))
                         .contentShape(.rect(cornerRadius: 12, style: .continuous))
                 }

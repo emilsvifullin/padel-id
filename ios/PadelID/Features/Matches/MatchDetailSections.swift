@@ -185,9 +185,9 @@ struct MatchDetailScoreboard: View {
         let tiebreak: Int? = wonSet ? nil : (team == 1 ? set.tb1 : set.tb2)
         return HStack(alignment: .top, spacing: 1) {
             Text("\(games)")
-                .font(.display(.title2, weight: wonSet ? Font.Weight.semibold : Font.Weight.regular))
+                .font(.display(.title3, weight: wonSet ? Font.Weight.bold : Font.Weight.medium))
                 .monospacedDigit()
-                .foregroundStyle(wonSet ? Color.primary : Color.secondary)
+                .foregroundStyle(wonSet ? Theme.ink : Color.secondary)
             if let tiebreak {
                 Text("\(tiebreak)")
                     .font(.display(.caption2, weight: .semibold))
@@ -195,7 +195,10 @@ struct MatchDetailScoreboard: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .frame(width: setColumnWidth)
+        .frame(width: setColumnWidth, height: setColumnWidth)
+        .background(wonSet ? AnyShapeStyle(Theme.lime) : AnyShapeStyle(Theme.inset),
+                    in: .rect(cornerRadius: 10, style: .continuous))
+        .padding(.horizontal, 2)
     }
 
     private func scoreAccessibility(_ team: Int) -> String {
