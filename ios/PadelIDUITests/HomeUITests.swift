@@ -48,10 +48,11 @@ final class HomeUITests: PadelIDUITestCase {
         try launch(.existingUser, arguments: ["-UIPreferredContentSizeCategoryName", Self.largestTextSize])
         signIn(); waitForHome()
         require(element("home.level"), timeout: 15, "home.level")
-        let homeAtLargest = labelAreas()
+        let homeAtLargest = labelAreasAcrossScreen()
         selectTab("Профиль")
         open(element("account.appearance"), screen: "Оформление")
-        let appearanceAtLargest = labelAreas()
+        let appearanceAtLargest = labelAreasAcrossScreen()
+        XCTAssertNotNil(appearanceAtLargest["Мяч"], "the measurement reaches the last row of the screen")
         app.terminate()
         server.stop()
 
@@ -97,6 +98,20 @@ final class HomeUITests: PadelIDUITestCase {
                 let frame = candidate.frame
                 areas[candidate.label] = max(areas[candidate.label] ?? 0, frame.width * frame.height)
             }
+        }
+        return areas
+    }
+
+    /// The same for the whole screen, scrolled to its end: a form creates
+    /// its rows as they come into view, and at the largest text size the
+    /// last ones start below the fold.
+    private func labelAreasAcrossScreen() -> [String: CGFloat] {
+        var areas = labelAreas()
+        for _ in 0..<8 {
+            app.swipeUp()
+            let merged = areas.merging(labelAreas(), uniquingKeysWith: max)
+            if merged.count == areas.count { break }
+            areas = merged
         }
         return areas
     }
