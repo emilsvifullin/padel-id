@@ -501,7 +501,7 @@ struct PlayerProfileView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 6)
                 }
-                .buttonStyle(.glassProminent)
+                .padelGlassProminent()
                 .controlSize(.large)
                 .accessibilityIdentifier("profile.newMatch")
             }

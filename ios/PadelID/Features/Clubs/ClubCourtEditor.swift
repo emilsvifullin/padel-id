@@ -55,7 +55,7 @@ struct ClubCourtEditor: View {
                     }
                 }
             }
-            .disabled(working).scrollContentBackground(.hidden).background(Theme.background)
+            .disabled(working).scrollContentBackground(.hidden).background(Theme.canvas)
             .navigationTitle(court == nil ? "Добавить корт" : "Изменить корт").navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() }.disabled(working) }

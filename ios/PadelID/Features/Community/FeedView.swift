@@ -4,16 +4,19 @@ struct FeedView: View {
     var groupId: UUID? = nil
     var clubId: Int? = nil
     var clubName: String? = nil
+    /// The root of the Community tab: adds the shortcuts and the tab's title.
+    var isHub = false
     @Environment(AppModel.self) private var app
     @Environment(\.scenePhase) private var scenePhase
     @State private var posts: CommunityCollection<CommunityPost>
     @State private var collectionKey: String
     @State private var scope = "all"
     @State private var composing = false
-    init(groupId: UUID? = nil, clubId: Int? = nil, clubName: String? = nil) {
+    init(groupId: UUID? = nil, clubId: Int? = nil, clubName: String? = nil, isHub: Bool = false) {
         self.groupId = groupId
         self.clubId = clubId
         self.clubName = clubName
+        self.isHub = isHub
         _posts = State(initialValue: Self.collection(groupId: groupId, clubId: clubId, scope: "all"))
         _collectionKey = State(initialValue: Self.key(groupId: groupId, clubId: clubId, scope: "all"))
     }
@@ -25,27 +28,55 @@ struct FeedView: View {
         return CommunityCollection("v1/social/feed", query: query, windowLimit: 150)
     }
     var body: some View {
-        List {
-            if groupId == nil && clubId == nil { Section {
-                Picker("Лента", selection: $scope) {
-                    Text("Все").tag("all")
-                    Text("Подписки").tag("following")
-                }.pickerStyle(.segmented)
-            } }
-            if let clubName {
-                Section { Text(clubName).font(.headline).fixedSize(horizontal: false, vertical: true) }
-            }
-            ForEach(posts.items) { post in
-                NavigationLink(value: Route.post(post.id)) { PostSummary(post: post) }
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 12) {
+                if isHub { CommunityShortcuts().padding(.bottom, 6) }
+                if groupId == nil && clubId == nil {
+                    Picker("Лента", selection: $scope) {
+                        Text("Все").tag("all")
+                        Text("Подписки").tag("following")
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.bottom, 4)
+                }
+                if let clubName {
+                    Text(clubName).font(.display(.title3, weight: .semibold))
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 4)
+                }
+                ForEach(posts.items) { post in
+                    NavigationLink(value: Route.post(post.id)) {
+                        PostSummary(post: post)
+                            .padding(18)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Theme.surface, in: .rect(cornerRadius: Theme.cornerRadius, style: .continuous))
+                            .contentShape(.rect(cornerRadius: Theme.cornerRadius, style: .continuous))
+                    }
+                    .buttonStyle(.padelCard)
                     .accessibilityIdentifier("feed.post")
+                }
+                VStack(spacing: 12) { CommunityCollectionFooter(collection: posts) }
+                    .frame(maxWidth: .infinity)
             }
-            CommunityCollectionFooter(collection: posts)
+            .padding(.horizontal, Theme.horizontalPadding)
+            .padding(.top, 8)
+            .padding(.bottom, 28)
+            .padelAnimation(value: posts.items.map(\.id))
         }
-        .navigationTitle(clubId != nil ? "Новости клуба" : groupId == nil ? "Лента" : "Публикации группы")
+        .padelCanvas()
+        .navigationTitle(isHub ? "Сообщество" : clubId != nil ? "Новости клуба" : groupId == nil ? "Лента" : "Публикации группы")
         .toolbar {
+            if isHub {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink(value: Route.socialInbox) { Label("Уведомления", systemImage: "bell") }
+                        .accessibilityIdentifier("community.inbox")
+                }
+            }
             if clubId == nil || app.me?.isAdmin == true {
-                Button("Публикация", systemImage: "square.and.pencil") { composing = true }
-                    .disabled(!app.isOnline).accessibilityIdentifier("feed.publish")
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Публикация", systemImage: "square.and.pencil") { composing = true }
+                        .disabled(!app.isOnline).accessibilityIdentifier("feed.publish")
+                }
             }
         }
         .sheet(isPresented: $composing) { PostCreateView(groupId: groupId, clubId: clubId, clubName: clubName) }
@@ -67,31 +98,42 @@ struct FeedView: View {
     }
 }
 
+/// A post as it reads in the feed and at the top of its own screen.
 struct PostSummary: View {
     let post: CommunityPost
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
-                AvatarView(card: post.author, size: 36)
-                VStack(alignment: .leading, spacing: 2) {
+                AvatarView(card: post.author, size: 40)
+                VStack(alignment: .leading, spacing: 1) {
                     Text(post.author.displayName).font(.subheadline.bold())
+                        .fixedSize(horizontal: false, vertical: true)
                     Text(post.createdAt, format: .dateTime.day().month().hour().minute())
                         .font(.caption).foregroundStyle(.secondary)
                 }
+                Spacer(minLength: 8)
+                if post.visibility == "friends" {
+                    Image(systemName: "person.2.fill").font(.caption).foregroundStyle(.secondary)
+                        .accessibilityLabel("Для друзей")
+                }
             }
             if let club = post.club {
-                Label(club.name, systemImage: "building.2")
-                    .font(.subheadline.weight(.semibold)).foregroundStyle(Theme.accent)
-                    .fixedSize(horizontal: false, vertical: true)
+                StatusPill(text: club.name, color: Theme.accent, symbol: "building.2.fill")
                     .accessibilityIdentifier("post.club")
             }
-            Text(post.body).foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
+            Text(post.body)
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 18) {
-                Label(String(post.reactionCount), systemImage: "heart")
-                Label(String(post.commentCount), systemImage: "text.bubble")
-                if post.visibility == "friends" { Label("Для друзей", systemImage: "person.2") }
-            }.font(.caption).foregroundStyle(.secondary)
-        }.padding(.vertical, 6)
+                Label(String(post.reactionCount), systemImage: post.myReaction == nil ? "heart" : "heart.fill")
+                    .foregroundStyle(post.myReaction == nil ? Color.secondary : Theme.negative)
+                    .accessibilityLabel("Реакций: \(post.reactionCount)")
+                Label(String(post.commentCount), systemImage: "bubble.right")
+                    .accessibilityLabel("Комментариев: \(post.commentCount)")
+            }
+            .font(.subheadline.weight(.medium)).monospacedDigit().foregroundStyle(.secondary)
+        }
     }
 }
 
@@ -186,51 +228,37 @@ struct PostDetailView: View {
         _comments = State(initialValue: CommunityCollection("v1/social/posts/\(id)/comments", windowLimit: 150))
     }
     var body: some View {
-        List {
-            if let value = post.value {
-                Section {
-                    NavigationLink(value: Route.player(value.author.id)) { PlayerRow(card: value.author) }
-                    PostSummary(post: value)
-                    HStack {
-                        Button(value.myReaction == "like" ? "Нравится · \(value.reactionCount)" : "Нравится", systemImage: value.myReaction == "like" ? "heart.fill" : "heart") {
-                            react(value.myReaction == "like" ? nil : "like")
-                        }
-                        Menu("Другие реакции") {
-                            Button("Поздравляю") { react("celebrate") }
-                            Button("Поддерживаю") { react("support") }
-                            Button("Убрать реакцию") { react(nil) }
-                        }
-                    }.disabled(isWorking || !app.isOnline)
-                    if value.author.id == app.me?.userId {
-                        Button("Удалить публикацию", role: .destructive) { confirmingDelete = true }
-                    } else {
-                        Button("Пожаловаться", systemImage: "flag") { report = ReportTarget(type: "post", id: id.uuidString) }
-                    }
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 16) {
+                if let value = post.value {
+                    postCard(value)
+                    SectionHeader("Комментарии").padding(.top, 4)
+                    ForEach(comments.items) { comment in commentRow(comment) }
+                    VStack(spacing: 12) { CommunityCollectionFooter(collection: comments) }
+                        .frame(maxWidth: .infinity)
+                } else if let failure = post.error {
+                    ErrorStateView(error: failure) { Task { await load() } }
+                } else {
+                    LoadingView()
                 }
-                Section("Комментарии") {
-                    ForEach(comments.items) { comment in
-                        VStack(alignment: .leading, spacing: 6) {
-                            NavigationLink(value: Route.player(comment.author.id)) { Text(comment.author.displayName).font(.subheadline.bold()) }
-                            Text(comment.body).textSelection(.enabled)
-                            if comment.author.id == app.me?.userId {
-                                Button("Удалить", role: .destructive) { removeComment(comment.id) }.font(.caption).disabled(isWorking)
-                            } else {
-                                Button("Пожаловаться") { report = ReportTarget(type: "comment", id: comment.id.uuidString) }.font(.caption)
-                            }
-                        }
-                    }
-                    CommunityCollectionFooter(collection: comments)
-                    TextField("Комментарий", text: $draft, axis: .vertical).lineLimit(2...5).disabled(isWorking)
-                    Button("Отправить") { comment() }
-                        .disabled(isWorking || !app.isOnline || !(1...1000).contains(SettingsText.length(draft)))
-                }
-            } else if let failure = post.error {
-                ErrorStateView(error: failure) { Task { await load() } }
-            } else { ProgressView() }
-            if let error { SettingsErrorRow(message: error) }
+                if let error { SettingsErrorRow(message: error) }
+            }
+            .padding(.horizontal, Theme.horizontalPadding)
+            .padding(.top, 8)
+            .padding(.bottom, 24)
+            .padelAnimation(value: comments.items.map(\.id))
+        }
+        .padelCanvas()
+        .safeAreaBar(edge: .bottom) {
+            if post.value != nil {
+                ComposerBar(placeholder: "Комментарий", text: $draft, isLocked: isWorking,
+                            canSend: !isWorking && app.isOnline && (1...1000).contains(SettingsText.length(draft)),
+                            draftIdentifier: "post.comment", sendIdentifier: "post.sendComment") { comment() }
+            }
         }
         .navigationTitle("Публикация")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .tabBar)
         .task(id: "\(app.dataRevision):\(scenePhase):\(app.isOnline)") {
             guard scenePhase == .active, app.isOnline else { return }
             await load(preserveWindow: true)
@@ -253,6 +281,89 @@ struct PostDetailView: View {
             Button("Отмена", role: .cancel) {}
         }
     }
+    private func postCard(_ value: CommunityPost) -> some View {
+        let liked = value.myReaction != nil
+        return VStack(alignment: .leading, spacing: 16) {
+            PostSummary(post: value)
+            Divider()
+            HStack(spacing: 10) {
+                Button {
+                    react(value.myReaction == "like" ? nil : "like")
+                } label: {
+                    Label(liked ? "Нравится · \(value.reactionCount)" : "Нравится", systemImage: liked ? "heart.fill" : "heart")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(liked ? Theme.negative : Color.primary)
+                        .padding(.horizontal, 14).frame(minHeight: 40)
+                        .background(Theme.inset, in: .capsule)
+                }
+                .buttonStyle(.padelCard)
+                .sensoryFeedback(.impact(weight: .light), trigger: liked)
+                Menu {
+                    Button("Поздравляю", systemImage: "hands.clap") { react("celebrate") }
+                    Button("Поддерживаю", systemImage: "hand.thumbsup") { react("support") }
+                    Button("Убрать реакцию", systemImage: "xmark") { react(nil) }
+                } label: {
+                    Image(systemName: "face.smiling")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(width: 40, height: 40)
+                        .background(Theme.inset, in: .circle)
+                }
+                .accessibilityLabel("Другие реакции")
+                Spacer(minLength: 8)
+                Menu {
+                    NavigationLink(value: Route.player(value.author.id)) { Label("Профиль автора", systemImage: "person.crop.circle") }
+                    if value.author.id == app.me?.userId {
+                        Button("Удалить публикацию", systemImage: "trash", role: .destructive) { confirmingDelete = true }
+                    } else {
+                        Button("Пожаловаться", systemImage: "flag") { report = ReportTarget(type: "post", id: id.uuidString) }
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(width: 40, height: 40)
+                        .background(Theme.inset, in: .circle)
+                }
+                .accessibilityLabel("Ещё")
+            }
+            .disabled(isWorking || !app.isOnline)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.surface, in: .rect(cornerRadius: Theme.cornerRadius, style: .continuous))
+    }
+
+    private func commentRow(_ comment: PostComment) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            AvatarView(card: comment.author, size: 34)
+            VStack(alignment: .leading, spacing: 4) {
+                NavigationLink(value: Route.player(comment.author.id)) {
+                    Text(comment.author.displayName).font(.subheadline.bold())
+                }
+                .buttonStyle(.plain)
+                Text(comment.body)
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(comment.createdAt, format: .dateTime.day().month().hour().minute())
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Menu {
+                if comment.author.id == app.me?.userId {
+                    Button("Удалить", systemImage: "trash", role: .destructive) { removeComment(comment.id) }
+                } else {
+                    Button("Пожаловаться", systemImage: "flag") { report = ReportTarget(type: "comment", id: comment.id.uuidString) }
+                }
+            } label: {
+                Image(systemName: "ellipsis").font(.footnote.weight(.semibold)).foregroundStyle(.secondary)
+                    .frame(width: 44, height: 36)
+            }
+            .disabled(isWorking)
+            .accessibilityLabel("Действия с комментарием")
+        }
+        .padding(14)
+        .background(Theme.surface, in: .rect(cornerRadius: 20, style: .continuous))
+    }
+
     private func load(preserveWindow: Bool = false) async {
         await post.load(using: app)
         guard !Task.isCancelled else { return }

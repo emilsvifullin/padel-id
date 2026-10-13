@@ -25,7 +25,7 @@ struct StatsDetailView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Theme.background)
+        .background(Theme.canvas)
         .navigationTitle("Статистика")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: app.dataRevision) { await player.load(using: app) }
@@ -69,7 +69,7 @@ struct StatsDetailView: View {
                     Button("Внести первый матч") {
                         app.matchEditor = .blank
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.padelProminent)
                 }
             }
         }

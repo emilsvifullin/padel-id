@@ -90,7 +90,7 @@ struct UpcomingDetailView: View {
                                 HStack {
                                     if application.status != "invited" {
                                         Button("Принять") { review(application.id, accepted: true) }
-                                            .buttonStyle(.borderedProminent).disabled(match.spotsLeft == 0)
+                                            .buttonStyle(.padelProminent).disabled(match.spotsLeft == 0)
                                     }
                                     Button("Отклонить") { review(application.id, accepted: false) }.buttonStyle(.bordered)
                                 }.disabled(isWorking || !app.isOnline || match.isClosed || match.startsAt <= .now)
@@ -146,7 +146,7 @@ struct UpcomingDetailView: View {
             Button("Выйти из листа ожидания", role: .destructive) { perform("leave") }.disabled(!app.isOnline || isWorking)
         } else if match.viewer.canJoin {
             Button(match.viewer.admission == "auto" ? "Занять место" : "Подать заявку") { perform("join") }
-                .buttonStyle(.borderedProminent).disabled(!app.isOnline || isWorking)
+                .buttonStyle(.padelProminent).disabled(!app.isOnline || isWorking)
                 .accessibilityIdentifier("upcoming.join")
         } else if match.viewer.admission == "out_of_range" {
             Text("Ваш подтверждённый уровень вне диапазона этой игры.").foregroundStyle(.secondary)

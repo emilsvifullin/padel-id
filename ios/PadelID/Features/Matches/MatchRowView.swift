@@ -11,8 +11,7 @@ struct MatchRowView: View {
     var showsPendingStatus = true
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @ScaledMetric(relativeTo: .body) private var setColumnWidth: CGFloat = 24
-    @ScaledMetric(relativeTo: .caption) private var markWidth: CGFloat = 18
+    @ScaledMetric(relativeTo: .body) private var setColumnWidth: CGFloat = 30
 
     init(item: MatchListItem, perspectiveTeam: Int?, showsPendingStatus: Bool = true) {
         self.item = item
@@ -115,7 +114,7 @@ struct MatchRowView: View {
                 setScores(team)
             }
         } else {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+            HStack(alignment: .center, spacing: 8) {
                 pairNames(team)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 setScores(team)
@@ -131,26 +130,24 @@ struct MatchRowView: View {
             .fixedSize(horizontal: false, vertical: true)
     }
 
+    /// The scoreboard: a set the pair won sits on lime, a set it lost stays quiet.
     private func setScores(_ team: Int) -> some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 4) {
             ForEach(Array(item.sets.enumerated()), id: \.offset) { _, set in
                 setCell(set, team: team)
             }
-            Image(systemName: "checkmark")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(Theme.accent)
-                .frame(width: markWidth)
-                .opacity(item.winnerTeam == team ? 1 : 0)
         }
     }
 
     private func setCell(_ set: SetScore, team: Int) -> some View {
         let wonSet = set.winner == team
         return Text("\(team == 1 ? set.t1 : set.t2)")
-            .font(wonSet ? Font.body.weight(.semibold) : Font.body)
+            .font(.display(.subheadline, weight: wonSet ? .bold : .medium))
             .monospacedDigit()
-            .foregroundStyle(wonSet ? Color.primary : Color.secondary)
-            .frame(width: setColumnWidth)
+            .foregroundStyle(wonSet ? Theme.ink : Color.secondary)
+            .frame(width: setColumnWidth, height: setColumnWidth)
+            .background(wonSet ? AnyShapeStyle(Theme.lime) : AnyShapeStyle(Theme.inset),
+                        in: .rect(cornerRadius: 8, style: .continuous))
     }
 
     private func cards(_ team: Int) -> [PlayerCard] {

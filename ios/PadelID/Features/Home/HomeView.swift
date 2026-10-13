@@ -19,15 +19,16 @@ struct HomeView: View {
     var body: some View {
         PadelNavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    if home.isStale, let error = home.error { StaleDataBanner(error: error) }
-                    if let profile = home.value?.profile ?? app.me?.profile {
-                        identity(profile)
-                        HomeLevelHero(meId: profile.id, profile: profile,
-                                      rating: home.value?.rating ?? app.me?.rating,
-                                      matches: home.value?.stats?.matches ?? 0)
+                VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
+                    VStack(alignment: .leading, spacing: 14) {
+                        if home.isStale, let error = home.error { StaleDataBanner(error: error) }
+                        if let profile = home.value?.profile ?? app.me?.profile {
+                            HomeLevelHero(meId: profile.id, profile: profile,
+                                          rating: home.value?.rating ?? app.me?.rating,
+                                          matches: home.value?.stats?.matches ?? 0)
+                        }
+                        quickActions
                     }
-                    quickActions
                     if let value = home.value, !value.actionItems.isEmpty {
                         pendingActions(value.actionItems)
                     }
@@ -49,14 +50,23 @@ struct HomeView: View {
                 .padding(.top, 8)
                 .padding(.bottom, 28)
             }
-            .background(Theme.background)
+            .padelCanvas()
             .refreshable { await refresh() }
             .navigationTitle("Главная")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Настройки", systemImage: "gearshape") { app.isAccountPresented = true }
                         .accessibilityIdentifier("home.settings")
+                }
+                if let profile = home.value?.profile ?? app.me?.profile {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        NavigationLink(value: Route.player(profile.id)) {
+                            AvatarView(profile: profile, size: 30)
+                        }
+                        .accessibilityLabel("Ваш профиль")
+                        .accessibilityIdentifier("home.profile")
+                    }
                 }
             }
             .sheet(isPresented: $isCreating) { UpcomingCreateView() }
@@ -74,94 +84,80 @@ struct HomeView: View {
         }
     }
 
-    private func identity(_ profile: Profile) -> some View {
-        NavigationLink(value: Route.player(profile.id)) {
-            Group {
-                if dynamicTypeSize.isAccessibilitySize {
-                    VStack(alignment: .leading, spacing: 12) {
-                        AvatarView(profile: profile, size: 52)
-                        identityText(profile)
-                    }
-                } else {
-                    HStack(spacing: 12) {
-                        identityText(profile)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        AvatarView(profile: profile, size: 52)
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 2)
-        }
-        .buttonStyle(.plain)
-        .accessibilityHint("Открывает ваш профиль")
-        .accessibilityIdentifier("home.profile")
-    }
-
-    private func identityText(_ profile: Profile) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Время для падела").font(.subheadline).foregroundStyle(Theme.supportingText)
-            Text(profile.displayName).font(.title2.bold())
-            if let city = profile.city {
-                Label(city.name, systemImage: "mappin.and.ellipse")
-                    .font(.caption).foregroundStyle(Theme.supportingText)
-            }
-        }
-        .fixedSize(horizontal: false, vertical: true)
-    }
-
+    /// Four ways into the game, two to a row; one to a row at accessibility sizes.
+    @ViewBuilder
     private var quickActions: some View {
-        VStack(spacing: 10) {
-            NavigationLink(value: Route.upcomingGames) {
-                actionLabel("Найти игру", symbol: "magnifyingglass")
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(spacing: 10) { findGame; createGame; sportsEvents; findPlayers }
+        } else {
+            Grid(horizontalSpacing: 10, verticalSpacing: 10) {
+                GridRow { findGame; createGame }
+                GridRow { sportsEvents; findPlayers }
             }
-            .buttonStyle(PadelPrimaryButtonStyle())
-            .accessibilityIdentifier("home.findGame")
-            Button { isCreating = true } label: {
-                SectionContainer(padding: 15) { actionLabel("Создать игру", symbol: "plus") }
-            }
-            .buttonStyle(.plain)
-            .disabled(!app.isOnline)
-            .accessibilityIdentifier("home.createGame")
         }
     }
 
-    private func actionLabel(_ title: String, symbol: String) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: symbol).font(.headline).accessibilityHidden(true)
-            Text(title).font(.headline).fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 8)
-            Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).accessibilityHidden(true)
+    private var findGame: some View {
+        NavigationLink(value: Route.upcomingGames) {
+            HomeActionTile(title: "Найти игру", symbol: "magnifyingglass", isPrimary: true)
         }
-        .frame(minHeight: 20)
+        .buttonStyle(.padelCard)
+        .accessibilityIdentifier("home.findGame")
+    }
+
+    private var createGame: some View {
+        Button { isCreating = true } label: {
+            HomeActionTile(title: "Создать игру", symbol: "plus")
+        }
+        .buttonStyle(.padelCard)
+        .disabled(!app.isOnline)
+        .accessibilityIdentifier("home.createGame")
+    }
+
+    private var sportsEvents: some View {
+        NavigationLink(value: Route.sportsEvents) {
+            HomeActionTile(title: "Тренировки и турниры", symbol: "trophy")
+        }
+        .buttonStyle(.padelCard)
+        .accessibilityIdentifier("home.events")
+    }
+
+    private var findPlayers: some View {
+        NavigationLink(value: Route.findPlayers) {
+            HomeActionTile(title: "Найти игроков", symbol: "person.2")
+        }
+        .buttonStyle(.padelCard)
+        .accessibilityIdentifier("home.findPlayers")
     }
 
     private func pendingActions(_ items: [MatchListItem]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             SectionHeader("Ждут вашего ответа")
-            ForEach(items.prefix(3)) { match in
-                NavigationLink(value: Route.match(match.id)) {
-                    SectionContainer {
-                        HStack(spacing: 12) {
-                            Image(systemName: "checkmark.bubble").foregroundStyle(Theme.accent)
-                                .accessibilityHidden(true)
-                            VStack(alignment: .leading, spacing: 4) {
+            VStack(spacing: 0) {
+                ForEach(Array(items.prefix(3).enumerated()), id: \.element.id) { index, match in
+                    if index > 0 { Divider().padding(.leading, 70) }
+                    NavigationLink(value: Route.match(match.id)) {
+                        HStack(spacing: 14) {
+                            SymbolPlate(symbol: "checkmark.bubble.fill", tint: Theme.attention)
+                            VStack(alignment: .leading, spacing: 2) {
                                 Text("Результат матча").font(.headline)
                                     .fixedSize(horizontal: false, vertical: true)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
                                 Text(match.playedAt, format: .dateTime.day().month(.wide))
-                                    .font(.subheadline).foregroundStyle(Theme.supportingText)
+                                    .font(.subheadline).foregroundStyle(.secondary)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .layoutPriority(1)
-                            Image(systemName: "chevron.right").font(.footnote.weight(.semibold))
-                                .foregroundStyle(.secondary).accessibilityHidden(true)
+                            Chevron()
                         }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+                        .contentShape(.rect)
                     }
+                    .buttonStyle(.padelCard)
+                    .accessibilityIdentifier("home.pendingMatch")
                 }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("home.pendingMatch")
             }
+            .background(Theme.surface, in: .rect(cornerRadius: Theme.cornerRadius, style: .continuous))
             if items.count > 3 {
                 Button("Все ожидающие результаты (\(items.count))") { app.selectedTab = .matches }
                     .font(.subheadline.weight(.semibold)).frame(minHeight: 44)
@@ -288,5 +284,34 @@ struct HomeView: View {
         await loadHome()
         await games.value
         await sports.value
+    }
+}
+
+/// One of the Home shortcuts.
+private struct HomeActionTile: View {
+    let title: String
+    let symbol: String
+    var isPrimary = false
+    @Environment(\.isEnabled) private var isEnabled
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Image(systemName: symbol)
+                .font(.system(size: 17, weight: .bold))
+                .foregroundStyle(isPrimary ? Theme.ink : Theme.accent)
+                .frame(width: 40, height: 40)
+                .background(isPrimary ? AnyShapeStyle(Theme.lime) : AnyShapeStyle(Theme.accent.opacity(0.14)), in: .circle)
+                .accessibilityHidden(true)
+            Text(title)
+                .font(.headline)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, minHeight: 112, maxHeight: .infinity, alignment: .topLeading)
+        .background(Theme.surface, in: .rect(cornerRadius: 22, style: .continuous))
+        .contentShape(.rect(cornerRadius: 22, style: .continuous))
+        .opacity(isEnabled ? 1 : 0.5)
     }
 }

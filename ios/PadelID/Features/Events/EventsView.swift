@@ -68,7 +68,7 @@ struct EventsView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(Theme.background)
+        .background(Theme.canvas)
         .navigationTitle(organizerId == nil ? "Тренировки и турниры" : "Занятия тренера")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

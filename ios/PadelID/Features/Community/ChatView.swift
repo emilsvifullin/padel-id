@@ -125,42 +125,41 @@ struct ChatView: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 16) {
+                LazyVStack(alignment: .leading, spacing: 10) {
                     if model.before != nil {
-                        Button("Ранние сообщения") { Task { await model.load(using: app, older: true) } }.disabled(model.isLoading)
+                        Button("Ранние сообщения") { Task { await model.load(using: app, older: true) } }
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .disabled(model.isLoading)
                     }
                     ForEach(model.messages) { message in
                         messageRow(message).id(message.id)
                     }
                     if let error = model.error { SettingsErrorRow(message: error) }
-                    if model.isLoading { ProgressView() }
+                    if model.isLoading { ProgressView().frame(maxWidth: .infinity) }
                 }
-                .padding(Theme.horizontalPadding)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .padelAnimation(Motion.quick, value: model.messages.last?.id)
             }
-            .background(Theme.background)
+            .background(Theme.canvas)
             .onChange(of: model.messages.last?.id) { _, last in
                 if let last, model.before == nil || model.messages.last?.sender.id == app.me?.userId {
                     proxy.scrollTo(last, anchor: .bottom)
                 }
             }
-            .safeAreaInset(edge: .bottom) {
-                HStack(alignment: .bottom, spacing: 12) {
-                    TextField("Сообщение", text: $draft, axis: .vertical)
-                        .lineLimit(1...5).textFieldStyle(.roundedBorder)
-                        .disabled(model.isSending)
-                        .accessibilityIdentifier("chat.draft")
-                    Button("Отправить", systemImage: "arrow.up.circle.fill") {
-                        Task { if await model.send(draft, using: app) { draft = "" } }
-                    }
-                    .labelStyle(.iconOnly).font(.title2)
-                    .disabled(model.isSending || !app.isOnline || !(1...4000).contains(SettingsText.length(draft)) || model.conversation == nil)
-                    .accessibilityIdentifier("chat.send")
+            .safeAreaBar(edge: .bottom) {
+                ComposerBar(placeholder: "Сообщение", text: $draft, isLocked: model.isSending,
+                            canSend: !model.isSending && app.isOnline && (1...4000).contains(SettingsText.length(draft))
+                                && model.conversation != nil,
+                            draftIdentifier: "chat.draft", sendIdentifier: "chat.send") {
+                    Task { if await model.send(draft, using: app) { draft = "" } }
                 }
-                .padding().background(.bar)
             }
         }
         .navigationTitle(model.conversation?.title ?? "Сообщения")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .tabBar)
         .toolbar {
             if let conversation = model.conversation {
                 NavigationLink(value: Route.conversationMembers(conversation.id)) {
@@ -179,23 +178,40 @@ struct ChatView: View {
         }
     }
 
+    /// The viewer's own lines sit on lime to the right, everyone else's on a
+    /// surface to the left with the sender named.
     private func messageRow(_ message: ChatMessage) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            NavigationLink(value: Route.player(message.sender.id)) {
-                Text(message.sender.displayName).font(.caption.bold()).foregroundStyle(Theme.accent)
+        let mine = message.sender.id == app.me?.userId
+        return HStack(alignment: .bottom, spacing: 8) {
+            if mine { Spacer(minLength: 44) } else { AvatarView(card: message.sender, size: 30) }
+            VStack(alignment: .leading, spacing: 4) {
+                if !mine {
+                    NavigationLink(value: Route.player(message.sender.id)) {
+                        Text(message.sender.displayName).font(.caption.bold()).foregroundStyle(Theme.accent)
+                    }
+                    .buttonStyle(.plain)
+                }
+                Text(message.deleted ? "Сообщение скрыто" : message.body)
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(message.createdAt, format: .dateTime.day().month().hour().minute())
+                    .font(.caption2)
+                    .foregroundStyle(mine ? AnyShapeStyle(Theme.ink.opacity(0.65)) : AnyShapeStyle(.secondary))
             }
-            Text(message.deleted ? "Сообщение скрыто" : message.body).textSelection(.enabled)
-            Text(message.createdAt, format: .dateTime.day().month().hour().minute())
-                .font(.caption2).foregroundStyle(.secondary)
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
-        .contextMenu {
-            if message.sender.id != app.me?.userId {
-                Button("Пожаловаться", systemImage: "flag") { report = ReportTarget(type: "message", id: String(message.id)) }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .foregroundStyle(mine ? Theme.ink : Color.primary)
+            .background(mine ? AnyShapeStyle(Theme.lime) : AnyShapeStyle(Theme.surface),
+                        in: UnevenRoundedRectangle(topLeadingRadius: 20, bottomLeadingRadius: mine ? 20 : 6,
+                                                   bottomTrailingRadius: mine ? 6 : 20, topTrailingRadius: 20, style: .continuous))
+            .contextMenu {
+                if !mine {
+                    Button("Пожаловаться", systemImage: "flag") { report = ReportTarget(type: "message", id: String(message.id)) }
+                }
             }
+            if !mine { Spacer(minLength: 44) }
         }
+        .frame(maxWidth: .infinity, alignment: mine ? .trailing : .leading)
     }
 }
 

@@ -208,7 +208,7 @@ struct MatchDetailView: View {
                     Text("Исправить матч")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.glassProminent)
+                .padelGlassProminent()
                 .controlSize(.large)
                 .disabled(!app.isOnline)
                 .accessibilityIdentifier("match.fix")
@@ -245,7 +245,7 @@ struct MatchDetailView: View {
                 }
                 .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.glassProminent)
+            .padelGlassProminent()
             .controlSize(.large)
             .disabled(isWorking)
             .accessibilityIdentifier("match.confirm")

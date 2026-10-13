@@ -41,7 +41,7 @@ struct ClubEventsView: View {
             }
             if let nextOffset { Button("Ещё события") { Task { await load(offset: nextOffset) } }.disabled(working) }
         }
-        .listStyle(.insetGrouped).scrollContentBackground(.hidden).background(Theme.background)
+        .listStyle(.insetGrouped).scrollContentBackground(.hidden).background(Theme.canvas)
         .navigationTitle(name).navigationBarTitleDisplayMode(.inline)
         .refreshable { await load(offset: 0) }
         .task(id: "\(kind.rawValue).\(app.dataRevision)") { await load(offset: 0) }

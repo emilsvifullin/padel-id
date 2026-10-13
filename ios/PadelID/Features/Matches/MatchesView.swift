@@ -128,7 +128,7 @@ struct MatchesView: View {
                     Button("Внести матч") {
                         app.matchEditor = .blank
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.padelProminent)
                 }
             }
 

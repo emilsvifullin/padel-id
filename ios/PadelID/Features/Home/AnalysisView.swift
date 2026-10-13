@@ -23,7 +23,7 @@ struct AnalysisView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Theme.background)
+            .background(Theme.canvas)
             .navigationTitle("Анализ")
             .navigationBarTitleDisplayMode(.large)
             .padelRoutes()
@@ -108,7 +108,6 @@ private struct HomeDashboard: View {
                 if model.home.isStale, let error = model.home.error {
                     StaleDataBanner(error: error)
                 }
-                HomeIdentityHeader(profile: home.profile)
                 HomeLevelHero(meId: meId, profile: home.profile, rating: home.rating, matches: matches)
                 if !home.actionItems.isEmpty {
                     HomeActionsRow(count: home.actionItems.count) {
@@ -141,50 +140,10 @@ private struct HomeDashboard: View {
     }
 }
 
-// MARK: - Identity
-
-private struct HomeIdentityHeader: View {
-    let profile: Profile
-
-    var body: some View {
-        HStack(spacing: 12) {
-            AvatarView(profile: profile, size: 52)
-            VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(profile.displayName)
-                    .font(.title2.bold())
-                    .fixedSize(horizontal: false, vertical: true)
-                if profile.isCoach {
-                    Image(systemName: "checkmark.seal.fill")
-                        .font(.headline)
-                        .foregroundStyle(Theme.accent)
-                        .accessibilityLabel("Тренер")
-                }
-            }
-            if !subtitle.isEmpty {
-                Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 4)
-        .accessibilityElement(children: .combine)
-    }
-
-    private var subtitle: String {
-        var parts: [String] = []
-        if let username = profile.username, !username.isEmpty { parts.append("@" + username) }
-        if let city = profile.city?.name { parts.append(city) }
-        if let club = profile.club?.name { parts.append(club) }
-        return parts.joined(separator: " · ")
-    }
-}
-
 // MARK: - Level hero
 
+/// The player's ID: who they are and what level they play at, on the lime of
+/// the app icon. Opens the rating history.
 struct HomeLevelHero: View {
     let meId: UUID
     let profile: Profile
@@ -194,48 +153,58 @@ struct HomeLevelHero: View {
 
     var body: some View {
         NavigationLink(value: Route.rating(meId)) {
-            VStack(alignment: .leading, spacing: 14) {
-                    HomeCardHeader(title: "Ваш уровень")
-                    ViewThatFits(in: .horizontal) {
-                        HStack(alignment: .center, spacing: 16) {
-                            levelBlock
-                            Spacer(minLength: 12)
-                            reliabilityBlock
-                        }
-                        VStack(alignment: .leading, spacing: 16) {
-                            levelBlock
-                            reliabilityBlock
-                        }
-                    }
-                    if let rating, showsTrend {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 3) {
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
-                            DeltaText(delta: rating.trend30d)
-                            Text("за 30 дней")
+                            Text(profile.displayName)
+                                .font(.headline)
+                                .fixedSize(horizontal: false, vertical: true)
+                            if profile.isCoach {
+                                Image(systemName: "checkmark.seal.fill")
+                                    .font(.subheadline)
+                                    .accessibilityLabel("Тренер")
+                            }
+                        }
+                        if !subtitle.isEmpty {
+                            Text(subtitle)
                                 .font(.subheadline)
-                                .foregroundStyle(Color.white.opacity(0.8))
+                                .foregroundStyle(Theme.ink.opacity(0.7))
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
+                    Spacer(minLength: 8)
+                    Image(systemName: "arrow.up.right")
+                        .font(.footnote.weight(.bold))
+                        .frame(width: 32, height: 32)
+                        .background(Theme.ink.opacity(0.1), in: .circle)
+                        .accessibilityHidden(true)
+                }
+
+                Text("Ваш уровень")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(Theme.ink.opacity(0.7))
+                    .padding(.top, 26)
+                LevelNumeral(level: level, size: 76)
+                if let level {
+                    Text(LevelBand(level: level).title)
+                        .font(.display(.title3, weight: .semibold))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if rating != nil {
+                    Rectangle().fill(Theme.ink.opacity(0.12)).frame(height: 1)
+                        .padding(.top, 20).padding(.bottom, 14)
+                    footer
+                }
             }
             .padding(22)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background {
-                ZStack(alignment: .trailing) {
-                    LinearGradient(colors: [Theme.ink, Color(red: 0.09, green: 0.19, blue: 0.17)],
-                                   startPoint: .topLeading, endPoint: .bottomTrailing)
-                    CourtMarkings()
-                        .stroke(Theme.lime.opacity(0.10), lineWidth: 1)
-                        .frame(width: 170)
-                        .rotationEffect(.degrees(-18))
-                        .offset(x: 30)
-                }
-                .clipShape(.rect(cornerRadius: Theme.cornerRadius, style: .continuous))
-                .accessibilityHidden(true)
-            }
-            .foregroundStyle(.white)
-            .environment(\.colorScheme, .dark)
-            .tappableCard()
+            .limeCard(cornerRadius: 30)
+            .contentShape(.rect(cornerRadius: 30, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.padelCard)
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
         .accessibilityHint("Открывает историю рейтинга")
         .accessibilityIdentifier("home.level")
@@ -243,65 +212,65 @@ struct HomeLevelHero: View {
 
     private var level: Double? { rating?.mu ?? profile.level }
 
+    private var subtitle: String {
+        var parts: [String] = []
+        if let username = profile.username, !username.isEmpty { parts.append("@" + username) }
+        if let city = profile.city?.name { parts.append(city) }
+        return parts.joined(separator: ", ")
+    }
+
     private var showsTrend: Bool {
         guard let rating else { return false }
         return abs(rating.trend30d) >= 0.005 || matches > 0
     }
 
-    private var levelBlock: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            LevelNumeral(level: level, size: 64)
-                .padding(.bottom, 6)
-                .overlay(alignment: .bottomLeading) {
-                    Capsule()
-                        .fill(Theme.lime)
-                        .frame(width: 40, height: 4)
+    @ViewBuilder
+    private var footer: some View {
+        if let rating {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 12) { reliability(rating); trend(rating) }
+            } else {
+                HStack(alignment: .center, spacing: 12) {
+                    reliability(rating)
+                    Spacer(minLength: 8)
+                    trend(rating)
                 }
-            if let level {
-                Text(LevelBand(level: level).title)
-                    .font(.headline)
-                    .fixedSize(horizontal: false, vertical: true)
             }
+        }
+    }
+
+    private func reliability(_ rating: RatingSummary) -> some View {
+        HStack(spacing: 10) {
+            PerforationGrid(filled: PerforationGrid.holes(for: rating.reliability), dot: 8, gap: 4)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(verbatim: "Надёжность \(rating.reliability)%")
+                    .font(.subheadline.weight(.semibold))
+                if rating.provisional {
+                    Text("Предварительный рейтинг")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.ink.opacity(0.7))
+                }
+            }
+            .fixedSize(horizontal: false, vertical: true)
         }
     }
 
     @ViewBuilder
-    private var reliabilityBlock: some View {
-        if let rating {
-            if dynamicTypeSize.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: 12) {
-                    reliabilityRing(rating)
-                    reliabilityText(rating)
-                }
-            } else {
-                HStack(spacing: 12) {
-                    reliabilityRing(rating)
-                    reliabilityText(rating)
-                }
+    private func trend(_ rating: RatingSummary) -> some View {
+        if showsTrend {
+            HStack(alignment: .firstTextBaseline, spacing: 5) {
+                Text(Format.delta(rating.trend30d, digits: 2))
+                    .font(.subheadline.weight(.bold)).monospacedDigit()
+                Text("за 30 дней")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.ink.opacity(0.7))
             }
+            .fixedSize()
         }
-    }
-
-    private func reliabilityRing(_ rating: RatingSummary) -> some View {
-        ReliabilityRing(reliability: rating.reliability, size: 48)
-            .accessibilityHidden(true)
-    }
-
-    private func reliabilityText(_ rating: RatingSummary) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(verbatim: "Надёжность \(rating.reliability)%")
-                .font(.subheadline.weight(.semibold))
-            if rating.provisional {
-                Text("Предварительный рейтинг")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .fixedSize(horizontal: false, vertical: true)
     }
 
     private var accessibilityText: String {
-        var parts = ["Уровень \(Format.level(level))"]
+        var parts = [profile.displayName, "Уровень \(Format.level(level))"]
         if let level { parts.append(LevelBand(level: level).title) }
         if let rating {
             parts.append("Надёжность \(rating.reliability)%")
@@ -679,7 +648,7 @@ private struct HomeWelcomeBlock: View {
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.padelProminent)
                 .controlSize(.large)
                 .accessibilityIdentifier("home.firstMatch")
             }

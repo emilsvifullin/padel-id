@@ -211,7 +211,7 @@ private struct AdminReviewApplicationRow: View {
                 .frame(maxWidth: .infinity)
         }
         if prominent {
-            button.buttonStyle(.borderedProminent)
+            button.buttonStyle(.padelProminent)
         } else {
             button.buttonStyle(.bordered)
         }

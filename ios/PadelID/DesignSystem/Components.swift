@@ -15,7 +15,7 @@ struct LevelNumeral: View {
 
     var body: some View {
         Text(Format.level(level))
-            .font(.system(size: size, weight: .semibold, design: .rounded))
+            .font(.display(size: size))
             .monospacedDigit()
             .contentTransition(reduceMotion ? .identity : .numericText(value: level ?? 0))
             .lineLimit(1)
@@ -33,10 +33,10 @@ struct LevelChip: View {
         Text(Format.level(level))
             .font(.subheadline.weight(.semibold))
             .monospacedDigit()
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(Theme.accent.opacity(isReliable ? 0.16 : 0.08), in: .capsule)
-            .foregroundStyle(isReliable ? Theme.accent : .secondary)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 4)
+            .background(isReliable ? AnyShapeStyle(Theme.lime) : AnyShapeStyle(Theme.inset), in: .capsule)
+            .foregroundStyle(isReliable ? Theme.ink : Color.secondary)
             .accessibilityLabel(accessibility)
     }
 
@@ -90,7 +90,7 @@ struct ReliabilityRing: View {
                 .stroke(Theme.accent, style: StrokeStyle(lineWidth: size * 0.11, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             Text("\(reliability)")
-                .font(.system(size: size * 0.32, weight: .semibold, design: .rounded))
+                .font(.display(size: size * 0.3, weight: .bold))
                 .monospacedDigit()
         }
         .frame(width: size, height: size)
@@ -141,7 +141,7 @@ struct AvatarView: View {
                     .foregroundStyle(.secondary)
             } else {
                 Text(initials)
-                    .font(.system(size: size * 0.38, weight: .semibold, design: .rounded))
+                    .font(.display(size: size * 0.34, weight: .bold))
                     .foregroundStyle(.primary)
             }
         }
@@ -320,10 +320,10 @@ struct StatusPill: View {
             Text(text)
         }
         .font(.caption.weight(.semibold))
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 5)
         .foregroundStyle(color)
-        .background(color.opacity(0.12), in: .capsule)
+        .background(color.opacity(0.14), in: .capsule)
     }
 }
 
@@ -362,8 +362,7 @@ struct StaleDataBanner: View {
 /// Loading placeholder with consistent spacing.
 struct LoadingView: View {
     var body: some View {
-        ProgressView()
-            .controlSize(.large)
+        PerforationLoader()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.vertical, 80)
     }
@@ -382,7 +381,8 @@ struct ErrorStateView: View {
             Text(error.message)
         } actions: {
             Button("Повторить", action: retry)
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.padelPrimary)
+                .fixedSize()
         }
     }
 }

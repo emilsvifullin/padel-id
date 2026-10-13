@@ -6,6 +6,8 @@ struct PadelIDApp: App {
     @State private var app = AppModel()
     @AppStorage(AppAppearance.storageKey) private var appearance = AppAppearance.automatic.rawValue
 
+    init() { Theme.applyNavigationTypography() }
+
     var body: some Scene {
         WindowGroup {
             RootView()

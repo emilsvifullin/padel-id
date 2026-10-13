@@ -1,35 +1,62 @@
 import SwiftUI
 
+/// The Community tab is the feed itself, with the other social places one tap away.
 struct CommunityView: View {
     var body: some View {
         PadelNavigationStack {
-            List {
-                Section {
-                    NavigationLink(value: Route.communityFeed) {
-                        Label("Лента", systemImage: "text.bubble")
-                    }.accessibilityIdentifier("community.feed")
-                    NavigationLink(value: Route.conversations) {
-                        Label("Сообщения", systemImage: "bubble.left.and.bubble.right")
-                    }.accessibilityIdentifier("community.chats")
-                    NavigationLink(value: Route.groups) {
-                        Label("Игровые сообщества", systemImage: "person.3")
-                    }.accessibilityIdentifier("community.groups")
-                    NavigationLink(value: Route.friends) {
-                        Label("Друзья", systemImage: "person.2")
-                    }.accessibilityIdentifier("community.friends")
-                    NavigationLink(value: Route.findPlayers) {
-                        Label("Найти игроков и тренеров", systemImage: "magnifyingglass")
-                    }
-                    NavigationLink(value: Route.socialInbox) {
-                        Label("Уведомления", systemImage: "bell")
-                    }
-                } footer: {
-                    Text("Знакомьтесь, собирайте игры и оставайтесь на связи.")
-                }
-            }
-            .navigationTitle("Сообщество")
-            .padelRoutes()
+            FeedView(isHub: true)
+                .padelRoutes()
         }
+    }
+}
+
+/// Ways from the feed into chats, groups, friends and player search.
+struct CommunityShortcuts: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    var body: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            Grid(horizontalSpacing: 10, verticalSpacing: 10) {
+                GridRow { chats; groups }
+                GridRow { friends; players }
+            }
+        } else {
+            HStack(spacing: 10) { chats; groups; friends; players }
+        }
+    }
+
+    private var chats: some View {
+        shortcut("Чаты", symbol: "bubble.left.and.bubble.right.fill", route: .conversations, id: "community.chats")
+    }
+    private var groups: some View {
+        shortcut("Группы", symbol: "person.3.fill", route: .groups, id: "community.groups")
+    }
+    private var friends: some View {
+        shortcut("Друзья", symbol: "person.2.fill", route: .friends, id: "community.friends")
+    }
+    private var players: some View {
+        shortcut("Игроки", symbol: "magnifyingglass", route: .findPlayers, id: "community.players")
+    }
+
+    private func shortcut(_ title: String, symbol: String, route: Route, id: String) -> some View {
+        NavigationLink(value: route) {
+            VStack(spacing: 8) {
+                Image(systemName: symbol)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(Theme.accent)
+                    .frame(height: 24)
+                    .accessibilityHidden(true)
+                Text(title)
+                    .font(.footnote.weight(.semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+            }
+            .frame(maxWidth: .infinity, minHeight: 76)
+            .background(Theme.surface, in: .rect(cornerRadius: 20, style: .continuous))
+            .contentShape(.rect(cornerRadius: 20, style: .continuous))
+        }
+        .buttonStyle(.padelCard)
+        .accessibilityIdentifier(id)
     }
 }
 
@@ -42,17 +69,7 @@ struct ConversationsView: View {
         List {
             ForEach(conversations.items) { conversation in
                 NavigationLink(value: Route.conversation(conversation.id)) {
-                    VStack(alignment: .leading, spacing: 5) {
-                        HStack {
-                            Text(conversation.title).font(.headline)
-                            Spacer()
-                            if conversation.unreadCount > 0 {
-                                Text(String(conversation.unreadCount)).font(.caption.bold()).foregroundStyle(Theme.accent)
-                            }
-                        }
-                        Text(conversation.latestMessage?.body ?? "Пока нет сообщений")
-                            .font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
-                    }
+                    ConversationRow(conversation: conversation, me: app.me?.userId)
                 }
             }
             CommunityCollectionFooter(collection: conversations)
@@ -70,6 +87,55 @@ struct ConversationsView: View {
             }
         }
         .refreshable { await conversations.load(using: app) }
+    }
+}
+
+/// One chat in the list: who it is with, the last line and what is unread.
+private struct ConversationRow: View {
+    let conversation: Conversation
+    let me: UUID?
+
+    var body: some View {
+        HStack(spacing: 12) {
+            mark
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(conversation.title)
+                        .font(.headline)
+                        .lineLimit(1)
+                    Spacer(minLength: 4)
+                    if let date = conversation.latestMessage?.createdAt {
+                        Text(date, format: .dateTime.hour().minute())
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                HStack(alignment: .top, spacing: 8) {
+                    Text(conversation.latestMessage?.body ?? "Пока нет сообщений")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                        .lineLimit(2)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    if conversation.unreadCount > 0 {
+                        Text(String(conversation.unreadCount))
+                            .font(.caption.bold()).monospacedDigit()
+                            .foregroundStyle(Theme.ink)
+                            .padding(.horizontal, 7).frame(minWidth: 22, minHeight: 22)
+                            .background(Theme.lime, in: .capsule)
+                            .accessibilityLabel("Непрочитанных: \(conversation.unreadCount)")
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder
+    private var mark: some View {
+        if conversation.kind == "direct", let peer = conversation.members.first(where: { $0.id != me })?.player {
+            AvatarView(card: peer, size: 46)
+        } else {
+            SymbolPlate(symbol: conversation.kind == "game" ? "tennis.racket" : "person.3.fill")
+        }
     }
 }
 

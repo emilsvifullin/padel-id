@@ -68,7 +68,7 @@ struct RecoveryKeyView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 6)
                 }
-                .buttonStyle(.glassProminent)
+                .padelGlassProminent()
                 .controlSize(.large)
                 .disabled(!confirmed)
                 .padding(.horizontal, Theme.horizontalPadding)

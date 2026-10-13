@@ -53,7 +53,7 @@ struct ClubDetailView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(Theme.background)
+        .background(Theme.canvas)
         .navigationTitle("Клуб")
         .navigationBarTitleDisplayMode(.inline)
         .refreshable { await refresh() }
@@ -80,14 +80,8 @@ struct ClubDetailView: View {
                 Text(Format.count(club.playersCount, "игрок", "игрока", "игроков") + " в сообществе клуба")
                     .font(.subheadline).foregroundStyle(.white.opacity(0.8)).fixedSize(horizontal: false, vertical: true)
             }
-            .padding(22).frame(maxWidth: .infinity, alignment: .leading).foregroundStyle(.white)
-            .background {
-                ZStack(alignment: .trailing) {
-                    Theme.ink
-                    CourtMarkings().stroke(Theme.lime.opacity(0.1), lineWidth: 1)
-                        .frame(width: 150).rotationEffect(.degrees(-15)).offset(x: 25)
-                }.clipShape(.rect(cornerRadius: Theme.cornerRadius, style: .continuous)).accessibilityHidden(true)
-            }
+            .padding(22).frame(maxWidth: .infinity, alignment: .leading)
+            .inkCard()
             .listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
             .accessibilityElement(children: .combine).accessibilityIdentifier("club.details")
         }

@@ -33,7 +33,7 @@ struct ClubsView: View {
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
-            .background(Theme.background)
+            .background(Theme.canvas)
             .navigationTitle("Клубы")
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Название или адрес клуба")
             .autocorrectionDisabled()

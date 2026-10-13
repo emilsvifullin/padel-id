@@ -77,12 +77,8 @@ struct AuthPrimaryButton: View {
                     ProgressView()
                 }
             }
-            .font(.headline)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
         }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
+        .buttonStyle(.padelPrimary)
         .listRowInsets(EdgeInsets())
         .listRowBackground(Color.clear)
     }

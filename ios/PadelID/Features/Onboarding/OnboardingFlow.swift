@@ -575,7 +575,7 @@ struct OnboardingActionBar: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
             }
-            .buttonStyle(.glassProminent)
+            .padelGlassProminent()
             .disabled(!isEnabled || isWorking)
             .accessibilityIdentifier(identifier)
         }

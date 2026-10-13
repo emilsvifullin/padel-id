@@ -133,7 +133,7 @@ struct LaunchFailureView: View {
             Button("Повторить") {
                 Task { await app.retryLaunch() }
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.padelProminent)
             Button("Выйти из аккаунта", role: .destructive) {
                 Task { await app.signOut() }
             }

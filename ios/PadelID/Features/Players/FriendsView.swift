@@ -79,7 +79,7 @@ struct FriendshipControls: View {
                 case .none:
                     Button("Добавить в друзья", systemImage: "person.badge.plus") { perform("request") }
                 case .incoming:
-                    Button("Принять") { perform("respond", decision: "accepted") }.buttonStyle(.borderedProminent)
+                    Button("Принять") { perform("respond", decision: "accepted") }.buttonStyle(.padelProminent)
                     Button("Отклонить") { perform("respond", decision: "rejected") }
                 case .outgoing:
                     Button("Отменить заявку") { perform("delete") }

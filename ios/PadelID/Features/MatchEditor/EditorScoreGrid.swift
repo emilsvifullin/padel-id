@@ -250,7 +250,7 @@ private struct EditorScoreButtonStyle: ViewModifier {
     @ViewBuilder
     func body(content: Content) -> some View {
         if isSelected {
-            content.buttonStyle(.borderedProminent)
+            content.buttonStyle(.padelProminent)
         } else {
             content.buttonStyle(.bordered)
         }
