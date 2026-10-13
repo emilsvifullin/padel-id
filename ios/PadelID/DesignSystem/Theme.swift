@@ -188,7 +188,7 @@ extension View {
     /// title that becomes the bar's title on scroll, with the system's own
     /// soft edge under it.
     func mainTabTitle() -> some View {
-        navigationBarTitleDisplayMode(.large)
+        toolbarTitleDisplayMode(.inlineLarge)
     }
 
     /// A line of a row as the system lists set it: kept to `lines` and cut
