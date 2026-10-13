@@ -149,8 +149,6 @@ struct HomeLevelHero: View {
     let profile: Profile
     let rating: RatingSummary?
     let matches: Int
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
     var body: some View {
         NavigationLink(value: Route.rating(meId)) {
             VStack(alignment: .leading, spacing: 0) {
@@ -223,17 +221,18 @@ struct HomeLevelHero: View {
         return abs(rating.trend30d) >= 0.005 || matches > 0
     }
 
+    /// Side by side while both fit on one line; one above the other at
+    /// larger text sizes, so nothing pushes the card wider than the screen.
     @ViewBuilder
     private var footer: some View {
         if let rating {
-            if dynamicTypeSize.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: 12) { reliability(rating); trend(rating) }
-            } else {
+            ViewThatFits(in: .horizontal) {
                 HStack(alignment: .center, spacing: 12) {
                     reliability(rating)
                     Spacer(minLength: 8)
                     trend(rating)
                 }
+                VStack(alignment: .leading, spacing: 12) { reliability(rating); trend(rating) }
             }
         }
     }
@@ -264,7 +263,7 @@ struct HomeLevelHero: View {
                     .font(.subheadline)
                     .foregroundStyle(Theme.inkSoft)
             }
-            .fixedSize()
+            .fixedSize(horizontal: false, vertical: true)
         }
     }
 
