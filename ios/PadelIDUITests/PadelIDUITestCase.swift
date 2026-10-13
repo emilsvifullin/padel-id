@@ -425,10 +425,15 @@ class PadelIDUITestCase: XCTestCase {
                 focused = waitUntil(timeout: 3) { Self.hasKeyboardFocus(field) }
             }
             guard focused else { continue }
+            // A system prompt can take focus in the middle of the password.
+            // Typing on would fail the test outright, so stop and start the
+            // entry again on the next attempt.
+            var typedAll = true
             for character in text {
+                guard Self.hasKeyboardFocus(field) else { typedAll = false; break }
                 field.typeText(String(character))
             }
-            if waitUntil(timeout: 3, accepted) {
+            if typedAll, waitUntil(timeout: 3, accepted) {
                 return
             }
             if attempt == attempts - 1 {
