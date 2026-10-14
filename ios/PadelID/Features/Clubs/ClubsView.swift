@@ -18,9 +18,12 @@ struct ClubsView: View {
         PadelNavigationStack {
             List {
                 Section {
-                    ViewThatFits(in: .horizontal) {
-                        HStack(spacing: 10) { cityChip; Spacer(minLength: 0); modePicker.frame(width: 190) }
-                        VStack(alignment: .leading, spacing: 10) { cityChip; modePicker }
+                    Group {
+                        if dynamicTypeSize.isAccessibilitySize {
+                            VStack(alignment: .leading, spacing: 10) { cityChip; modePicker }
+                        } else {
+                            HStack(spacing: 10) { cityChip; Spacer(minLength: 0); modePicker.frame(width: 190) }
+                        }
                     }
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
@@ -73,7 +76,7 @@ struct ClubsView: View {
     private var cityChip: some View {
         Button { isPickingCity = true } label: {
             Label(city?.name ?? "Выберите город", systemImage: "mappin.and.ellipse")
-                .lineLimit(1)
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
         }
         .buttonStyle(.bordered)
         .buttonBorderShape(.capsule)
@@ -187,9 +190,15 @@ private struct ClubCatalogRow: View {
     let club: ClubCatalogEntry
 
     @ScaledMetric(relativeTo: .body) private var tile: CGFloat = 60
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
+        // At the largest text sizes the name goes under the picture: beside
+        // it a word no longer fits a line.
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 10))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: 14))
+        return layout {
             leading
             VStack(alignment: .leading, spacing: 6) {
                 Text(club.name).font(.headline).rowText()
@@ -255,7 +264,7 @@ private struct ClubFact: View {
     var body: some View {
         HStack(spacing: 5) {
             if let symbol { Image(symbol: symbol).imageScale(.small).accessibilityHidden(true) }
-            Text(text).lineLimit(1)
+            Text(text).rowText()
         }
         .font(.caption.weight(.medium))
         .foregroundStyle(Theme.supportingText)

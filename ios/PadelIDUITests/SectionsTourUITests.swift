@@ -202,7 +202,8 @@ final class SectionsTourUITests: PadelIDUITestCase {
         drag(upwards: true); snap(prefix + "-15-feed")
         open(element("feed.post"), screen: "Публикация"); snap(prefix + "-16-post")
         goBack(previousTitle: "Сообщество")
-        selectTab("Профиль"); require(element("account.appearance"), timeout: 15, "profile"); snap(prefix + "-17-profile")
+        // At the largest text sizes the first rows are below the fold and not created yet.
+        selectTab("Профиль"); requireScreen("Профиль", timeout: 15); snap(prefix + "-17-profile")
         drag(upwards: true); snap(prefix + "-18-profile-more")
     }
 

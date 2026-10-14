@@ -177,9 +177,11 @@ struct HomeLevelHero: View {
                     .padding(.top, 26)
                 LevelNumeral(level: level, size: 76)
                 if let level {
+                    // One word: shrink it to the card rather than break it.
                     Text(LevelBand(level: level).title)
                         .font(.display(.title3, weight: .semibold))
-                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
                 }
 
                 if rating != nil {

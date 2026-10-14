@@ -90,13 +90,21 @@ final class HomeUITests: PadelIDUITestCase {
     /// Above every text size the suite's simulators are configured with.
     private static let largestTextSize = "UICTContentSizeCategoryAccessibilityXXXL"
 
+    /// A label as the measurement knows it. The two launches are minutes
+    /// apart and some labels carry the time of a game relative to now
+    /// («15 октября в 00:58»), so digits do not take part in the match.
+    private static func measurementKey(_ label: String) -> String {
+        String(label.map { $0.isNumber ? "#" : $0 })
+    }
+
     /// The area each labelled text or button takes on the current screen.
     private func labelAreas() -> [String: CGFloat] {
         var areas: [String: CGFloat] = [:]
         for query in [app.staticTexts, app.buttons] {
             for candidate in query.allElementsBoundByIndex where candidate.exists && !candidate.label.isEmpty {
                 let frame = candidate.frame
-                areas[candidate.label] = max(areas[candidate.label] ?? 0, frame.width * frame.height)
+                let key = Self.measurementKey(candidate.label)
+                areas[key] = max(areas[key] ?? 0, frame.width * frame.height)
             }
         }
         return areas
@@ -126,7 +134,7 @@ final class HomeUITests: PadelIDUITestCase {
                 if issue.auditType == .dynamicType {
                     // Set aside only what the measurement launch proved to resize.
                     let now = target.frame.width * target.frame.height
-                    guard now > 0, let grown = largest[target.label], grown >= now * 1.15 else { return false }
+                    guard now > 0, let grown = largest[Self.measurementKey(target.label)], grown >= now * 1.15 else { return false }
                     print("ACCESSIBILITY MEASURED: \(target.label) takes \(Int(now)) pt² now and \(Int(grown)) pt² at the largest text size")
                     return true
                 }

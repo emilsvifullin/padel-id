@@ -6,6 +6,7 @@ struct EventsView: View {
     var initialMine = false
     @Environment(AppModel.self) private var app
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var kind: SportEventKind = .training
     @State private var mine = false
     @State private var city: NamedRef?
@@ -29,9 +30,12 @@ struct EventsView: View {
                         Picker("События", selection: $kind) {
                             ForEach(SportEventKind.allCases) { Text($0.title).tag($0) }
                         }.pickerStyle(.segmented).accessibilityIdentifier("events.kind")
-                        ViewThatFits(in: .horizontal) {
-                            HStack(spacing: 10) { scopePicker; cityFilter }
+                        // Side by side while both fit whole; at the largest text
+                        // sizes the city gets a line of its own.
+                        if dynamicTypeSize.isAccessibilitySize {
                             VStack(alignment: .leading, spacing: 10) { scopePicker; cityFilter }
+                        } else {
+                            HStack(spacing: 10) { scopePicker; cityFilter }
                         }
                     }
                     .listRowInsets(EdgeInsets())
@@ -116,7 +120,7 @@ struct EventsView: View {
             } label: {
                 Label(allCities ? "Все города" : city?.name ?? "Город",
                       systemImage: allCities ? "globe" : "mappin.and.ellipse")
-                    .lineLimit(1)
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
             }
             .buttonStyle(.bordered)
             .buttonBorderShape(.capsule)
@@ -150,9 +154,15 @@ struct EventsView: View {
 /// A training or tournament in the catalog: what, when, where and how full.
 private struct EventCatalogRow: View {
     let event: SportEvent
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 12) {
+        // At the largest text sizes the title goes under the plate: beside
+        // it a word no longer fits a line.
+        let heading = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
+        return VStack(alignment: .leading, spacing: 12) {
+            heading {
                 SymbolPlate(symbol: event.kind.symbol)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(event.title).font(.headline).rowText()

@@ -45,9 +45,10 @@ struct SheetNavigationStack<Content: View>: View {
 
 extension View {
     /// Russian text set by its own rules breaks words by syllable
-    /// ("сохра-нён"); the system apps break between words.
+    /// ("сохра-нён"); the system apps break between words. With no language
+    /// to set the text in, a word breaks only when it is wider than its line.
     func padelTypesetting() -> some View {
-        typesettingLanguage(Locale.Language(identifier: "en"))
+        typesettingLanguage(Locale.Language(identifier: "und"))
     }
 }
 
