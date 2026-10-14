@@ -1,0 +1,37 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - path: ${PADEL_GATEWAY_ENV_FILE:?Absolute path to the protected gateway environment file required}
+        required: true
+    environment:
+      NODE_ENV: production
+      PORT: "8787"
+    # No published API port; clients can reach only the TLS proxy.
+    expose: ["8787"]
+    read_only: true
+    tmpfs: ["/tmp"]
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+  caddy:
+    image: caddy:2.11.7
+    restart: unless-stopped
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?A dedicated owned API hostname required}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+volumes:
+  caddy_data:
+  caddy_config:

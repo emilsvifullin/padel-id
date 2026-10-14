@@ -1,17 +1,32 @@
-Padel ID 1.1.0 связывает поиск игроков, взаимную дружбу и набор открытой игры с существующим вводом счёта и подтверждением всеми четырьмя участниками. Предстоящая игра хранится отдельно от сыгранного результата; принятие заявки не меняет рейтинг.
+Padel ID 1.2.0 turns the app into a social and sports platform and rebuilds its interface on a design system taken from the app icon. Accounts, rating maths, four-player confirmation and the result outbox are unchanged.
 
-- Пять постоянных вкладок: Главная с ближайшей принятой игрой, Матчи, Анализ, Друзья, Профиль со всеми прежними настройками и административным разделом по правам.
-- Заявки в друзья, принятие/отклонение/отмена/удаление, выбор друзей вместе с недавними и глобальным поиском. Скрытые профили и личные данные защищены; авторитетный отказ доступа очищает кэши аналитики и истории.
-- Публикация игры, автодопуск либо заявка создателю, актуальный состав, отмена участия/игры, ввод результата с принятыми игроками. БД сериализует конкурирующие действия; повторные публикации и результаты идемпотентны. Legacy edit не позволяет подменить состав, тип, клуб и начало связанной игры.
-- DNA: диаграмма/шесть реальных значений на прежней шкале0–7. Последние десять подтверждённых результатов и текущая непрерывная серия по всей истории. В карточках уровень, надёжность и предпочитаемая сторона.
-- Фото выбирается нажатием на аватар; бинарные отмены используют нативный alert. Убрана лишняя анимация типа матча; периоды рейтинга переиспользуют подготовленные вне MainActor данные, сохраняют все точки и игнорируют устаревшие ответы.
+## What changes
 
-Автодопуск выбран в реализации: надёжность≥70%, минимум5 рейтинговых игр и уровень внутри включительного диапазона. Это не гарантирует надёжность после фиксированного числа игр. Недостаточно надёжные игроки подают заявку организатору; надёжный рейтинг вне диапазона получает отказ. Рейтинговая математика сохранена.
+**Design.** Lime carries ink in both themes (player ID card, primary actions, chosen values and segments, own chat bubbles, won sets), graphite carries the header of a game, an event, a club and a profile, the racket's six perforation dots show rating reliability and act as the loader, titles and numerals use expanded SF Pro. The app has its own symbols for a padel racket and a padel court. Everything else follows the system: its navigation bar untouched, a main tab's title on the row of its buttons, the system search field, grouped lists and forms, sheets, Liquid Glass only where the system puts it. Rows set their titles in one line with an ellipsis, words do not break by syllable, facts are joined with commas rather than middle dots. Rules: `docs/ios-architecture.md`, "Visual language".
 
-Локальные доказательства: 43 SQL,7 независимых concurrency сценариев; gateway Node22 typecheck/build,46 unit; full API E2E17/17 на Supabase PG17, smoke2/2. iOS build и106 unit passed. Целевые UI: Social4/4 и Home2/Players1 прошли в релевантных локальных прогонах. Обязательная четырёхстрочная GitHub Actions матрица ещё не запускалась: managed среда отклонила запись GitHub (approval required / policy never). Lint0errors/61warnings; local advisors0WARN/ERROR,6INFO о неиспользованных индексах новой БД. Ни одна проверка не удалена и не ослаблена.
+**Structure.** Home leads with one action, Find a game, with Create next to it. The Matches tab opens upcoming games and trainings with tournaments from two cards. The events catalogue keeps its filters in two rows, the clubs catalogue shows what a club has. Community is a feed with chats, groups, friends and suggested players one tap away.
 
-Поставка: две новые аддитивные миграции → merge main/совместимый Vercel gateway → production smoke на новом commit → Release publish=true → проверка IPA1.1.0(build2)/checksum/production URL. Применённые миграции не менялись. Назначение администратора не выполняется; процедура подготовлена.
+**Product.** Private games with invitations, waitlists and weekly series; trainings with verified coaches; Americano, Mexicano, King of the Court and Round Robin tournaments; a club catalogue with list and map, club news and verified external booking links. Statistics gain achievements counted from confirmed results only. Three Home Screen icons and Automatic/Light/Dark appearance.
 
-Физический iPhone17ProMax, FPS/Instruments, SideStore/iLoader установка и Wi-Fi/LTE с реальным VPN недоступны и не объявляются пройденными. Приёмочный чек-лист и порядок поставки: docs/release-1.1.0.md; исследование первичных источников и допущения: docs/design-research.md; точное состояние разработки и результаты: HANDOFF.md. Выдержки локальных логов, их SHA256 и unit xcresult summary: docs/verification/1.1.0-local-checks.json; повторная проверка main/release: docs/verification/1.1.0-remote-state.json.
+**Motion.** Cards grow into their screens, loaded content fades in, a theme change dissolves; everything stands still under Reduce Motion. Checked frame by frame on a simulator recording.
 
-Production не изменён. Local Release archive в managed sandbox завершился exit65 из-за запрета запуска Swift macro plugin server; IPA отсутствует. Сначала нужны green CI и разрешённая средой поставка, затем публикуется release.
+**Backend.** Eleven migrations after the fourteen in production, private avatar storage, group ownership transfer on account deletion, moderation of reported content. Padel ID 1.1.0 is not supported after the server update: the minimum client build in production is 3.
+
+## Not in this release
+
+- Remote push: the app is sideloaded with a free Apple ID, which cannot carry the APNs entitlement. The code is present, the build flag is off.
+- Photos in posts.
+- In-app court booking; only a verified link to the club's own service.
+- Access without VPN. The build talks to the same single API origin as 1.1.0; on some Russian networks it still works only through VPN. The owner deferred this to a later stage. Measurements and the prepared but undeployed relay (branch `network/ingress-relay`) are in `docs/verification/network-audit-1.2.0.md`.
+
+## Verification
+
+- Server: typecheck and unit tests; backend CI (SQL, concurrency, end-to-end) on this branch.
+- iOS: 171 unit tests and 34 UI tests, run locally in Light on iOS 27 and in a true Dark configuration on iPhone 17 Pro Max, iOS 26.5; the CI matrix runs five configurations on this PR, the fifth being an iPhone SE.
+- A tour test walks every section with typical and with worst-case data and keeps the screenshots; it also ran on iPhone SE, iPhone 13 mini and iPhone 11.
+- The UI test reset now clears the chosen theme, so the dark configurations stay dark for the whole suite; before, most of it ran in Light.
+- Not done: installation and acceptance on a physical iPhone.
+
+Procedure: `docs/release-1.2.0.md`.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)

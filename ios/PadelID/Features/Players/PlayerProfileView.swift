@@ -82,8 +82,18 @@ struct PlayerProfileView: View {
                     StaleDataBanner(error: error)
                 }
                 PlayerProfileHeader(profile: value.profile)
+                if let coach = value.coach { coachBlock(coach) }
+                if isMe(value) {
+                    SectionContainer {
+                        NavigationLink("Мои тренировки и турниры", value: Route.myEvents)
+                            .accessibilityIdentifier("player.myEvents")
+                    }
+                }
                 levelBlock(value)
-                if !isMe(value) { SectionContainer { FriendshipControls(playerId: playerId) } }
+                if !isMe(value) {
+                    SectionContainer { FriendshipControls(playerId: playerId) }
+                    SectionContainer { SocialPlayerActions(playerId: playerId, initialFollowing: value.isFollowing ?? false) }
+                }
                 if !isMe(value), let compatibility = value.compatibility {
                     compatibilityBlock(compatibility, name: value.profile.displayName)
                 }
@@ -113,6 +123,30 @@ struct PlayerProfileView: View {
     }
 
     // MARK: - Level
+
+    private func coachBlock(_ coach: PublicCoachProfile) -> some View {
+        SectionContainer {
+            VStack(alignment: .leading, spacing: 14) {
+                Label("Подтверждённый тренер", systemImage: "checkmark.seal.fill")
+                    .font(.headline).foregroundStyle(Theme.accent)
+                LabeledContent("Стаж", value: Format.count(coach.experienceYears, "год", "года", "лет"))
+                Text(coach.about).fixedSize(horizontal: false, vertical: true)
+                if let certification = coach.certification {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Квалификация").font(.subheadline.bold())
+                        Text(certification).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                if let club = coach.club { LabeledContent("Клуб", value: club.name) }
+                Text("Опыт, квалификация и описание занятий указаны тренером.")
+                    .font(.footnote).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                NavigationLink("Расписание и запись", value: Route.coachTrainings(playerId))
+                    .accessibilityIdentifier("player.coachTrainings")
+            }
+        }
+        .accessibilityIdentifier("player.coach")
+    }
 
     @ViewBuilder
     private func levelBlock(_ value: PlayerProfileResponse) -> some View {
@@ -167,10 +201,15 @@ struct PlayerProfileView: View {
 
     private func levelSummary(_ level: Double?) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            LevelNumeral(level: level, size: 44)
             if let level {
+                LevelNumeral(level: level, size: 44)
                 Text(LevelBand(level: level).title)
                     .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
+            } else {
+                // A dash set in the display face reads as a broken bar.
+                Text("Уровень пока недоступен")
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
         }
@@ -180,7 +219,7 @@ struct PlayerProfileView: View {
     private func reliabilitySummary(_ reliability: Int?) -> some View {
         if let reliability {
             HStack(spacing: 10) {
-                ReliabilityRing(reliability: reliability, size: 44)
+                ReliabilityMark(reliability: reliability, size: 44)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Надёжность " + String(reliability) + "%")
@@ -203,7 +242,7 @@ struct PlayerProfileView: View {
                 PlayerProfileBlockTitle(title: "Совместимость с вами", navigates: false)
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
                     Text(String(compatibility.score) + "%")
-                        .font(.system(.largeTitle, design: .rounded, weight: .semibold))
+                        .font(.display(.largeTitle, weight: .semibold))
                         .monospacedDigit()
                         .foregroundStyle(Self.compatibilityTint(compatibility.score))
                     Text(Self.verdict(compatibility.score))
@@ -374,7 +413,7 @@ struct PlayerProfileView: View {
     private func statTile(value: String, title: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value)
-                .font(.system(.title2, design: .rounded, weight: .semibold))
+                .font(.display(.title2, weight: .semibold))
                 .monospacedDigit()
             Text(title)
                 .font(.subheadline)
@@ -439,7 +478,7 @@ struct PlayerProfileView: View {
                     Button {
                         app.matchEditor = MatchEditorRequest(mode: .create(partner: nil, opponents: [value.profile.card]))
                     } label: {
-                        Label("Внести матч против игрока", systemImage: "sportscourt")
+                        Label("Внести матч против игрока", image: PadelSymbol.racket)
                     }
                     if value.viewer?.canAssess == true {
                         Button {
@@ -467,7 +506,7 @@ struct PlayerProfileView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 6)
                 }
-                .buttonStyle(.glassProminent)
+                .padelGlassProminent()
                 .controlSize(.large)
                 .accessibilityIdentifier("profile.newMatch")
             }
@@ -522,7 +561,7 @@ private struct PlayerProfileHeader: View {
             AvatarView(profile: profile, size: 88)
             VStack(spacing: 4) {
                 Text(profile.displayName)
-                    .font(.title2.bold())
+                    .font(.display(.title2, weight: .bold))
                     .multilineTextAlignment(.center)
                 if let username = profile.username {
                     Text("@" + username)
@@ -559,7 +598,7 @@ private struct PlayerProfileHeader: View {
 
     private var placeLine: String? {
         let parts = [profile.city?.name, profile.club?.name].compactMap { $0 }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        return parts.isEmpty ? nil : parts.joined(separator: ", ")
     }
 
     private var factsLine: String? {
@@ -573,7 +612,7 @@ private struct PlayerProfileHeader: View {
         if let since = profile.playingSince {
             parts.append("в паделе с \(since) года")
         }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        return parts.isEmpty ? nil : parts.joined(separator: ", ")
     }
 }
 

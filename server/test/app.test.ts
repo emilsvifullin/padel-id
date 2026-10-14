@@ -96,6 +96,26 @@ describe("password policy", () => {
 });
 
 describe("service endpoints", () => {
+  it("does not report a healthy database when deep health upstream is unavailable", async () => {
+    const h = harness(() => ({ status: 503 }));
+    const res = await h.request("/v1/health?deep=1");
+    expect(res.status).toBe(503);
+    expect((await res.json()).error.code).toBe("service_unavailable");
+    expect(h.calls).toHaveLength(1);
+    expect(h.calls[0]!.body).toMatchObject({ p_bucket: "health", p_secret: config.gatewaySecret });
+  });
+
+  it("deep health requires a valid successful database response", async () => {
+    for (const body of [true, false, {}]) {
+      const h = harness(() => ({ status: 200, body }));
+      const res = await h.request("/v1/health?deep=1");
+      if (typeof body === "boolean") {
+        expect(res.status).toBe(200);
+        expect((await res.json()).database).toBe(body ? "ok" : "degraded");
+      } else { expect(res.status).toBe(503); }
+    }
+  });
+
   it("reports health without touching upstream", async () => {
     const h = harness(() => ({ status: 500 }));
     const res = await h.request("/v1/health");
@@ -460,7 +480,7 @@ describe("data API", () => {
     expect(res.status).toBe(409);
     const body = await res.json();
     expect(body.error.code).toBe("version_conflict");
-    expect(body.error.message).toMatch(/изменился/);
+    expect(body.error.message).toBe("Данные изменились. Обновите их перед повторным действием.");
   });
 
   it("treats expired JWTs as session_expired", async () => {
@@ -726,14 +746,348 @@ describe("avatars", () => {
     expect(res.status).toBe(413);
   });
 
-  it("serves avatars with immutable caching and validates paths", async () => {
+  it("authorizes avatar reads and disables caching so privacy changes apply immediately", async () => {
     const h = harness(() => ({ status: 200, body: "jpeg-bytes" }));
-    let res = await h.request("/v1/avatars/11111111-1111-1111-1111-111111111111/abcdefgh12.jpg");
+    const path = "/v1/avatars/11111111-1111-1111-1111-111111111111/abcdefgh12.jpg";
+    let res = await h.request(path);
+    expect(res.status).toBe(401);
+    expect(h.calls).toHaveLength(0);
+    res = await h.request(path, { headers: auth });
     expect(res.status).toBe(200);
-    expect(res.headers.get("cache-control")).toContain("immutable");
-    res = await h.request("/v1/avatars/../../etc/passwd");
+    expect(res.headers.get("cache-control")).toBe("private, no-store");
+    expect(h.calls[0]!.url).toContain("/rpc/player_profile");
+    expect(h.calls[0]!.headers.authorization).toBe(auth.authorization);
+    expect(h.calls[1]!.url).toContain("/storage/v1/object/authenticated/avatars/");
+    expect(h.calls[1]!.headers.authorization).toBe(auth.authorization);
+    expect(h.calls[1]!.headers.apikey).toBe(config.supabaseKey);
+    res = await h.request("/v1/avatars/../../etc/passwd", { headers: auth });
     expect(res.status).toBe(404);
-    res = await h.request("/v1/avatars/11111111-1111-1111-1111-111111111111/evil.png");
+    res = await h.request("/v1/avatars/11111111-1111-1111-1111-111111111111/evil.png", { headers: auth });
     expect(res.status).toBe(404);
+    const denied = harness(() => ({ status: 400, body: { code: "P0001", message: "player_not_found" } }));
+    expect((await denied.request(path, { headers: auth })).status).toBe(404);
+    expect(denied.calls).toHaveLength(1);
+    expect(denied.calls.some((call) => call.url.includes("/storage/"))).toBe(false);
+  });
+});
+
+describe("social ecosystem contracts", () => {
+  const resource = "6f1c1a5e-6a4b-4c43-9e0b-1c3b9f0f9a11";
+  const player = "11111111-1111-1111-1111-111111111111";
+  const key = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+  const headers = { ...auth, "idempotency-key": key.toUpperCase(), "content-type": "application/json" };
+  const page = { limit: 30, offset: 0 };
+  const routes: Array<[string, string, unknown, string, unknown]> = [
+    ["GET", "/v1/social/settings", undefined, "social_settings", {}],
+    ["PATCH", "/v1/social/settings", { messages_from: "friends", notify_messages: false }, "update_social_settings", { p: { messages_from: "friends", notify_messages: false } }],
+    ["GET", "/v1/social/blocks", undefined, "blocked_players", {}],
+    ["PUT", `/v1/social/blocks/${player}`, undefined, "block_player", { p_player: player }],
+    ["DELETE", `/v1/social/blocks/${player}`, undefined, "unblock_player", { p_player: player }],
+    ["GET", "/v1/social/follows", undefined, "following_players", {}],
+    ["PUT", `/v1/social/follows/${player}`, undefined, "follow_player", { p_player: player }],
+    ["DELETE", `/v1/social/follows/${player}`, undefined, "unfollow_player", { p_player: player }],
+    ["POST", "/v1/social/reports", { target_type: "message", target_id: "42", reason: "spam" }, "report_content", { p: { target_type: "message", target_id: "42", reason: "spam" }, p_client_id: key }],
+    ["GET", "/v1/conversations", undefined, "conversations", { p: page }],
+    ["POST", "/v1/conversations", { kind: "direct", player_id: player }, "create_conversation", { p: { kind: "direct", player_id: player, client_id: key } }],
+    ["GET", `/v1/conversations/${resource}`, undefined, "conversation", { p_conversation: resource }],
+    ["POST", `/v1/conversations/${resource}/members`, { player_id: player, action: "remove" }, "conversation_member_action", { p_conversation: resource, p_player: player, p_action: "remove" }],
+    ["POST", `/v1/conversations/${resource}/members`, { player_id: player, action: "transfer_owner" }, "conversation_member_action", { p_conversation: resource, p_player: player, p_action: "transfer_owner" }],
+    ["POST", `/v1/conversations/${resource}/join`, undefined, "conversation_member_action", { p_conversation: resource, p_player: null, p_action: "join" }],
+    ["POST", `/v1/conversations/${resource}/leave`, undefined, "conversation_member_action", { p_conversation: resource, p_player: null, p_action: "leave" }],
+    ["GET", `/v1/conversations/${resource}/messages?after_id=42&limit=10`, undefined, "conversation_messages", { p_conversation: resource, p: { after_id: 42, limit: 10 } }],
+    ["POST", `/v1/conversations/${resource}/messages`, { body: "  Играем завтра?  " }, "send_message", { p_conversation: resource, p_body: "Играем завтра?", p_client_id: key }],
+    ["POST", `/v1/conversations/${resource}/read`, { message_id: 42 }, "mark_conversation_read", { p_conversation: resource, p_message: 42 }],
+    ["GET", "/v1/social/groups?query=padel&city_id=1", undefined, "social_groups", { p: { ...page, query: "padel", city_id: 1 } }],
+    ["GET", "/v1/social/feed?scope=following&mine=true&offset=50&limit=10", undefined, "social_feed", { p: { limit: 10, offset: 50, scope: "following", mine: true } }],
+    ["POST", "/v1/social/posts", { body: "Победа!", visibility: "friends" }, "create_post", { p: { body: "Победа!", visibility: "friends", client_id: key } }],
+    ["GET", `/v1/social/posts/${resource}`, undefined, "social_post", { p_post: resource }],
+    ["DELETE", `/v1/social/posts/${resource}`, undefined, "delete_post", { p_post: resource }],
+    ["GET", `/v1/social/posts/${resource}/comments`, undefined, "post_comments", { p_post: resource, p: page }],
+    ["POST", `/v1/social/posts/${resource}/comments`, { body: "Поздравляю!" }, "comment_on_post", { p_post: resource, p_body: "Поздравляю!", p_client_id: key }],
+    ["DELETE", `/v1/social/comments/${resource}`, undefined, "delete_comment", { p_comment: resource }],
+    ["PUT", `/v1/social/posts/${resource}/reaction`, { reaction: null }, "react_to_post", { p_post: resource, p_reaction: null }],
+    ["GET", "/v1/notifications", undefined, "social_notifications", { p: page }],
+    ["POST", "/v1/notifications/read", {}, "read_social_notifications", { p_id: null }],
+    ["GET", "/v1/admin/reports", undefined, "moderation_reports", { p: page }],
+    ["POST", `/v1/admin/reports/${resource}`, { decision: "hide" }, "moderate_report", { p_report: resource, p_decision: "hide" }],
+  ];
+
+  it("requires a bearer on every social endpoint before parsing input or calling the database", async () => {
+    const h = harness(() => ({ status: 200, body: {} }));
+    for (const [method, path] of routes) {
+      expect((await h.request(path, { method })).status, `${method} ${path}`).toBe(401);
+    }
+    expect(h.calls).toHaveLength(0);
+  });
+
+  it("uses only the authenticated caller and propagates typed resource-specific arguments", async () => {
+    const h = harness((call) => ({ status: 200, body: { received: call.body } }));
+    for (const [method, path, body, rpc, expected] of routes) {
+      const result = await h.request(path, { method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+      expect(result.ok, `${method} ${path}`).toBe(true);
+      expect((await result.json()).received, path).toEqual(expected);
+      const call = h.calls.at(-1)!;
+      expect(call.url, path).toBe(`https://example.supabase.co/rest/v1/rpc/${rpc}`);
+      expect(call.headers.authorization, path).toBe(auth.authorization);
+      expect(call.headers.apikey).toBe(config.supabaseKey);
+      expect(call.headers["x-padelid-gateway"]).toBeUndefined();
+    }
+  });
+
+  it("rejects actor spoofing, malformed memberships and mixed conversation kinds without upstream writes", async () => {
+    const h = harness(() => ({ status: 200, body: {} }));
+    for (const [path, body] of [
+      ["/v1/conversations", { kind: "direct", player_id: player, owner_id: resource }],
+      ["/v1/conversations", { kind: "group", title: "Пара", player_ids: [player, player.toUpperCase()] }],
+      ["/v1/conversations", { kind: "game", game_id: resource, player_ids: [player] }],
+      ["/v1/conversations", { kind: "group", title: " " }],
+      ["/v1/conversations", { kind: "direct", player_id: "not-a-uuid" }],
+      [`/v1/conversations/${resource}/members`, { action: "add", player_id: "not-a-uuid" }],
+      [`/v1/conversations/${resource}/members`, { action: "join", player_id: player }],
+      [`/v1/conversations/${resource}/members`, { action: "add", player_id: player, owner_id: resource }],
+      [`/v1/conversations/${resource}/messages`, { body: "Привет", sender_id: player }],
+      ["/v1/social/posts", { body: "Новости", author_id: player }],
+      ["/v1/social/reports", { target_type: "message", target_id: "-2", reason: "spam" }],
+      ["/v1/social/reports", { target_type: "post", target_id: "42", reason: "spam" }],
+    ] as const) {
+      expect((await h.request(path, json(body, headers))).status, path).toBe(400);
+    }
+    expect((await h.request(`/v1/conversations/${resource}/read`, json({ message_id: 9007199254740992 }, headers))).status).toBe(400);
+    expect((await h.request("/v1/social/settings", { method: "PATCH", headers, body: JSON.stringify({ notify_messages: "false" }) })).status).toBe(400);
+    expect(h.calls).toHaveLength(0);
+  });
+
+  it("requires matching UUID retry keys for every append operation", async () => {
+    const h = harness(() => ({ status: 200, body: {} }));
+    for (const [path, body] of [
+      ["/v1/conversations", { kind: "direct", player_id: player }],
+      ["/v1/social/posts", { body: "Новости" }],
+      [`/v1/conversations/${resource}/messages`, { body: "Привет" }],
+      [`/v1/social/posts/${resource}/comments`, { body: "Отлично" }],
+      ["/v1/social/reports", { target_type: "player", target_id: player, reason: "spam" }],
+    ] as const) {
+      for (const value of [undefined, "not-a-uuid"]) {
+        const response = await h.request(path, json(body, { ...auth, ...(value ? { "idempotency-key": value } : {}) }));
+        expect(response.status, path).toBe(400);
+        expect((await response.json()).error.code).toBe("idempotency_key_required");
+      }
+    }
+    expect((await h.request("/v1/conversations", json({ kind: "direct", player_id: player, client_id: resource }, headers))).status).toBe(400);
+    expect((await h.request("/v1/social/posts", json({ body: "Новости", client_id: resource }, headers))).status).toBe(400);
+    expect(h.calls).toHaveLength(0);
+    expect((await h.request("/v1/social/posts", json({ body: "Новости", client_id: key.toUpperCase() }, headers))).status).toBe(201);
+  });
+
+  it("bounds pagination and cursor parsing including repeated, ambiguous and unsafe values", async () => {
+    const h = harness(() => ({ status: 200, body: {} }));
+    for (const path of [
+      "/v1/conversations?limit=51", "/v1/conversations?limit=0", "/v1/conversations?offset=1001",
+      "/v1/conversations?offset=1e2", "/v1/conversations?limit=10&limit=50", "/v1/conversations?player_id=" + player,
+      "/v1/social/feed?mine=1", "/v1/social/feed?scope=friends", "/v1/social/groups?city_id=-1",
+      `/v1/conversations/${resource}/messages?before_id=1&after_id=2`,
+      `/v1/conversations/${resource}/messages?after_id=9007199254740992`,
+      `/v1/conversations/${resource}/messages?after_id=-1`,
+      `/v1/conversations/${resource}/messages?before_id=0`,
+      `/v1/conversations/${resource}/messages?before_id=4.2`,
+    ]) {
+      expect((await h.request(path, { headers: auth })).status, path).toBe(400);
+    }
+    expect(h.calls).toHaveLength(0);
+    expect((await h.request("/v1/conversations?limit=50&offset=1000", { headers: auth })).status).toBe(200);
+  });
+
+  it("reconciles a chat whose earliest message has ID 1 using the exclusive zero cursor", async () => {
+    // The iOS poll includes the earliest visible message by sending its ID - 1.
+    // Rejecting zero makes the very first persisted message impossible to refresh.
+    const response = { items: [{ id: 1, body: "Сообщение скрыто", deleted: true }], next_before: null, latest_id: 1 };
+    const h = harness(() => ({ status: 200, body: response }));
+    const path = `/v1/conversations/${resource}/messages?after_id=0&limit=50`;
+    expect((await h.request(path)).status).toBe(401);
+    expect(h.calls).toHaveLength(0);
+    const result = await h.request(path, { headers: auth });
+    expect(result.status).toBe(200);
+    expect(await result.json()).toEqual(response);
+    expect(h.calls).toHaveLength(1);
+    expect(h.calls[0]!.body).toEqual({ p_conversation: resource, p: { after_id: 0, limit: 50 } });
+    expect(h.calls[0]!.headers.authorization).toBe(auth.authorization);
+
+    const revoked = harness(() => ({ status: 400, body: { code: "P0001", message: "conversation_not_found" } }));
+    expect((await revoked.request(path, { headers: auth })).status).toBe(404);
+    expect(revoked.calls).toHaveLength(1);
+  });
+
+  it("enforces content size by code points and never accepts empty messages", async () => {
+    const h = harness(() => ({ status: 200, body: {} }));
+    const path = `/v1/conversations/${resource}/messages`;
+    for (const body of [" ", "а".repeat(4001), "🎾".repeat(4001)]) {
+      expect((await h.request(path, json({ body }, headers))).status).toBe(400);
+    }
+    expect(h.calls).toHaveLength(0);
+    expect((await h.request(path, json({ body: "🎾".repeat(4000) }, headers))).status).toBe(201);
+    expect((await h.request(`/v1/social/posts/${resource}/comments`, json({ body: "а".repeat(1001) }, headers))).status).toBe(400);
+    expect((await h.request("/v1/social/reports", json({ target_type: "player", target_id: player, reason: "spam", detail: "а".repeat(501) }, headers))).status).toBe(400);
+  });
+
+  it("preserves database authorization failures for valid UUIDs, owners, blocks and moderators", async () => {
+    for (const [code, status, path, body] of [
+      ["conversation_owner_required", 403, `/v1/conversations/${resource}/members`, { action: "add", player_id: player }],
+      ["conversation_not_found", 404, `/v1/conversations/${resource}/messages`, { body: "Привет" }],
+      ["social_blocked", 403, `/v1/conversations/${resource}/messages`, { body: "Привет" }],
+      ["messages_not_allowed", 403, "/v1/conversations", { kind: "direct", player_id: player }],
+      ["conversation_owner_cannot_leave", 409, `/v1/conversations/${resource}/leave`, undefined],
+      ["post_not_found", 404, `/v1/social/posts/${resource}/comments`, { body: "Комментарий" }],
+      ["report_not_found", 404, `/v1/admin/reports/${resource}`, { decision: "hide" }],
+      ["forbidden", 403, `/v1/admin/reports/${resource}`, { decision: "hide" }],
+    ] as const) {
+      const h = harness(() => ({ status: 400, body: { code: "P0001", message: code } }));
+      const result = await h.request(path, { method: "POST", headers, ...(body ? { body: JSON.stringify(body) } : {}) });
+      expect(result.status, code).toBe(status);
+      expect((await result.json()).error.code).toBe(code);
+      expect(h.calls).toHaveLength(1);
+      expect(h.calls[0]!.headers.authorization).toBe(auth.authorization);
+    }
+  });
+});
+
+describe("events and private upcoming-game gateway boundaries", () => {
+  const event = "11111111-2222-3333-4444-555555555555";
+  const player = "22222222-2222-3333-4444-555555555555";
+  const key = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+  const create = { starts_at: "2026-10-12T19:00:00+03:00", city_id: 1, location: "Корт", match_type: "friendly", min_level: 0, max_level: 7 };
+  const tournament = { kind: "tournament", format: "americano", title: "Осенний турнир", description: "", starts_at: create.starts_at,
+    duration_minutes: 90, city_id: 1, location: "Корт", capacity: 4, min_level: 0, max_level: 7 };
+  const headers = { ...auth, "idempotency-key": key };
+
+  it("requires bearer before every event and upcoming extension mutation", async () => {
+    const h = harness(() => ({ status: 500 }));
+    const paths: [string,string][] = [
+      ["GET","/v1/events"],["POST","/v1/events"],["GET",`/v1/events/${event}`],["PUT",`/v1/events/${event}`],
+      ...["register","leave","cancel","complete","rounds/generate",`participants/${player}/remove`,`games/${player}/confirm`]
+        .map(path => ["POST",`/v1/events/${event}/${path}`] as [string,string]),
+      ["PUT",`/v1/events/${event}/games/${player}/score`],
+      ...["series",`${event}/invitations`,`${event}/invitations/respond`,`${event}/waitlist`]
+        .map(path => ["POST",`/v1/upcoming-matches/${path}`] as [string,string]),
+    ];
+    for (const [method,path] of paths) expect((await h.request(path,{method})).status,path).toBe(401);
+    expect(h.calls).toHaveLength(0);
+  });
+
+  it("rejects organizer spoofing, invalid tournament formats and ambiguous round/score versions", async () => {
+    const h = harness(() => ({ status: 200, body: {} }));
+    for (const patch of [{ organizer_id: player },{ capacity: 12 },{ format: "group" },{ min_level: 6, max_level: 2 },{ client_id: event }]) {
+      expect((await h.request("/v1/events",json({...tournament,...patch},headers))).status).toBe(400);
+    }
+    for (const body of [{},{expected_round: -1},{expected_round: 0,organizer_id:player}]) {
+      expect((await h.request(`/v1/events/${event}/rounds/generate`,json(body,auth))).status).toBe(400);
+    }
+    for (const body of [{version: 0,points1:20,points2:12},{version:1,points1:20.5,points2:11.5},{version:1,points1:20,points2:12,player_id:player}]) {
+      expect((await h.request(`/v1/events/${event}/games/${player}/score`,{...json(body,auth),method:"PUT"})).status).toBe(400);
+    }
+    for (const query of ["limit=1e1","offset=1.2","kind=other","scope=all","limit=2&limit=3","organizer_id=wrong","organizer_id="+player+"&organizer_id="+event]) {
+      expect((await h.request("/v1/events?"+query,{headers:auth})).status).toBe(400);
+    }
+    expect(h.calls).toHaveLength(0);
+    const created = await h.request("/v1/events",json(tournament,headers));
+    expect(created.status).toBe(201);
+    expect(h.calls.at(-1)!.body).toEqual({p:{...tournament,client_id:key}});
+    expect(h.calls.at(-1)!.headers.authorization).toBe(auth.authorization);
+  });
+
+  it("scopes real training catalogs to the requested coach without changing actor authorization", async () => {
+    const h = harness(call => ({status:200,body:call.body}));
+    const response = await h.request(`/v1/events?kind=training&organizer_id=${player.toUpperCase()}`, {headers:auth});
+    expect(response.status).toBe(200);
+    expect(h.calls.at(-1)!.body).toEqual({p:{kind:"training",organizer_id:player,scope:"upcoming",limit:30,offset:0}});
+    expect(h.calls.at(-1)!.headers.authorization).toBe(auth.authorization);
+  });
+
+  it("restricts schedule edits to metadata and validates personal upcoming catalog flags", async () => {
+    const h = harness(() => ({status:200,body:{}}));
+    const edit = {version:1,title:"Перенесённое занятие",description:"Новые условия",starts_at:"2026-12-10T10:00:00Z",
+      duration_minutes:60,city_id:1,club_id:null,location:"Корт 3",specialization:null,price_rub:null};
+    expect((await h.request(`/v1/events/${event}`, {...json(edit,auth),method:"PUT"})).status).toBe(200);
+    expect(h.calls.at(-1)!.url).toContain("/rpc/event_update");
+    expect(h.calls.at(-1)!.headers.authorization).toBe(auth.authorization);
+    expect(h.calls.at(-1)!.body).toEqual({p_event:event,p:edit});
+    for (const patch of [{organizer_id:player},{capacity:8},{format:"mexicano"},{version:0}]) {
+      expect((await h.request(`/v1/events/${event}`, {...json({...edit,...patch},auth),method:"PUT"})).status).toBe(400);
+    }
+    expect((await h.request("/v1/events?scope=mine&upcoming_only=true",{headers:auth})).status).toBe(200);
+    expect(h.calls.at(-1)!.body).toEqual({p:{scope:"mine",upcoming_only:true,limit:30,offset:0}});
+    for (const query of ["upcoming_only=true","scope=mine&upcoming_only=1","scope=mine&upcoming_only=true&upcoming_only=false"]) {
+      expect((await h.request("/v1/events?"+query,{headers:auth})).status).toBe(400);
+    }
+  });
+
+  it("keeps invite acceptance distinct from owner review and binds series retry keys and timezone", async () => {
+    const h = harness(call => ({ status: 200,body: call.body }));
+    for (const patch of [{occurrences:1},{interval_weeks:5},{time_zone:"Unknown/Timezone"},{match:{...create,client_id:key}},{organizer_id:player}]) {
+      expect((await h.request("/v1/upcoming-matches/series",json({match:create,occurrences:2,interval_weeks:1,...patch},headers))).status).toBe(400);
+    }
+    for (const body of [{decision:"rejected"},{decision:"accepted",player_id:player}]) {
+      expect((await h.request(`/v1/upcoming-matches/${event}/invitations/respond`,json(body,auth))).status).toBe(400);
+    }
+    expect((await h.request(`/v1/upcoming-matches/${event}/invitations`,json({player_id:"wrong"},auth))).status).toBe(400);
+    expect(h.calls).toHaveLength(0);
+    const series = await h.request("/v1/upcoming-matches/series",json({match:{...create,visibility:"private"},occurrences:2,interval_weeks:1},headers));
+    expect(series.status).toBe(201);
+    expect(h.calls.at(-1)!.url).toContain("/rpc/create_scheduled_series");
+    expect(h.calls.at(-1)!.body).toEqual({p:{match:{...create,visibility:"private"},occurrences:2,interval_weeks:1,time_zone:"Europe/Moscow"},p_client_id:key});
+    expect((await h.request(`/v1/upcoming-matches/${event}/invitations/respond`,json({decision:"declined"},auth))).status).toBe(200);
+    expect(h.calls.at(-1)!.url).toContain("/rpc/respond_scheduled_invitation");
+    expect(h.calls.at(-1)!.body).toEqual({p_match:event,p_decision:"declined"});
+    expect(h.calls.every(call=>call.headers.authorization===auth.authorization)).toBe(true);
+  });
+
+  it("preserves database permissions and conflict errors for structurally valid foreign IDs", async () => {
+    for (const [code,status,path,body] of [
+      ["event_not_participant",403,`/v1/events/${event}/games/${player}/confirm`,{version:1}],
+      ["event_version_conflict",409,`/v1/events/${event}/rounds/generate`,{expected_round:0}],
+      ["event_invalid_points",400,`/v1/events/${event}/games/${player}/confirm`,{version:1}],
+      ["invitation_not_pending",409,`/v1/upcoming-matches/${event}/invitations/respond`,{decision:"accepted"}],
+      ["organizer_required",403,`/v1/upcoming-matches/${event}/invitations`,{player_id:player}],
+    ] as const) {
+      const h = harness(() => ({status:400,body:{code:"P0001",message:code}}));
+      const response = await h.request(path,json(body,auth));
+      expect(response.status).toBe(status);
+      expect((await response.json() as any).error.code).toBe(code);
+      expect(h.calls[0]!.headers.authorization).toBe(auth.authorization);
+    }
+  });
+});
+
+
+describe("club-linked news gateway boundaries", () => {
+  const key = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+  it("filters the existing feed by a real club with the current bearer and bounded cursor", async () => {
+    const h = harness(call => ({status:200,body:call.body}));
+    const response = await h.request("/v1/social/feed?club_id=42&limit=10&offset=20", {headers:auth});
+    expect(response.status).toBe(200);
+    expect(h.calls.at(-1)!.body).toEqual({p:{club_id:42,scope:"all",mine:false,limit:10,offset:20}});
+    expect(h.calls.at(-1)!.headers.authorization).toBe(auth.authorization);
+  });
+  it("does not accept malformed, duplicated, unsafe or actor-spoofing club filters", async () => {
+    const h = harness(() => ({status:200,body:{}}));
+    expect((await h.request("/v1/social/feed?club_id=42")).status).toBe(401);
+    for (const query of ["club_id=0","club_id=-1","club_id=1.2","club_id=1e2","club_id=9007199254740992",
+                         "club_id=true","club_id=1&club_id=2","club_id=1&is_admin=true","club_id=1&offset=1001"]) {
+      expect((await h.request("/v1/social/feed?"+query,{headers:auth})).status,query).toBe(400);
+    }
+    expect(h.calls).toHaveLength(0);
+  });
+  it("binds club publication to the existing payload/key and respects a fresh server role refusal", async () => {
+    const h = harness(call => ({status:200,body:call.body}));
+    const body = {body:"Новый турнир клуба",visibility:"public",club_id:42};
+    for (let attempt=0;attempt<2;attempt++) {
+      const response = await h.request("/v1/social/posts",json(body,{...auth,"idempotency-key":key}));
+      expect(response.status).toBe(201);
+      expect(h.calls.at(-1)!.body).toEqual({p:{...body,client_id:key}});
+      expect(h.calls.at(-1)!.headers.authorization).toBe(auth.authorization);
+    }
+    expect(h.calls[0]!.body).toEqual(h.calls[1]!.body);
+    const revoked = harness(() => ({status:400,body:{code:"P0001",message:"forbidden"}}));
+    const response = await revoked.request("/v1/social/posts",json(body,{...auth,"idempotency-key":key}));
+    expect(response.status).toBe(403);
+    expect((await response.json()).error.code).toBe("forbidden");
   });
 });

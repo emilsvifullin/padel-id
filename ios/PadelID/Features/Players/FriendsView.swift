@@ -1,11 +1,19 @@
 import SwiftUI
 
 struct FriendsView: View {
+    var embedded = false
     @Environment(AppModel.self) private var app
     @State private var friends = Resource<FriendsResponse>(cacheKey: CacheKey.friends) { .get("v1/friends") }
 
     var body: some View {
-        NavigationStack {
+        Group {
+            if embedded { list }
+            else { PadelNavigationStack { list.padelRoutes() } }
+        }
+        .task(id: app.dataRevision) { await friends.load(using: app) }
+    }
+
+    private var list: some View {
             List {
                 Section {
                     NavigationLink(value: Route.findPlayers) {
@@ -24,12 +32,9 @@ struct FriendsView: View {
                     ErrorStateView(error: error) { Task { await friends.load(using: app) } }
                 } else { ProgressView() }
             }
-            .listStyle(.insetGrouped)
+            .listStyle(.insetGrouped).closeToBar()
             .navigationTitle("Друзья")
-            .padelRoutes()
             .refreshable { await friends.load(using: app) }
-        }
-        .task(id: app.dataRevision) { await friends.load(using: app) }
     }
 
     @ViewBuilder
@@ -74,7 +79,7 @@ struct FriendshipControls: View {
                 case .none:
                     Button("Добавить в друзья", systemImage: "person.badge.plus") { perform("request") }
                 case .incoming:
-                    Button("Принять") { perform("respond", decision: "accepted") }.buttonStyle(.borderedProminent)
+                    Button("Принять") { perform("respond", decision: "accepted") }.buttonStyle(.padelProminent)
                     Button("Отклонить") { perform("respond", decision: "rejected") }
                 case .outgoing:
                     Button("Отменить заявку") { perform("delete") }

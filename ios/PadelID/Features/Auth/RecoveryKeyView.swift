@@ -9,7 +9,7 @@ struct RecoveryKeyView: View {
     @State private var copied = false
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     Image(systemName: "key.horizontal.fill")
@@ -17,7 +17,7 @@ struct RecoveryKeyView: View {
                         .foregroundStyle(Theme.accent)
                         .accessibilityHidden(true)
                     Text("Сохраните ключ восстановления")
-                        .font(.title.bold())
+                        .font(.display(.title, weight: .bold))
                         .accessibilityAddTraits(.isHeader)
                     Text("Это единственный способ вернуть доступ, если вы забудете пароль. Мы не храним ключ в открытом виде и не сможем показать его снова.")
                         .foregroundStyle(.secondary)
@@ -68,7 +68,7 @@ struct RecoveryKeyView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 6)
                 }
-                .buttonStyle(.glassProminent)
+                .padelGlassProminent()
                 .controlSize(.large)
                 .disabled(!confirmed)
                 .padding(.horizontal, Theme.horizontalPadding)

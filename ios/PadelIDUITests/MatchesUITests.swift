@@ -27,7 +27,7 @@ final class MatchesUITests: PadelIDUITestCase {
         waitForHome()
         openPendingMatch(screenshotList: false)
 
-        open(require(element("match.dispute"), timeout: 15, "match.dispute"), screen: "Оспорить результат")
+        open(require(element("match.dispute"), timeout: 15, "match.dispute"), screen: "Оспорить")
         let reason = require(button(labelPrefix: "Неверный сч"), "first dispute reason")
         tap(reason)
         let send = button(label: "Отправить")
@@ -40,7 +40,7 @@ final class MatchesUITests: PadelIDUITestCase {
         let cancel = firstHittable(app.buttons.matching(NSPredicate(format: "label == %@", "Отмена")))
         let cancelButton = try XCTUnwrap(cancel, "Отмена is not reachable in the dispute sheet")
         cancelButton.tap()
-        waitForScreenToClose("Оспорить результат")
+        waitForScreenToClose("Оспорить")
         require(element("match.dispute"), "match.dispute after cancelling")
         require(element("match.confirm"), "match.confirm after cancelling")
         XCTAssertTrue(server.recorded("POST", "v1/matches/\(StubServer.pendingMatchID)/dispute").isEmpty)
@@ -137,6 +137,7 @@ final class MatchesUITests: PadelIDUITestCase {
                           file: StaticString = #filePath, line: UInt = #line) {
         let setRow = element("editor.set.\(number)")
         tap(setRow, file: file, line: line)
+        requireScreen("Сет \(number)", file: file, line: line)
         let option = require(element("score.\(score)"), "score.\(score)", file: file, line: line)
         if screenshot {
             snap("score-grid")

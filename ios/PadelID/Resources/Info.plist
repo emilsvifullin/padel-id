@@ -28,6 +28,12 @@
 	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>PadelIDAPIBaseURL</key>
+	<string>$(PADELID_API_BASE_URL)</string>
+	<key>PadelIDAPIFallbackURL</key>
+	<string>$(PADELID_API_FALLBACK_URL)</string>
+	<key>PadelIDRemotePushEnabled</key>
+	<string>$(PADELID_PUSH_ENABLED)</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

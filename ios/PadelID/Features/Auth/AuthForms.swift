@@ -77,12 +77,8 @@ struct AuthPrimaryButton: View {
                     ProgressView()
                 }
             }
-            .font(.headline)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
         }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
+        .buttonStyle(.padelPrimary)
         .listRowInsets(EdgeInsets())
         .listRowBackground(Color.clear)
     }
@@ -137,7 +133,7 @@ struct SignInView: View {
                     .listRowBackground(Color.clear)
                     .accessibilityIdentifier("signIn.forgot")
             }
-        }
+        }.closeToBar()
         .navigationTitle("Вход")
         .navigationBarTitleDisplayMode(.large)
         .toolbar(.visible, for: .navigationBar)
@@ -209,7 +205,7 @@ struct SignUpView: View {
                     .disabled(!canSubmit)
                     .accessibilityIdentifier("signUp.submit")
             }
-        }
+        }.closeToBar()
         .navigationTitle("Регистрация")
         .navigationBarTitleDisplayMode(.large)
         .toolbar(.visible, for: .navigationBar)
@@ -287,7 +283,7 @@ struct RecoverView: View {
             } footer: {
                 Text("После восстановления все другие устройства выйдут из аккаунта, а вы получите новый ключ.")
             }
-        }
+        }.closeToBar()
         .navigationTitle("Восстановление")
         .navigationBarTitleDisplayMode(.large)
         .toolbar(.visible, for: .navigationBar)

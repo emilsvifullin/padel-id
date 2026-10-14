@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="3300" height="2200">
+ <g id="Notes">
+  <rect height="2200" id="artboard" style="fill:white;opacity:1" width="3300" x="0" y="0"/>
+  <text id="template-version" style="stroke:none;fill:black;font-family:sans-serif;font-size:13;text-anchor:end;" transform="matrix(1 0 0 1 3036 1933)">Template v.3.0</text>
+ </g>
+ <g id="Guides">
+  <line id="Baseline-S" style="fill:none;stroke:#27AAE1;opacity:1;stroke-width:0.5;" x1="263" x2="3036" y1="696.0" y2="696.0"/>
+  <line id="Capline-S" style="fill:none;stroke:#27AAE1;opacity:1;stroke-width:0.5;" x1="263" x2="3036" y1="625.541" y2="625.541"/>
+  <line id="left-margin-Regular-S" style="fill:none;stroke:#00AEEF;stroke-width:0.5;opacity:1.0;" x1="1394.52" x2="1394.52" y1="600.54" y2="720.00"/>
+  <line id="right-margin-Regular-S" style="fill:none;stroke:#00AEEF;stroke-width:0.5;opacity:1.0;" x1="1502.57" x2="1502.57" y1="600.54" y2="720.00"/>
+  <line id="Baseline-M" style="fill:none;stroke:#27AAE1;opacity:1;stroke-width:0.5;" x1="263" x2="3036" y1="1126.0" y2="1126.0"/>
+  <line id="Capline-M" style="fill:none;stroke:#27AAE1;opacity:1;stroke-width:0.5;" x1="263" x2="3036" y1="1055.54" y2="1055.54"/>
+  <line id="left-margin-Regular-M" style="fill:none;stroke:#00AEEF;stroke-width:0.5;opacity:1.0;" x1="1393.00" x2="1393.00" y1="1030.54" y2="1150.00"/>
+  <line id="right-margin-Regular-M" style="fill:none;stroke:#00AEEF;stroke-width:0.5;opacity:1.0;" x1="1531.00" x2="1531.00" y1="1030.54" y2="1150.00"/>
+  <line id="Baseline-L" style="fill:none;stroke:#27AAE1;opacity:1;stroke-width:0.5;" x1="263" x2="3036" y1="1556.0" y2="1556.0"/>
+  <line id="Capline-L" style="fill:none;stroke:#27AAE1;opacity:1;stroke-width:0.5;" x1="263" x2="3036" y1="1485.54" y2="1485.54"/>
+  <line id="left-margin-Regular-L" style="fill:none;stroke:#00AEEF;stroke-width:0.5;opacity:1.0;" x1="1390.97" x2="1390.97" y1="1460.54" y2="1580.00"/>
+  <line id="right-margin-Regular-L" style="fill:none;stroke:#00AEEF;stroke-width:0.5;opacity:1.0;" x1="1568.99" x2="1568.99" y1="1460.54" y2="1580.00"/>
+ </g>
+ <g id="Symbols">
+  <g id="Regular-S">
+   <path d="M1411.75 627.10L1485.35 627.10A11.75 11.75 0 0 1 1497.09 638.85L1497.09 682.69A11.75 11.75 0 0 1 1485.35 694.44L1411.75 694.44A11.75 11.75 0 0 1 1400.00 682.69L1400.00 638.85A11.75 11.75 0 0 1 1411.75 627.10Z M1412.53 634.54A5.09 5.09 0 0 0 1407.44 639.63L1407.44 681.91A5.09 5.09 0 0 0 1412.53 687.00L1484.56 687.00A5.09 5.09 0 0 0 1489.65 681.91L1489.65 639.63A5.09 5.09 0 0 0 1484.56 634.54L1412.53 634.54Z M1445.02 628.67L1452.07 628.67L1452.07 692.87L1445.02 692.87Z M1423.29 628.67L1428.38 628.67L1428.38 692.87L1423.29 692.87Z M1468.71 628.67L1473.80 628.67L1473.80 692.87L1468.71 692.87Z M1425.84 658.23L1471.25 658.23L1471.25 663.32L1425.84 663.32Z"/>
+  </g>
+  <g id="Regular-M">
+   <path d="M1415.00 1047.77L1509.00 1047.77A15.00 15.00 0 0 1 1524.00 1062.77L1524.00 1118.77A15.00 15.00 0 0 1 1509.00 1133.77L1415.00 1133.77A15.00 15.00 0 0 1 1400.00 1118.77L1400.00 1062.77A15.00 15.00 0 0 1 1415.00 1047.77Z M1416.00 1057.27A6.50 6.50 0 0 0 1409.50 1063.77L1409.50 1117.77A6.50 6.50 0 0 0 1416.00 1124.27L1508.00 1124.27A6.50 6.50 0 0 0 1514.50 1117.77L1514.50 1063.77A6.50 6.50 0 0 0 1508.00 1057.27L1416.00 1057.27Z M1457.50 1049.77L1466.50 1049.77L1466.50 1131.77L1457.50 1131.77Z M1429.75 1049.77L1436.25 1049.77L1436.25 1131.77L1429.75 1131.77Z M1487.75 1049.77L1494.25 1049.77L1494.25 1131.77L1487.75 1131.77Z M1433.00 1087.52L1491.00 1087.52L1491.00 1094.02L1433.00 1094.02Z"/>
+  </g>
+  <g id="Regular-L">
+   <path d="M1419.35 1465.30L1540.61 1465.30A19.35 19.35 0 0 1 1559.96 1484.65L1559.96 1556.89A19.35 19.35 0 0 1 1540.61 1576.24L1419.35 1576.24A19.35 19.35 0 0 1 1400.00 1556.89L1400.00 1484.65A19.35 19.35 0 0 1 1419.35 1465.30Z M1420.64 1477.56A8.38 8.38 0 0 0 1412.26 1485.94L1412.26 1555.60A8.38 8.38 0 0 0 1420.64 1563.98L1539.32 1563.98A8.38 8.38 0 0 0 1547.70 1555.60L1547.70 1485.94A8.38 8.38 0 0 0 1539.32 1477.56L1420.64 1477.56Z M1474.17 1467.88L1485.79 1467.88L1485.79 1573.66L1474.17 1573.66Z M1438.38 1467.88L1446.76 1467.88L1446.76 1573.66L1438.38 1573.66Z M1513.20 1467.88L1521.58 1467.88L1521.58 1573.66L1513.20 1573.66Z M1442.57 1516.58L1517.39 1516.58L1517.39 1524.96L1442.57 1524.96Z"/>
+  </g>
+ </g>
+</svg>

@@ -2,7 +2,7 @@ name: Backend
 
 on:
   push:
-    branches: [main, "claude/**"]
+    branches: [main, "claude/**", "codex/**"]
     paths:
       - "supabase/**"
       - "server/**"
@@ -45,6 +45,17 @@ jobs:
       - run: pnpm run typecheck
       - run: pnpm run build
       - run: pnpm test
+      - name: Check isolated read-only network probe
+        run: node --test deploy/netlify/probe.test.mjs
+      - run: pnpm run build:edge
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: v2.9.7
+      - name: Check generated Edge gateway and run adapter tests
+        working-directory: .
+        run: |
+          deno check --frozen --config supabase/functions/gateway/deno.json supabase/functions/gateway/index.ts
+          deno test --frozen --config supabase/functions/gateway/deno.json supabase/functions/gateway/adapter_test.ts
 
   stack:
     name: Database & end-to-end (Supabase stack)
@@ -63,6 +74,13 @@ jobs:
           node-version: 22
           cache: pnpm
           cache-dependency-path: server/pnpm-lock.yaml
+
+      - name: Build generated Edge gateway
+        working-directory: server
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+          pnpm run build:edge
 
       - name: Start Supabase (applies all migrations from scratch)
         run: supabase start -x studio,imgproxy,mailpit,realtime,vector,logflare,supavisor
@@ -85,6 +103,55 @@ jobs:
           PGDATABASE: postgres
         run: python3 scripts/db/run-concurrency-tests.py
 
+      - name: Social concurrency regressions (independent connections)
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: "54322"
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: postgres
+        run: python3 scripts/db/run-social-concurrency-tests.py
+
+      - name: Account deletion concurrency regressions (independent connections)
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: "54322"
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: postgres
+          PADELID_DISPOSABLE_DB: "1"
+        run: python3 scripts/db/run-account-cleanup-concurrency-tests.py
+
+      - name: Event concurrency regressions (independent connections)
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: "54322"
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: postgres
+          PADELID_DISPOSABLE_DB: "1"
+        run: python3 scripts/db/run-event-concurrency-tests.py
+
+      - name: Club concurrency regressions (independent connections)
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: "54322"
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: postgres
+          PADELID_DISPOSABLE_DB: "1"
+        run: python3 scripts/db/run-clubs-concurrency-tests.py
+
+      - name: Push concurrency regressions (independent connections)
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: "54322"
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: postgres
+          PADELID_DISPOSABLE_DB: "1"
+        run: python3 scripts/db/run-push-concurrency-tests.py
+
       - name: Database linter
         run: supabase db lint --level warning --fail-on error
 
@@ -103,7 +170,10 @@ jobs:
 
       - name: Serve edge functions
         run: |
-          nohup supabase functions serve > functions.log 2>&1 &
+          umask 077
+          PADEL_EDGE_ENV="$RUNNER_TEMP/padel-edge.env"
+          printf 'PADELID_GATEWAY_SECRET=%s\nPADELID_SIGNUPS_PER_HOUR=100\n' "$GATEWAY_SECRET" > "$PADEL_EDGE_ENV"
+          nohup supabase functions serve --env-file "$PADEL_EDGE_ENV" > functions.log 2>&1 &
           for i in $(seq 1 60); do
             code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:54321/functions/v1/account -H 'content-type: application/json' -d '{}') || true
             if [ "$code" = "401" ]; then echo "account function ready"; exit 0; fi
@@ -111,11 +181,16 @@ jobs:
           done
           cat functions.log; exit 1
 
+      - name: Edge Runtime gateway health and anonymous-access regression
+        run: |
+          curl -fsS http://127.0.0.1:54321/functions/v1/gateway/v1/health?deep=1 | python3 -c 'import json,sys; body=json.load(sys.stdin); assert body["status"]=="ok" and body["database"]=="ok"'
+          code=$(curl -sS -o edge-anonymous.json -w '%{http_code}' http://127.0.0.1:54321/functions/v1/gateway/v1/me)
+          test "$code" = 401
+          python3 -c 'import json; assert json.load(open("edge-anonymous.json"))["error"]["code"]=="not_authenticated"'
+
       - name: Start API gateway
         working-directory: server
         run: |
-          pnpm install --frozen-lockfile
-          pnpm run build
           eval "$(supabase status -o env | sed 's/^/export SB_/')"
           export SUPABASE_URL="$SB_API_URL"
           export SUPABASE_PUBLISHABLE_KEY="${SB_PUBLISHABLE_KEY:-$SB_ANON_KEY}"
@@ -133,7 +208,11 @@ jobs:
         env:
           E2E_API_URL: http://127.0.0.1:8787
           E2E_MODE: full
-        run: pnpm run test:e2e
+        run: |
+          eval "$(supabase status -o env | sed 's/^/export SB_/')"
+          export E2E_SUPABASE_URL="$SB_API_URL"
+          export E2E_SUPABASE_PUBLISHABLE_KEY="${SB_PUBLISHABLE_KEY:-$SB_ANON_KEY}"
+          pnpm run test:e2e
 
       - name: Logs on failure
         if: failure()

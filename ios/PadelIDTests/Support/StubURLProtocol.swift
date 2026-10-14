@@ -1,10 +1,16 @@
 import Foundation
+@testable import PadelID
 
 /// A canned HTTP answer (or a transport failure) for the stub protocol.
 nonisolated struct StubResponse: Sendable {
     var status: Int
     var body: Data
     var failure: URLError?
+    var redirectTo: URL? = nil
+
+    static func redirect(_ target: URL) -> StubResponse {
+        StubResponse(status: 307, body: Data(), failure: nil, redirectTo: target)
+    }
 
     static func json(_ status: Int, _ text: String) -> StubResponse {
         StubResponse(status: status, body: Data(text.utf8), failure: nil)
@@ -93,7 +99,7 @@ nonisolated final class StubURLProtocol: URLProtocol, @unchecked Sendable {
         configuration.protocolClasses = [StubURLProtocol.self]
         configuration.urlCache = nil
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
-        return URLSession(configuration: configuration)
+        return URLSession(configuration: configuration, delegate: GatewayRedirectPolicy(), delegateQueue: nil)
     }
 
     static func register(_ baseURL: URL, handler: @escaping Handler) {
@@ -144,6 +150,16 @@ nonisolated final class StubURLProtocol: URLProtocol, @unchecked Sendable {
 
         if let failure = response.failure {
             client?.urlProtocol(self, didFailWithError: failure)
+            return
+        }
+        if let target = response.redirectTo, let source = current.url,
+           let redirect = HTTPURLResponse(url: source, statusCode: 307, httpVersion: "HTTP/1.1", headerFields: ["Location": target.absoluteString]) {
+            var newRequest = current
+            newRequest.url = target
+            client?.urlProtocol(self, wasRedirectedTo: newRequest, redirectResponse: redirect)
+            client?.urlProtocol(self, didReceive: redirect, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: response.body)
+            client?.urlProtocolDidFinishLoading(self)
             return
         }
         guard let url = current.url,

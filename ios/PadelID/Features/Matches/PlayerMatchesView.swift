@@ -56,7 +56,7 @@ struct PlayerMatchesView: View {
                 }
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.insetGrouped).closeToBar()
         .refreshable {
             await pager.load(using: app, reset: true)
         }
@@ -64,7 +64,7 @@ struct PlayerMatchesView: View {
             if pager.items.isEmpty {
                 ContentUnavailableView(
                     "Матчей пока нет",
-                    systemImage: "sportscourt",
+                    image: PadelSymbol.racket,
                     description: Text("Здесь появятся матчи, подтверждённые всеми участниками."))
             }
         }

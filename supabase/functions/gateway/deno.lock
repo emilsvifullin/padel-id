@@ -1,0 +1,21 @@
+{
+  "version": "5",
+  "specifiers": {
+    "npm:hono@4.13.8": "4.13.8",
+    "npm:zod@4.6.5": "4.6.5"
+  },
+  "npm": {
+    "hono@4.13.8": {
+      "integrity": "sha512-/Gng7NfoykZl2pjukW5Z6+8Yxm3BPRf86GTbQnt0SbySkvax4fyL4H3HhY1cCpBGmiW9XDRFzRV+CXK2W8QudQ=="
+    },
+    "zod@4.6.5": {
+      "integrity": "sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q=="
+    }
+  },
+  "workspace": {
+    "dependencies": [
+      "npm:hono@4.13.8",
+      "npm:zod@4.6.5"
+    ]
+  }
+}

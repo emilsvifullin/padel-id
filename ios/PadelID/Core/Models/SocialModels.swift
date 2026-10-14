@@ -60,6 +60,8 @@ nonisolated struct UpcomingViewer: Codable, Hashable, Sendable {
     let participation: String
     let canJoin: Bool
     let admission: String
+    var canWaitlist: Bool? = nil
+    var canInvite: Bool? = nil
 }
 
 nonisolated struct AdmissionPolicy: Codable, Hashable, Sendable {
@@ -87,6 +89,9 @@ nonisolated struct UpcomingMatch: Codable, Hashable, Sendable, Identifiable {
     let admission: AdmissionPolicy
     let resultMatchId: UUID?
     let resultStatus: MatchStatus?
+    var visibility: String? = nil
+    var seriesId: UUID? = nil
+    var occurrence: Int? = nil
 
     var statusTitle: String {
         if status == .resultPending {
@@ -112,7 +117,7 @@ nonisolated struct UpcomingPage: Codable, Hashable, Sendable {
 }
 
 nonisolated struct UpcomingCreateBody: Encodable, Sendable {
-    let clientId: UUID
+    let clientId: UUID?
     let startsAt: String
     let cityId: Int
     let clubId: Int?
@@ -121,4 +126,17 @@ nonisolated struct UpcomingCreateBody: Encodable, Sendable {
     let minLevel: Double
     let maxLevel: Double
     let note: String?
+    var visibility: String? = nil
+}
+
+nonisolated struct UpcomingSeriesBody: Encodable, Sendable {
+    let match: UpcomingCreateBody
+    let occurrences: Int
+    let intervalWeeks: Int
+    let timeZone: String
+}
+
+nonisolated struct UpcomingSeriesResponse: Decodable, Sendable {
+    let seriesId: UUID
+    let items: [UpcomingMatch]
 }

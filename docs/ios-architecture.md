@@ -37,11 +37,14 @@ Core/Networking APIClient, Endpoint, APIError, AppEnvironment, Connectivity
 Core/Storage    ResponseCache, Outbox, Resource
 Core/Auth       Keychain, SessionStore
 Core/Services   NotificationService
-DesignSystem    Theme, Components (LevelNumeral, LevelChip, DeltaText,
-                ReliabilityRing, AvatarView, RemoteImage, PlayerRow, StatusPill,
-                OfflineBanner, StaleDataBanner, LoadingView, ErrorStateView,
-                SectionContainer, SectionHeader, FormResultDot,
-                EqualWidthHStack, Announce), DNAHexagon, RatingChart
+DesignSystem    Theme (tokens, type, motion, surfaces, button styles),
+                Brand (PerforationGrid, LimeSurface, InkSurface, limeCard,
+                inkCard, PerforationLoader, PadelSymbol, SymbolPlate, Chevron,
+                ComposerBar), Components (LevelNumeral,
+                LevelChip, DeltaText, ReliabilityMark, AvatarView, RemoteImage,
+                PlayerRow, StatusPill, OfflineBanner, StaleDataBanner,
+                LoadingView, ErrorStateView, FormResultDot, EqualWidthHStack, FlowLayout,
+                Announce), DNAHexagon, RatingChart
 Features/<Area> screens of one area
 ```
 
@@ -179,34 +182,81 @@ Server rules worth mirroring in the UI (the server stays authoritative):
 
 ## Visual language
 
-* Native first: system fonts (Dynamic Type text styles only; numerals use
-  `.rounded` design + `.monospacedDigit()`), SF Symbols, `List`/`Form` where
-  the content is a list or a form, standard navigation bars and toolbars,
-  `.sheet` with detents for short tasks, `.confirmationDialog` for
-  destructive multi-option choices; `.alert` for binary discard/cancel/delete confirmations and errors. The latter avoids iOS26 toolbar-anchored action-sheet popovers without custom presentation.
-* Backgrounds: `Color(.systemGroupedBackground)` for scroll screens with
-  `SectionContainer` blocks; `List`/`Form` use `.insetGrouped`.
-* Colors: `Theme.accent` (court blue), `Theme.ball` only for the level hero
-  and DNA fill, `Theme.positive/negative/attention` for meaning. No other
-  hard-coded colors.
-* **Liquid Glass** is used deliberately, not decoratively: system bars and tab
-  bar (automatic), toolbar buttons (automatic), floating primary action areas
-  pinned to the bottom with `.safeAreaBar(edge: .bottom)` containing
-  `GlassEffectContainer` and `.buttonStyle(.glassProminent)` /
-  `.buttonStyle(.glass)`. Never apply `.glassEffect` to content cards or list
-  rows; buttons inside forms use `.borderedProminent`.
+The language comes from the app icon; the neutrals come from the system.
+
+* **Neutrals are the system grouped colours** (`Theme.canvas`,
+  `Theme.surface`, `Theme.inset`), so `List`, `Form`, sheets and bars are
+  native in both themes. Scroll screens use `.padelCanvas()` with
+  `SectionContainer` or surface cards; lists and forms use `.insetGrouped`.
+* **Lime carries ink, in both themes.** `Theme.lime` with `Theme.ink` is the
+  one brand surface: the player ID card (`limeCard`), primary actions, a
+  chosen chip, the viewer's own chat bubbles, a won set on the scoreboard, an
+  earned achievement. Never put white text on lime — that is why prominent
+  system button styles are not used: `.buttonStyle(.padelPrimary)` (full
+  width), `.padelProminent` (compact, in a row) and `.padelGlassProminent()`
+  (in a floating glass bar).
+* `Theme.accent` is for text and symbols on neutral surfaces: deep court
+  green in Light, lime in Dark. `inkCard` is the graphite of the alternate
+  icon, used for the header of a profile, a club, a game and an event.
+* **The six perforation dots** of the racket (`PerforationGrid`) are the mark:
+  they show rating reliability everywhere it appears (`ReliabilityMark`, and
+  the ID card) and pulse as the loader. Do not use them as decoration
+  elsewhere.
+* **The app's own symbols** (`PadelSymbol.racket`, `PadelSymbol.court`) stand
+  for matches and games and for clubs and courts: the system set only has a
+  tennis racket and a pitch with a centre circle. They are custom symbol
+  assets drawn by `scripts/ios/make-symbols.py`; use `Image(symbol:)` where a
+  symbol name is passed around. A `SymbolPlate` without a tint of its own
+  carries ink on lime. Segmented controls are the system's, untinted: a
+  tinted selection distorts the glass lens of iOS 26.
+* **Type**: system fonts and Dynamic Type text styles only. Large navigation
+  titles, section headers, level and score numerals use the expanded face
+  (`Font.display`); inline titles and body text use the standard one.
+  Numerals also take `.monospacedDigit()`.
+* **Text is set the way the system lists set it.** A row's title is one line
+  cut with an ellipsis (`.rowText()`, `.rowText(lines: 2)` for a supporting
+  line); it wraps in full only above the default text sizes. Words do not
+  break by syllable (the app sets its typesetting language so that Russian
+  is not hyphenated). Facts are joined with commas and colons or given a
+  line each, never with middle dots. A sheet's title must fit between its
+  two buttons: keep it to about twelve characters.
+* **Liquid Glass** is for navigation and for controls that float above
+  content: system bars and the tab bar (automatic), toolbar buttons
+  (automatic), bottom action bars in `.safeAreaBar(edge: .bottom)` with
+  `GlassEffectContainer`, and `ComposerBar`. Never apply `.glassEffect` to
+  content cards or list rows.
+* **Motion** answers a touch and goes through `Motion` and
+  `.padelAnimation(_:value:)`, which stand still under Reduce Motion. A card
+  that opens a screen declares `.zoomSource(route)` and the destination
+  grows out of it; plain rows keep the standard push. `PadelCardButtonStyle`
+  gives every tappable card the same press response.
+* **Follow the system; do not invent chrome.** Navigation bars are the
+  system's, untouched: a main tab has a large title (`.mainTabTitle()`) that
+  becomes the bar's title on scroll, with the system's soft scroll edge. No
+  hard edges, hidden titles or hand-made fades. The tab bar never collapses
+  (`.tabBarMinimizeBehavior(.never)`). On a main tab the search field lives
+  in the content: a search bar in the navigation bar keeps the large title
+  collapsed on iOS 27.
+* Every `List` and `Form` takes `.closeToBar()`: content starts 8 pt under
+  the bar on every screen, not after the system's wide gap. A sheet's root is
+  `SheetNavigationStack`, which carries the typesetting setting into it.
+* Standard navigation bars and toolbars, `.sheet` with a medium detent for
+  short tasks, `.confirmationDialog` for destructive multi-option choices,
+  `.alert` for binary discard/cancel/delete confirmations and errors (this
+  avoids iOS 26 toolbar-anchored action-sheet popovers).
 * Results and failures of actions are spoken with `Announce.post(_:)` so
   VoiceOver users hear what happened.
 * Spacing: `Theme.horizontalPadding` (20) side margins on scroll screens,
-  `Theme.sectionSpacing` between sections, 12–16 inside containers.
+  `Theme.sectionSpacing` between sections, 12–18 inside containers.
   Touch targets ≥ 44 pt.
 * Every screen supports Light/Dark, Dynamic Type up to accessibility sizes
-  (no fixed heights for text; allow wrapping; use `ViewThatFits` or vertical
-  stacks when horizontal layouts would truncate), VoiceOver (labels for
-  icon-only buttons, combined row elements, headers marked with
+  (no fixed heights for text; body text and anything above the default sizes
+  wraps; use `ViewThatFits`, `Grid`, `FlowLayout` or vertical stacks when a
+  horizontal layout would not fit), VoiceOver (labels
+  for icon-only buttons, combined row elements, headers marked with
   `.accessibilityAddTraits(.isHeader)`).
 * Haptics with `.sensoryFeedback` on meaningful events (confirm success,
-  dispute warning, selection changes in pickers).
+  dispute warning, selection changes in pickers, joining and sending).
 * Empty states use `ContentUnavailableView` with one clear action at most.
 * No placeholder copy, no "coming soon", no buttons without an action, no
   debug UI.

@@ -16,14 +16,21 @@ struct UpcomingCreateView: View {
     @State private var clientId = UUID()
     @State private var prepared = false
     @State private var submittedBody: UpcomingCreateBody?
+    @State private var submittedSeries: UpcomingSeriesBody?
+    @State private var isPrivate = false
+    @State private var repeating = false
+    @State private var occurrences = 4
+    @State private var intervalWeeks = 1
+    private var hasSubmission: Bool { submittedBody != nil || submittedSeries != nil }
 
     private var valid: Bool {
         city != nil && SettingsText.length(location) >= 2 && SettingsText.length(location) <= 120
             && SettingsText.length(note) <= 280 && minLevel <= maxLevel && startsAt > .now
+            && (!repeating || (Calendar.current.date(byAdding: .weekOfYear, value: (occurrences - 1) * intervalWeeks, to: startsAt) ?? .distantFuture) < Date.now.addingTimeInterval(180 * 86400))
     }
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 if !app.isOnline { SettingsOfflineNotice() }
                 if let error { SettingsErrorRow(message: error) }
@@ -41,6 +48,7 @@ struct UpcomingCreateView: View {
                         .accessibilityIdentifier("upcoming.location")
                 }
                 Section {
+                    Toggle("Закрытая игра", isOn: $isPrivate)
                     Picker("Тип матча", selection: $matchType) {
                         Text("Товарищеский").tag(MatchType.friendly)
                         Text("Рейтинговый").tag(MatchType.ranked)
@@ -54,17 +62,26 @@ struct UpcomingCreateView: View {
                     TextField("Что нужно знать игрокам", text: $note, axis: .vertical)
                     SettingsCharacterCount(count: SettingsText.length(note), limit: 280)
                 } header: { Text("Примечание") }
-            }
-            .disabled(isWorking || submittedBody != nil)
-            .navigationTitle("Новая открытая игра")
+                Section {
+                    Toggle("Повторять игру", isOn: $repeating)
+                    if repeating {
+                        Stepper("Количество игр: \(occurrences)", value: $occurrences, in: 2...12)
+                        Stepper("Каждые \(intervalWeeks) нед.", value: $intervalWeeks, in: 1...4)
+                    }
+                } header: { Text("Постоянная игра") } footer: {
+                    Text("Все даты должны быть в пределах 180 дней. Каждый состав собирается отдельно; приглашение не резервирует место. В закрытые игры вы приглашаете друзей после создания.")
+                }
+            }.closeToBar()
+            .disabled(isWorking || hasSubmission)
+            .navigationTitle("Новая игра")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() }.disabled(isWorking) }
                 ToolbarItem(placement: .confirmationAction) {
                     Button { publish() } label: {
-                        if isWorking { ProgressView() } else { Text(submittedBody == nil ? "Опубликовать" : "Повторить") }
+                        if isWorking { ProgressView() } else { Text(hasSubmission ? "Повторить" : "Опубликовать") }
                     }
-                    .disabled((submittedBody == nil && !valid) || !app.isOnline || isWorking)
+                    .disabled((!hasSubmission && !valid) || !app.isOnline || isWorking)
                     .accessibilityIdentifier("upcoming.publish")
                 }
             }
@@ -80,22 +97,31 @@ struct UpcomingCreateView: View {
     }
 
     private func publish() {
-        guard let city, submittedBody != nil || valid, app.isOnline, !isWorking else { return }
+        guard let city, hasSubmission || valid, app.isOnline, !isWorking else { return }
         isWorking = true
         error = nil
-        let body = submittedBody ?? UpcomingCreateBody(clientId: clientId, startsAt: JSONCoding.formatDate(startsAt), cityId: city.id,
+        var body = submittedBody ?? submittedSeries?.match ?? UpcomingCreateBody(clientId: repeating ? nil : clientId, startsAt: JSONCoding.formatDate(startsAt), cityId: city.id,
                                       clubId: club?.id, location: SettingsText.trimmed(location), matchType: matchType,
                                       minLevel: minLevel, maxLevel: maxLevel, note: note.isEmpty ? nil : SettingsText.trimmed(note))
-        submittedBody = body
+        if !hasSubmission {
+            body.visibility = isPrivate ? "private" : "public"
+            if repeating {
+                submittedSeries = UpcomingSeriesBody(match: body, occurrences: occurrences, intervalWeeks: intervalWeeks, timeZone: TimeZone.current.identifier)
+            } else { submittedBody = body }
+        }
         Task {
             defer { isWorking = false }
             do {
-                _ = try await app.api.send(.json(.post, "v1/upcoming-matches", body, idempotencyKey: clientId), as: UpcomingMatch.self)
+                if let series = submittedSeries {
+                    _ = try await app.api.send(.json(.post, "v1/upcoming-matches/series", series, idempotencyKey: clientId), as: UpcomingSeriesResponse.self)
+                } else {
+                    _ = try await app.api.send(.json(.post, "v1/upcoming-matches", body, idempotencyKey: clientId), as: UpcomingMatch.self)
+                }
                 app.dataDidChange()
                 Announce.post("Игра опубликована")
                 dismiss()
             } catch let failure as APIError {
-                if !failure.isTransient && failure.kind != .decoding { submittedBody = nil }
+                if !failure.isTransient && failure.kind != .decoding { submittedBody = nil; submittedSeries = nil }
                 error = failure.message
                 Announce.post(failure.message)
             }

@@ -9,10 +9,11 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "build:edge": "node scripts/build-edge.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run test/app.test.ts",
+    "test": "vitest run test/app.test.ts test/edge-handler.test.ts test/edge-relay.test.ts test/clubs.test.ts test/push-routes.test.ts test/push-provider.test.ts test/push-worker.test.ts",
     "start:local": "node dist/dev-server.js",
-    "test:e2e": "vitest run test/e2e"
+    "test:e2e": "node scripts/test-e2e.mjs"
   },
   "dependencies": {
     "hono": "4.13.8",

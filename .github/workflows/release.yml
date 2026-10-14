@@ -8,7 +8,7 @@ on:
   push:
     # Every push to main (and to working branches) builds and verifies the
     # IPA; publishing a GitHub Release is a separate, manual step.
-    branches: [main, "claude/**"]
+    branches: [main, "claude/**", "codex/**"]
     paths:
       - "ios/**"
       - "scripts/ios/**"
@@ -50,6 +50,9 @@ jobs:
           echo "Padel ID $version ($build)"
 
       - uses: ./.github/actions/setup-ios
+
+      - name: Production origin validation regressions
+        run: python3 scripts/ios/test-api-url.py
 
       - name: Unit tests
         working-directory: ios

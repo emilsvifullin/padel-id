@@ -1,0 +1,7 @@
+{
+  "imports": {
+    "hono": "npm:hono@4.13.8",
+    "hono/body-limit": "npm:hono@4.13.8/body-limit",
+    "zod": "npm:zod@4.6.5"
+  }
+}

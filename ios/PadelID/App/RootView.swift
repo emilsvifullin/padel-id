@@ -3,7 +3,9 @@ import SwiftUI
 struct RootView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var lastForegroundRefresh = Date.distantPast
+    @State private var remotePush = RemotePushService.shared
 
     var body: some View {
         @Bindable var app = app
@@ -15,8 +17,9 @@ struct RootView: View {
                 phaseContent
             }
         }
-        .animation(.smooth, value: app.phase)
-        .animation(.smooth, value: app.isClientOutdated)
+        .animation(reduceMotion ? nil : .smooth(duration: 0.25), value: app.phase)
+        .animation(reduceMotion ? nil : .smooth(duration: 0.25), value: app.isClientOutdated)
+        .transaction { if reduceMotion { $0.animation = nil } }
         .task { await app.bootstrap() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .background {
@@ -24,11 +27,32 @@ struct RootView: View {
                 NotificationService.shared.scheduleBackgroundRefresh()
             }
             guard phase == .active, app.phase == .ready else { return }
+            Task { await remotePush.synchronize() }
             if Date.now.timeIntervalSince(lastForegroundRefresh) > 30 {
                 lastForegroundRefresh = .now
                 app.dataDidChange()
                 Task { await app.flushOutbox() }
             }
+        }
+        .sheet(item: Binding(
+            get: { app.phase == .ready ? remotePush.destination : nil },
+            set: { remotePush.destination = $0 }
+        )) { destination in
+            PadelNavigationStack {
+                Group {
+                    switch destination {
+                    case .inbox: SocialInboxView()
+                    case .match(let id): MatchDetailView(matchId: id)
+                    }
+                }
+                .padelRoutes()
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Готово") { remotePush.destination = nil }
+                    }
+                }
+            }
+            .environment(app)
         }
         .fullScreenCover(isPresented: Binding(
             get: { app.recoveryKeyToShow != nil && app.phase != .launching },
@@ -109,7 +133,7 @@ struct LaunchFailureView: View {
             Button("Повторить") {
                 Task { await app.retryLaunch() }
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.padelProminent)
             Button("Выйти из аккаунта", role: .destructive) {
                 Task { await app.signOut() }
             }

@@ -32,7 +32,7 @@ struct MatchEditorView: View {
 
     var body: some View {
         let previewKey = model.previewKey(meId: meId)
-        NavigationStack {
+        SheetNavigationStack {
             ScrollViewReader { proxy in
                 Form {
                     statusSection
@@ -43,7 +43,7 @@ struct MatchEditorView: View {
                     if let previewKey {
                         previewSection(for: previewKey)
                     }
-                }
+                }.closeToBar()
                 .scrollDismissesKeyboard(.interactively)
                 .onChange(of: model.failureCount) {
                     withAnimation(reduceMotion ? nil : .smooth) {
@@ -54,7 +54,7 @@ struct MatchEditorView: View {
                     }
                 }
             }
-            .navigationTitle(model.isEditing ? "Изменить матч" : model.upcomingMatch != nil ? "Внести результат" : "Новый матч")
+            .navigationTitle(model.isEditing ? "Изменить матч" : model.upcomingMatch != nil ? "Результат" : "Новый матч")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
             .sheet(item: $pickingSlot) { slot in
@@ -259,7 +259,7 @@ struct MatchEditorView: View {
         Binding(
             get: { model.draft.format },
             set: { value in
-                withAnimation(.smooth) { model.setFormat(value) }
+                withAnimation(reduceMotion ? nil : .smooth) { model.setFormat(value) }
             })
     }
 
@@ -275,7 +275,7 @@ struct MatchEditorView: View {
                 Spacer(minLength: 12)
                 if let score {
                     Text(EditorScoreText.set(score))
-                        .font(.system(.title3, design: .rounded, weight: .semibold).monospacedDigit())
+                        .font(.display(.title3, weight: .semibold).monospacedDigit())
                         .foregroundStyle(.primary)
                 } else {
                     Text("Указать счёт")
@@ -315,7 +315,7 @@ struct MatchEditorView: View {
         TextField("0", text: text)
             .keyboardType(.numberPad)
             .multilineTextAlignment(.center)
-            .font(.system(.title3, design: .rounded, weight: .semibold).monospacedDigit())
+            .font(.display(.title3, weight: .semibold).monospacedDigit())
             .frame(width: pointsFieldWidth)
             .padding(.vertical, 8)
             .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 10, style: .continuous))
@@ -470,7 +470,7 @@ struct MatchEditorView: View {
             Text("Ваш уровень")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            Text("Победа: \(deltaText(mine.ifTeam1Wins)) · Поражение: \(deltaText(mine.ifTeam2Wins))")
+            Text("Победа: \(deltaText(mine.ifTeam1Wins)), поражение: \(deltaText(mine.ifTeam2Wins))")
                 .font(.body.weight(.medium))
             if let entered = mine.withEnteredScore {
                 Text("С введённым счётом: \(deltaText(entered))")

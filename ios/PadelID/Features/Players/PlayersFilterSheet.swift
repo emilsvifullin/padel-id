@@ -17,7 +17,7 @@ struct PlayersFilterSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 Section {
                     NavigationLink {
@@ -66,7 +66,7 @@ struct PlayersFilterSheet: View {
                     }
                     .disabled(isDefault)
                 }
-            }
+            }.closeToBar()
             .navigationTitle("Фильтры")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -114,7 +114,7 @@ private struct PlayersLevelSlider: View {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(title)
                 Spacer(minLength: 8)
-                Text(Format.level(value) + " · " + LevelBand(level: value).title)
+                Text(Format.level(value) + ", " + LevelBand(level: value).title.lowercased())
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.trailing)

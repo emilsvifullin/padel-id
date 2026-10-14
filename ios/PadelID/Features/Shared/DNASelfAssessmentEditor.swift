@@ -96,6 +96,7 @@ private struct SharedDNAAssessmentRow: View {
 private struct SharedDNAAssessmentControl: View {
     let title: String
     @Binding var value: Int
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(spacing: 6) {
@@ -109,16 +110,16 @@ private struct SharedDNAAssessmentControl: View {
                         .monospacedDigit()
                         .lineLimit(1)
                         .minimumScaleFactor(0.6)
-                        .foregroundStyle(isSelected ? Color.white : Color.primary)
+                        .foregroundStyle(isSelected ? Theme.ink : Color.primary)
                         .frame(maxWidth: .infinity, minHeight: 44)
-                        .background(isSelected ? Theme.accent : Color(.tertiarySystemFill),
+                        .background(isSelected ? Theme.lime : Color(.tertiarySystemFill),
                                     in: .rect(cornerRadius: 12, style: .continuous))
                         .contentShape(.rect(cornerRadius: 12, style: .continuous))
                 }
                 .buttonStyle(.plain)
             }
         }
-        .animation(.snappy(duration: 0.2), value: value)
+        .animation(reduceMotion ? nil : .snappy(duration: 0.2), value: value)
         .sensoryFeedback(.selection, trigger: value)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(title)

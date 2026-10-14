@@ -177,4 +177,20 @@ struct FormattingTests {
         #expect(card.preferredSide == .right)
         #expect(card.level == 4.49)
     }
+
+    @Test("A chat names today and yesterday and dates the days before them")
+    @MainActor
+    func chatDayTitles() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try #require(TimeZone(identifier: "Europe/Moscow"))
+        let now = try #require(calendar.date(from: DateComponents(year: 2026, month: 10, day: 14, hour: 12)))
+        func day(_ year: Int, _ month: Int, _ day: Int) throws -> Date {
+            try #require(calendar.date(from: DateComponents(year: year, month: month, day: day, hour: 9)))
+        }
+        #expect(ChatView.dayTitle(now, now: now, calendar: calendar) == "Сегодня")
+        #expect(try ChatView.dayTitle(day(2026, 10, 13), now: now, calendar: calendar) == "Вчера")
+        #expect(try ChatView.dayTitle(day(2026, 10, 2), now: now, calendar: calendar).contains("октября"))
+        #expect(try !ChatView.dayTitle(day(2026, 10, 2), now: now, calendar: calendar).contains("2026"))
+        #expect(try ChatView.dayTitle(day(2025, 12, 31), now: now, calendar: calendar).contains("2025"))
+    }
 }

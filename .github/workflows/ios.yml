@@ -2,7 +2,7 @@ name: iOS
 
 on:
   push:
-    branches: [main, "claude/**"]
+    branches: [main, "claude/**", "codex/**"]
     paths:
       - "ios/**"
       - "scripts/ios/**"
@@ -16,6 +16,10 @@ on:
       - ".github/actions/setup-ios/**"
       - ".github/workflows/ios.yml"
   workflow_dispatch:
+    inputs:
+      only_testing:
+        description: "Test identifier for a targeted run, e.g. PadelIDUITests/HomeUITests/testHomeAndAppearanceAccessibility"
+        default: PadelIDUITests
 
 permissions:
   contents: read
@@ -28,7 +32,10 @@ jobs:
   test:
     name: ${{ matrix.name }}
     runs-on: macos-26
-    timeout-minutes: 75
+    # Hosted UI automation takes up to an hour and a half on the large-text
+    # configurations; leave time to export the result bundle even when the
+    # bounded UI step times out.
+    timeout-minutes: 150
     strategy:
       fail-fast: false
       matrix:
@@ -57,10 +64,24 @@ jobs:
             appearance: dark
             content_size: extra-extra-extra-large
             unit: false
+          # The narrowest screen the app runs on, with a Home button: every
+          # section with typical and with worst-case data.
+          - name: iPhone SE · light · sections tour
+            slug: se-tour
+            device: iPhone SE (3rd generation)
+            appearance: light
+            content_size: large
+            unit: false
+            only: PadelIDUITests/SectionsTourUITests
     steps:
       - uses: actions/checkout@v5
 
       - uses: ./.github/actions/setup-ios
+
+      - name: Check API and push build configuration gates
+        run: |
+          python3 scripts/ios/test-api-url.py
+          python3 scripts/ios/test-push-config.py
 
       - name: Boot the simulator
         id: sim
@@ -71,7 +92,7 @@ jobs:
         run: |
           if ! xcodebuild build-for-testing \
             -project PadelID.xcodeproj -scheme PadelID -configuration Debug \
-            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }},arch=arm64" \
             -derivedDataPath "$RUNNER_TEMP/dd" > "$RUNNER_TEMP/build.log" 2>&1; then
             grep -E "error:" "$RUNNER_TEMP/build.log" | sort -u | head -300
             tail -40 "$RUNNER_TEMP/build.log"
@@ -81,29 +102,35 @@ jobs:
           grep -E "warning:" "$RUNNER_TEMP/build.log" | grep -v "appintentsmetadataprocessor" | sort -u | head -200 || true
 
       - name: Unit tests
-        if: matrix.unit
+        if: matrix.unit && (github.event_name != 'workflow_dispatch' || inputs.only_testing == 'PadelIDUITests')
+        timeout-minutes: 15
         working-directory: ios
         run: |
           set -o pipefail
           xcodebuild test-without-building \
             -project PadelID.xcodeproj -scheme PadelID -configuration Debug \
-            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }},arch=arm64" \
             -derivedDataPath "$RUNNER_TEMP/dd" \
+            -parallel-testing-enabled NO \
+            -maximum-concurrent-test-simulator-destinations 1 \
             -only-testing:PadelIDTests \
             -resultBundlePath "$RUNNER_TEMP/unit.xcresult" \
-            | tail -60
+            2>&1 | tee "$RUNNER_TEMP/unit.log"
 
       - name: UI tests
+        timeout-minutes: 120
         working-directory: ios
         run: |
           set -o pipefail
           xcodebuild test-without-building \
             -project PadelID.xcodeproj -scheme PadelID -configuration Debug \
-            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }},arch=arm64" \
             -derivedDataPath "$RUNNER_TEMP/dd" \
-            -only-testing:PadelIDUITests \
+            -parallel-testing-enabled NO \
+            -maximum-concurrent-test-simulator-destinations 1 \
+            -only-testing:"${{ matrix.only || inputs.only_testing || 'PadelIDUITests' }}" \
             -resultBundlePath "$RUNNER_TEMP/ui.xcresult" \
-            | tail -80
+            2>&1 | tee "$RUNNER_TEMP/ui.log"
 
       - name: Test summary
         if: always()
@@ -112,12 +139,14 @@ jobs:
           summary="$RUNNER_TEMP/screenshots/${{ matrix.slug }}-summary.txt"
           : > "$summary"
           for r in unit ui; do
-            if [ -d "$RUNNER_TEMP/$r.xcresult" ]; then
+            if [ -f "$RUNNER_TEMP/$r.xcresult/Info.plist" ]; then
               echo "== $r" | tee -a "$summary"
               xcrun xcresulttool get test-results summary --path "$RUNNER_TEMP/$r.xcresult" --compact \
                 | python3 -c 'import json,sys; s=json.load(sys.stdin); print({k: s.get(k) for k in ("result","totalTestCount","passedTests","failedTests","skippedTests")}); [print("FAILED:", f.get("testName"), "-", f.get("failureText")) for f in s.get("testFailures", [])]' \
                 | tee -a "$summary"
               python3 scripts/ios/failed-activities.py "$RUNNER_TEMP/$r.xcresult" >> "$summary" || true
+            elif [ -d "$RUNNER_TEMP/$r.xcresult" ]; then
+              echo "== $r: incomplete result bundle (test execution interrupted)" | tee -a "$summary"
             fi
           done
 
@@ -134,13 +163,15 @@ jobs:
           retention-days: 14
 
       - uses: actions/upload-artifact@v7
-        if: failure()
+        if: always() && (failure() || cancelled())
         with:
           name: xcresult-${{ matrix.slug }}
           path: |
             ${{ runner.temp }}/unit.xcresult
             ${{ runner.temp }}/ui.xcresult
             ${{ runner.temp }}/build.log
+            ${{ runner.temp }}/unit.log
+            ${{ runner.temp }}/ui.log
           if-no-files-found: ignore
           retention-days: 7
 

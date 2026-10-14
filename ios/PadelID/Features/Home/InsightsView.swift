@@ -18,7 +18,7 @@ struct InsightsView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemGroupedBackground))
+        .background(Theme.canvas)
         .navigationTitle("Выводы об игре")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: app.dataRevision) { await home.load(using: app) }
@@ -49,7 +49,8 @@ struct InsightsView: View {
                     }
                 }
             }
-            .listStyle(.insetGrouped)
+            .listStyle(.insetGrouped).closeToBar()
+            .scrollContentBackground(.hidden)
             .listSectionSpacing(.compact)
             .refreshable { [home = self.home, app = self.app] in
                 await home.load(using: app)

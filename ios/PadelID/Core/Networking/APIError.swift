@@ -24,6 +24,14 @@ nonisolated struct APIError: Error, Hashable, Sendable, LocalizedError {
         return nil
     }
 
+    /// A structured rejection means this submission was not accepted. Network,
+    /// decoding and server failures remain uncertain and keep the same payload
+    /// and idempotency key for reconciliation instead of creating a duplicate.
+    var permitsSubmissionCorrection: Bool {
+        guard let status else { return false }
+        return (400..<500).contains(status)
+    }
+
     /// Whether retrying the same request may succeed.
     var isTransient: Bool {
         switch kind {
@@ -40,7 +48,9 @@ nonisolated struct APIError: Error, Hashable, Sendable, LocalizedError {
     var message: String {
         switch kind {
         case .network:
-            return "Нет подключения к интернету. Проверьте сеть и попробуйте снова."
+            // A blocked route fails the same way as no connection at all, so
+            // the copy must hold when the device itself is online.
+            return "Не удалось связаться с сервером. Проверьте подключение и попробуйте снова."
         case .decoding:
             return "Не удалось обработать ответ сервера. Обновите приложение или попробуйте позже."
         case .server:
@@ -61,7 +71,7 @@ nonisolated struct APIError: Error, Hashable, Sendable, LocalizedError {
         "same_password": "Новый пароль совпадает с текущим.",
         "service_unavailable": "Сервис временно недоступен. Попробуйте через минуту.",
         "client_outdated": "Эта версия приложения устарела. Установите обновление.",
-        "version_conflict": "Матч только что изменили. Проверьте актуальный счёт.",
+        "version_conflict": "Данные изменились. Обновите их перед повторным действием.",
         "duplicate_match": "Этот матч уже внесён — проверьте раздел «Матчи».",
         "match_locked": "Матч уже подтверждён всеми участниками и не может быть изменён.",
         "match_closed": "Матч отменён или истёк срок его подтверждения.",

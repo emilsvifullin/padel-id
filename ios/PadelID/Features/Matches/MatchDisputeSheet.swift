@@ -21,7 +21,7 @@ struct MatchDisputeSheet: View {
     private var limit: Int { MatchActions.disputeCommentLimit }
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 Section {
                     ForEach(DisputeReason.allCases, id: \.self) { option in
@@ -56,9 +56,9 @@ struct MatchDisputeSheet: View {
                         }
                     }
                 }
-            }
+            }.closeToBar()
             .disabled(isSubmitting)
-            .navigationTitle("Оспорить результат")
+            .navigationTitle("Оспорить")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

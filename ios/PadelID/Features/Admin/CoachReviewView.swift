@@ -18,7 +18,7 @@ struct CoachReviewView: View {
             }
             content
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.insetGrouped).closeToBar()
         .navigationTitle("Заявки тренеров")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: status) { await load(status) }
@@ -211,7 +211,7 @@ private struct AdminReviewApplicationRow: View {
                 .frame(maxWidth: .infinity)
         }
         if prominent {
-            button.buttonStyle(.borderedProminent)
+            button.buttonStyle(.padelProminent)
         } else {
             button.buttonStyle(.bordered)
         }
@@ -232,7 +232,7 @@ private struct AdminReviewDecisionSheet: View {
     @State private var failureCount = 0
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 if !app.isOnline {
                     Section {
@@ -263,7 +263,7 @@ private struct AdminReviewDecisionSheet: View {
                         SettingsErrorRow(message: error.message)
                     }
                 }
-            }
+            }.closeToBar()
             .disabled(isSubmitting)
             .navigationTitle(AdminReviewCopy.title(request.action))
             .navigationBarTitleDisplayMode(.inline)

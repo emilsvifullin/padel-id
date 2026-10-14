@@ -92,7 +92,7 @@ struct CityPickerView: View {
                 }
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.insetGrouped).closeToBar()
         .overlay {
             overlayContent
         }
@@ -226,7 +226,7 @@ struct ClubPickerView: View {
                 addSection
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.insetGrouped).closeToBar()
         .navigationTitle("Клуб")
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Название клуба")

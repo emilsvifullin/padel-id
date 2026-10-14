@@ -33,8 +33,11 @@ alter table auth.users add column if not exists raw_app_meta_data jsonb;
 create table if not exists auth.sessions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  not_after timestamptz
 );
+-- Mirror optional Supabase Auth session expiry, including existing shim databases.
+alter table auth.sessions add column if not exists not_after timestamptz;
 
 create or replace function auth.uid() returns uuid
 language sql stable
@@ -67,6 +70,15 @@ alter table storage.objects enable row level security;
 create or replace function storage.foldername(name text) returns text[]
 language sql immutable
 as $$ select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
+
+-- Match operation-aware Storage RLS helpers. Unset operations must not turn
+-- SQL-only tests into authorization for public downloads or signed URLs.
+create or replace function storage.operation() returns text language sql stable
+as $$ select nullif(current_setting('storage.operation', true), '') $$;
+create or replace function storage.allow_any_operation(operations text[]) returns boolean language sql stable
+as $$ select coalesce(storage.operation()=any(operations),false) $$;
+create or replace function storage.allow_only_operation(operation text) returns boolean language sql stable
+as $$ select coalesce(storage.operation()=operation,false) $$;
 
 -- Mirror Supabase default privileges: new objects in public are granted to API roles.
 alter default privileges in schema public grant all on tables to anon, authenticated, service_role;

@@ -4,6 +4,7 @@ import SwiftUI
 /// calibration questions and the Padel DNA self-assessment, followed by the
 /// starting level.
 struct OnboardingFlow: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var model = OnboardingModel()
 
     init() {}
@@ -34,7 +35,7 @@ struct OnboardingFlow: View {
                 .transition(.opacity)
             }
         }
-        .animation(.smooth, value: model.result != nil)
+        .animation(reduceMotion ? nil : .smooth, value: model.result != nil)
         .sensoryFeedback(.success, trigger: model.result != nil) { _, isDone in isDone }
         .sensoryFeedback(.error, trigger: model.failureCount)
     }
@@ -48,6 +49,7 @@ private nonisolated enum OnboardingProfileField: Hashable, Sendable {
 
 private struct OnboardingProfileStep: View {
     @Environment(AppModel.self) private var app
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Bindable private var model: OnboardingModel
     @FocusState private var focus: OnboardingProfileField?
 
@@ -121,7 +123,7 @@ private struct OnboardingProfileStep: View {
                 }
                 Text("От 3 до 20 символов. По имени пользователя вас найдут в поиске.")
             }
-            .animation(.default, value: model.usernameStatus)
+            .animation(reduceMotion ? nil : .default, value: model.usernameStatus)
         }
     }
 
@@ -373,6 +375,7 @@ private nonisolated enum OnboardingScrollAnchor {
 /// the bottom in a glass container and the sign-out menu.
 private struct OnboardingStepScreen<Content: View>: View {
     @Environment(AppModel.self) private var app
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isSignOutPresented = false
 
     private let step: OnboardingStep
@@ -411,10 +414,10 @@ private struct OnboardingStepScreen<Content: View>: View {
                         .listRowBackground(Color.clear)
                 }
                 content
-            }
+            }.closeToBar()
             .scrollDismissesKeyboard(.interactively)
             .onChange(of: scrollRequest) {
-                withAnimation(.smooth) {
+                withAnimation(reduceMotion ? nil : .smooth) {
                     proxy.scrollTo(OnboardingScrollAnchor.bottom, anchor: .bottom)
                 }
             }
@@ -572,7 +575,7 @@ struct OnboardingActionBar: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
             }
-            .buttonStyle(.glassProminent)
+            .padelGlassProminent()
             .disabled(!isEnabled || isWorking)
             .accessibilityIdentifier(identifier)
         }

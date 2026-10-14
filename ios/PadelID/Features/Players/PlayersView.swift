@@ -20,7 +20,7 @@ struct PlayersView: View {
                     browseSections
                 }
             }
-            .listStyle(.insetGrouped)
+            .listStyle(.insetGrouped).closeToBar()
             .overlay {
                 if !isResultsMode {
                     browseOverlay
@@ -36,6 +36,7 @@ struct PlayersView: View {
                 PlayersFilterSheet(filter: filter, myCity: myCity) { newFilter in
                     filter = newFilter
                 }
+                .compactSheet()
             }
             .sensoryFeedback(.selection, trigger: sort)
             .padelRoutes()
@@ -219,11 +220,10 @@ struct PlayersView: View {
     }
 
     private func recentSubtitle(_ card: PlayerCard) -> String? {
+        // Only what the two of you share: with the user name in front the
+        // line did not fit next to the level and was cut mid-word.
         guard let together = card.matchesTogether, together > 0 else { return nil }
-        var parts: [String] = []
-        if let username = card.username { parts.append("@" + username) }
-        parts.append(Format.count(together, "общий матч", "общих матча", "общих матчей"))
-        return parts.joined(separator: " · ")
+        return Format.count(together, "общий матч", "общих матча", "общих матчей")
     }
 
     // MARK: - Results
@@ -346,7 +346,7 @@ struct PlayersView: View {
         }
         if filter.reliableOnly { parts.append("надёжный рейтинг") }
         if filter.coachesOnly { parts.append("тренеры") }
-        return parts.joined(separator: " · ")
+        return parts.joined(separator: ", ")
     }
 
     private var resultsCountText: String? {

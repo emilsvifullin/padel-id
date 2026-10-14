@@ -20,6 +20,7 @@ struct EditorScoreGrid: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var selection: EditorScoreOption?
     @State private var tiebreakEnabled: Bool
@@ -51,7 +52,7 @@ struct EditorScoreGrid: View {
     }
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
@@ -71,7 +72,7 @@ struct EditorScoreGrid: View {
                 .onChange(of: selection) { _, newValue in
                     guard newValue?.isTiebreakSet == true else { return }
                     detent = .large
-                    withAnimation(.smooth) {
+                    withAnimation(reduceMotion ? nil : .smooth) {
                         proxy.scrollTo(Self.tiebreakAnchor, anchor: .bottom)
                     }
                 }
@@ -137,15 +138,13 @@ struct EditorScoreGrid: View {
             choose(option)
         } label: {
             Text(verbatim: "\(option.t1) : \(option.t2)")
-                .font(.system(.title3, design: .rounded, weight: .semibold).monospacedDigit())
+                .font(.display(.title3, weight: .semibold).monospacedDigit())
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 6)
         }
-        .buttonBorderShape(.roundedRectangle(radius: Theme.smallCornerRadius))
-        .controlSize(.large)
-        .modifier(EditorScoreButtonStyle(isSelected: isSelected))
+        .buttonStyle(EditorScoreButtonStyle(isSelected: isSelected))
         .accessibilityLabel(Text(verbatim: "\(option.t1):\(option.t2)"))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityIdentifier("score.\(option.t1)-\(option.t2)")
@@ -156,7 +155,7 @@ struct EditorScoreGrid: View {
     private func tiebreakEditor(for option: EditorScoreOption) -> some View {
         SectionContainer {
             VStack(alignment: .leading, spacing: 12) {
-                Toggle("Указать счёт тай-брейка", isOn: $tiebreakEnabled.animation(.smooth))
+                Toggle("Указать счёт тай-брейка", isOn: $tiebreakEnabled.animation(reduceMotion ? nil : .smooth))
                     .accessibilityIdentifier("score.tiebreak")
                 if tiebreakEnabled {
                     Stepper(value: $tiebreak1, in: 0...40) {
@@ -242,16 +241,17 @@ struct EditorScoreGrid: View {
     }
 }
 
-/// Selected result: prominent; others: bordered.
-private struct EditorScoreButtonStyle: ViewModifier {
+/// A set result to pick: a plain card until chosen, then the icon's lime.
+private struct EditorScoreButtonStyle: ButtonStyle {
     let isSelected: Bool
 
-    @ViewBuilder
-    func body(content: Content) -> some View {
-        if isSelected {
-            content.buttonStyle(.borderedProminent)
-        } else {
-            content.buttonStyle(.bordered)
-        }
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(isSelected ? Theme.ink : Color.primary)
+            .frame(minHeight: 52)
+            .background(isSelected ? AnyShapeStyle(Theme.lime) : AnyShapeStyle(Theme.surface),
+                        in: .rect(cornerRadius: Theme.smallCornerRadius, style: .continuous))
+            .contentShape(.rect(cornerRadius: Theme.smallCornerRadius, style: .continuous))
+            .opacity(configuration.isPressed ? 0.7 : 1)
     }
 }

@@ -426,6 +426,17 @@ nonisolated struct PlayerProfileResponse: Codable, Hashable, Sendable {
     let compatibility: Compatibility?
     let coachAssessments: [CoachAssessment]?
     let viewer: ProfileViewer?
+    let isFollowing: Bool?
+    let coach: PublicCoachProfile?
+}
+
+/// Only approved coaches publish these existing application fields. Internal
+/// application/review metadata is deliberately absent from this public model.
+nonisolated struct PublicCoachProfile: Codable, Hashable, Sendable {
+    let experienceYears: Int
+    let certification: String?
+    let about: String
+    let club: NamedRef?
 }
 
 nonisolated struct HomeResponse: Codable, Hashable, Sendable {

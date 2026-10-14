@@ -35,7 +35,10 @@ struct RatingDetailView: View {
             }
             content(histories[range])
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.insetGrouped).closeToBar()
+        // The chart and the totals arrive together: let them fade in
+        // instead of replacing the placeholder in one frame.
+        .animation(reduceMotion ? nil : Motion.standard, value: histories[range].value != nil)
         .navigationTitle("Рейтинг")
         .navigationBarTitleDisplayMode(.inline)
         .sensoryFeedback(.selection, trigger: range)
@@ -342,7 +345,7 @@ private struct RatingDetailSections: View {
                     Text("Рейтинговые матчи")
                 }
                 LabeledContent {
-                    Text(verbatim: "\(wins) из \(matchPoints.count) · \(Format.percent(Double(wins) / Double(matchPoints.count)))")
+                    Text(verbatim: "\(wins) из \(matchPoints.count), \(Format.percent(Double(wins) / Double(matchPoints.count)))")
                         .monospacedDigit()
                 } label: {
                     Text("Победы")
@@ -444,7 +447,7 @@ private struct RatingDetailSummary: View {
     private var reliabilityColumn: some View {
         if let rating {
             HStack(spacing: 12) {
-                ReliabilityRing(reliability: rating.reliability, size: 48)
+                ReliabilityMark(reliability: rating.reliability, size: 48)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(verbatim: "Надёжность \(rating.reliability)%")
@@ -547,6 +550,6 @@ private struct RatingDetailChangeRow: View {
         if let expected = point.expectedWin {
             parts.append("Шансы были \(Format.percent(expected))")
         }
-        return parts.joined(separator: " · ")
+        return parts.joined(separator: ", ")
     }
 }

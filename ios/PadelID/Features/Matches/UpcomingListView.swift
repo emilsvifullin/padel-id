@@ -16,21 +16,25 @@ struct UpcomingListView: View {
                 Picker("Игры", selection: $mine) {
                     Text("Открытые").tag(false)
                     Text("Мои").tag(true)
-                }.pickerStyle(.segmented).accessibilityIdentifier("upcoming.scope")
+                }
+                .pickerStyle(.segmented)
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+                .accessibilityIdentifier("upcoming.scope")
             }
             if let error { StaleDataBanner(error: error) }
             ForEach(items) { match in
                 NavigationLink(value: Route.upcoming(match.id)) { UpcomingMatchRow(match: match) }
             }
             if items.isEmpty && !isLoading && error == nil {
-                ContentUnavailableView(mine ? "Пока нет ваших игр" : "Открытых игр пока нет", systemImage: "tennis.racket",
+                ContentUnavailableView(mine ? "Пока нет ваших игр" : "Открытых игр пока нет", image: PadelSymbol.racket,
                                        description: Text("Опубликуйте игру и пригласите игроков занять свободные места."))
             }
             if let nextOffset {
                 Button("Ещё игры") { Task { await load(offset: nextOffset) } }.disabled(isLoading)
             }
             if isLoading { ProgressView() }
-        }
+        }.closeToBar()
         .navigationTitle("Предстоящие игры")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

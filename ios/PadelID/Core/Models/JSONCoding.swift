@@ -23,6 +23,9 @@ nonisolated enum JSONCoding {
 
     static let encoder: JSONEncoder = {
         let encoder = JSONEncoder()
+        // Manual idempotent retries rebuild endpoints from a frozen payload.
+        // Keep its wire bytes stable as well as its semantic JSON content.
+        encoder.outputFormatting = [.sortedKeys]
         encoder.keyEncodingStrategy = .convertToSnakeCase
         encoder.dateEncodingStrategy = .custom { date, encoder in
             var container = encoder.singleValueContainer()

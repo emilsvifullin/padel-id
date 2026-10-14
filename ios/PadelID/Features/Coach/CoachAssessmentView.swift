@@ -25,7 +25,7 @@ struct CoachAssessmentView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 Section {
                     PlayerRow(card: player) {
@@ -77,8 +77,8 @@ struct CoachAssessmentView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-            }
-            .navigationTitle("Оценка тренера")
+            }.closeToBar()
+            .navigationTitle("Оценка")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

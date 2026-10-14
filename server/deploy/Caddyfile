@@ -1,0 +1,18 @@
+# A direct HTTPS origin: do not put this behind another CDN without separately
+# reviewing the trusted proxy/client IP policy.
+{$API_DOMAIN} {
+    reverse_proxy api:8787 {
+        # For the independent full API, only this proxy supplies the rate-limit IP.
+        # The fixed-origin relay strips it again and shares upstream IP budgets.
+        # Remove client-supplied platform headers before the Hono application.
+        header_up X-Real-IP {remote_host}
+        header_up -X-Vercel-Forwarded-For
+        header_up X-Forwarded-For {remote_host}
+        # No retry/failover for account or other mutations. Authorization,
+        # Idempotency-Key, method and body pass through without rewriting.
+        transport http {
+            dial_timeout 5s
+            response_header_timeout 45s
+        }
+    }
+}

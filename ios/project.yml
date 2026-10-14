@@ -14,13 +14,17 @@ settings:
     SWIFT_VERSION: "6.0"
     SWIFT_APPROACHABLE_CONCURRENCY: YES
     SWIFT_STRICT_CONCURRENCY: complete
-    MARKETING_VERSION: "1.1.0"
-    CURRENT_PROJECT_VERSION: "2"
+    MARKETING_VERSION: "1.2.0"
+    CURRENT_PROJECT_VERSION: "3"
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     ENABLE_MODULE_VERIFIER: YES
     LOCALIZATION_PREFERS_STRING_CATALOGS: YES
     SWIFT_EMIT_LOC_STRINGS: NO
     DEAD_CODE_STRIPPING: YES
+    PADELID_API_BASE_URL: "https://padel-id-gamma.vercel.app"
+    PADELID_API_FALLBACK_URL: ""
+    PADELID_PUSH_ENABLED: NO
+    PADELID_APNS_ENVIRONMENT: production
     TARGETED_DEVICE_FAMILY: "1"
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: ""
@@ -40,12 +44,15 @@ targets:
     platform: iOS
     sources:
       - path: PadelID
+        excludes:
+          - Resources/PadelID-Push.entitlements
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.padelid.ios
         PRODUCT_NAME: PadelID
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIconCharcoal AppIconBall"
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         INFOPLIST_FILE: PadelID/Resources/Info.plist
         GENERATE_INFOPLIST_FILE: NO
@@ -55,6 +62,12 @@ targets:
         SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
         # The Debug-only plist step below edits the processed Info.plist.
         ENABLE_USER_SCRIPT_SANDBOXING: NO
+    preBuildScripts:
+      - name: Validate production API origin
+        basedOnDependencyAnalysis: false
+        script: |
+          python3 "${SRCROOT}/../scripts/ios/verify-api-url.py"
+          python3 "${SRCROOT}/../scripts/ios/verify-push-config.py"
     postBuildScripts:
       - name: Allow loopback HTTP in Debug builds
         basedOnDependencyAnalysis: false

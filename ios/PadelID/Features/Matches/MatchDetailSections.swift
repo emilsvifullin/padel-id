@@ -159,7 +159,7 @@ struct MatchDetailScoreboard: View {
 
     private func sideText(_ player: MatchPlayer) -> String {
         let side = Narratives.sideShort(player.courtSide)
-        return player.player.id == viewerId ? "\(side) · вы" : side
+        return player.player.id == viewerId ? "\(side), вы" : side
     }
 
     private func scoreColumns(_ team: Int) -> some View {
@@ -185,17 +185,20 @@ struct MatchDetailScoreboard: View {
         let tiebreak: Int? = wonSet ? nil : (team == 1 ? set.tb1 : set.tb2)
         return HStack(alignment: .top, spacing: 1) {
             Text("\(games)")
-                .font(.system(.title2, design: .rounded, weight: wonSet ? Font.Weight.semibold : Font.Weight.regular))
+                .font(.display(.title3, weight: wonSet ? Font.Weight.bold : Font.Weight.medium))
                 .monospacedDigit()
-                .foregroundStyle(wonSet ? Color.primary : Color.secondary)
+                .foregroundStyle(wonSet ? Theme.ink : Color.secondary)
             if let tiebreak {
                 Text("\(tiebreak)")
-                    .font(.system(.caption2, design: .rounded, weight: .semibold))
+                    .font(.display(.caption2, weight: .semibold))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
             }
         }
-        .frame(width: setColumnWidth)
+        .frame(width: setColumnWidth, height: setColumnWidth)
+        .background(wonSet ? AnyShapeStyle(Theme.lime) : AnyShapeStyle(Theme.inset),
+                    in: .rect(cornerRadius: 10, style: .continuous))
+        .padding(.horizontal, 2)
     }
 
     private func scoreAccessibility(_ team: Int) -> String {
@@ -325,7 +328,7 @@ struct MatchDetailStatusSection: View {
 struct MatchDetailProjectionSection: View {
     let projection: ProjectedChange
 
-    private var numeralFont: Font { Font.system(.title2, design: .rounded, weight: .semibold) }
+    private var numeralFont: Font { Font.display(.title2, weight: .semibold) }
 
     var body: some View {
         MatchDetailSection("Рейтинг") {
@@ -366,6 +369,7 @@ struct MatchDetailRatingSection: View {
     let match: MatchDetail
     let viewerId: UUID?
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isExplanationExpanded = false
 
     init(match: MatchDetail, viewerId: UUID?) {
@@ -429,7 +433,7 @@ struct MatchDetailRatingSection: View {
     private func explanation(_ lines: [String]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Button {
-                withAnimation(.snappy) {
+                withAnimation(reduceMotion ? nil : .snappy) {
                     isExplanationExpanded.toggle()
                 }
             } label: {
@@ -533,7 +537,7 @@ struct MatchDetailAnalysisSection: View {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(Format.percent(chance))
-                        .font(.system(.title3, design: .rounded, weight: .semibold))
+                        .font(.display(.title3, weight: .semibold))
                         .monospacedDigit()
                         .foregroundStyle(Theme.accent)
                     Text(ownLabel)
@@ -544,7 +548,7 @@ struct MatchDetailAnalysisSection: View {
                 Spacer(minLength: 12)
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(Format.percent(1 - chance))
-                        .font(.system(.title3, design: .rounded, weight: .semibold))
+                        .font(.display(.title3, weight: .semibold))
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
                     Text(otherLabel)
@@ -647,7 +651,7 @@ struct MatchDetailMetaSection: View {
                 if let club = match.club {
                     metaRow("mappin.and.ellipse", [club.name, club.city].compactMap { $0 }.joined(separator: ", "))
                 }
-                metaRow("sportscourt", "\(Narratives.matchType(match.matchType)) матч · \(Narratives.format(match.format))",
+                metaRow(PadelSymbol.racket, "\(Narratives.matchType(match.matchType)) матч, \(Narratives.format(match.format).lowercased())",
                         detail: match.matchType == .friendly ? "Не влияет на рейтинг" : nil)
                 if match.status == .confirmed, let confirmedAt = match.confirmedAt {
                     metaRow("checkmark.seal", "Подтверждён \(Format.date(confirmedAt))")
@@ -658,7 +662,7 @@ struct MatchDetailMetaSection: View {
 
     private func metaRow(_ symbol: String, _ text: String, detail: String? = nil) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
-            Image(systemName: symbol)
+            Image(symbol: symbol)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .frame(width: 24)

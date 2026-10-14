@@ -11,8 +11,7 @@ struct MatchRowView: View {
     var showsPendingStatus = true
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @ScaledMetric(relativeTo: .body) private var setColumnWidth: CGFloat = 24
-    @ScaledMetric(relativeTo: .caption) private var markWidth: CGFloat = 18
+    @ScaledMetric(relativeTo: .body) private var setColumnWidth: CGFloat = 30
 
     init(item: MatchListItem, perspectiveTeam: Int?, showsPendingStatus: Bool = true) {
         self.item = item
@@ -36,28 +35,25 @@ struct MatchRowView: View {
 
     // MARK: - Header
 
+    /// The day and the result share the first line, the result always at its
+    /// end; what kind of match it is and its state follow on a line of their
+    /// own. Nothing moves to another place when a row has more to say.
     private var header: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(alignment: .center, spacing: 8) {
-                dateText
-                typePill
-                statusPill
-                Spacer(minLength: 8)
-                outcome
-            }
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 8) {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
                     dateText
-                    typePill
-                    statusPill
+                    Spacer(minLength: 8)
+                    outcome
                 }
-                outcome
+                VStack(alignment: .leading, spacing: 4) {
+                    dateText
+                    outcome
+                }
             }
-            VStack(alignment: .leading, spacing: 6) {
-                dateText
+            HStack(spacing: 8) {
                 typePill
                 statusPill
-                outcome
             }
         }
     }
@@ -95,7 +91,7 @@ struct MatchRowView: View {
             HStack(spacing: 6) {
                 Text(won ? "Победа" : "Поражение")
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(won ? Theme.positive : Color.secondary)
+                    .foregroundStyle(won ? Theme.positive : Theme.negative)
                 if let delta {
                     DeltaText(delta: delta)
                 }
@@ -115,7 +111,7 @@ struct MatchRowView: View {
                 setScores(team)
             }
         } else {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+            HStack(alignment: .center, spacing: 8) {
                 pairNames(team)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 setScores(team)
@@ -128,29 +124,27 @@ struct MatchRowView: View {
         return Text(MatchesNames.shortPair(cards(team)))
             .font(isWinner ? Font.body.weight(.semibold) : Font.body)
             .foregroundStyle(isWinner ? Color.primary : Color.secondary)
-            .fixedSize(horizontal: false, vertical: true)
+            .rowText()
     }
 
+    /// The scoreboard: a set the pair won sits on lime, a set it lost stays quiet.
     private func setScores(_ team: Int) -> some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 4) {
             ForEach(Array(item.sets.enumerated()), id: \.offset) { _, set in
                 setCell(set, team: team)
             }
-            Image(systemName: "checkmark")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(Theme.accent)
-                .frame(width: markWidth)
-                .opacity(item.winnerTeam == team ? 1 : 0)
         }
     }
 
     private func setCell(_ set: SetScore, team: Int) -> some View {
         let wonSet = set.winner == team
         return Text("\(team == 1 ? set.t1 : set.t2)")
-            .font(wonSet ? Font.body.weight(.semibold) : Font.body)
+            .font(.display(.subheadline, weight: wonSet ? .bold : .medium))
             .monospacedDigit()
-            .foregroundStyle(wonSet ? Color.primary : Color.secondary)
-            .frame(width: setColumnWidth)
+            .foregroundStyle(wonSet ? Theme.ink : Color.secondary)
+            .frame(width: setColumnWidth, height: setColumnWidth)
+            .background(wonSet ? AnyShapeStyle(Theme.lime) : AnyShapeStyle(Theme.inset),
+                        in: .rect(cornerRadius: 8, style: .continuous))
     }
 
     private func cards(_ team: Int) -> [PlayerCard] {

@@ -3,10 +3,17 @@ import SwiftUI
 /// The "Padel ID" tab: the player's identity, level, rating trend, Padel DNA,
 /// insights and statistics at a glance.
 struct AnalysisView: View {
+    var embedded = false
     @Environment(AppModel.self) private var app
 
     var body: some View {
-        NavigationStack {
+        Group {
+            if embedded { dashboard }
+            else { NavigationStack { dashboard } }
+        }
+    }
+
+    private var dashboard: some View {
             ZStack {
                 if let me = app.me {
                     HomeDashboard(meId: me.userId)
@@ -16,11 +23,10 @@ struct AnalysisView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(.systemGroupedBackground))
+            .background(Theme.canvas)
             .navigationTitle("Анализ")
             .navigationBarTitleDisplayMode(.large)
             .padelRoutes()
-        }
     }
 
 }
@@ -98,17 +104,10 @@ private struct HomeDashboard: View {
         let isNewUser = matches == 0
         let insights = home.insights.compactMap { Narratives.insight($0) }
         return VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
-            VStack(alignment: .leading, spacing: 14) {
-                if model.home.isStale, let error = model.home.error {
-                    StaleDataBanner(error: error)
-                }
-                HomeIdentityHeader(profile: home.profile)
-                HomeLevelHero(meId: meId, profile: home.profile, rating: home.rating, matches: matches)
-                if !home.actionItems.isEmpty {
-                    HomeActionsRow(count: home.actionItems.count) {
-                        app.selectedTab = .matches
-                    }
-                }
+            // The player card and what awaits an answer live on the Home;
+            // this screen starts with the analysis itself.
+            if model.home.isStale, let error = model.home.error {
+                StaleDataBanner(error: error)
             }
             if isNewUser {
                 HomeWelcomeBlock {
@@ -135,82 +134,70 @@ private struct HomeDashboard: View {
     }
 }
 
-// MARK: - Identity
-
-private struct HomeIdentityHeader: View {
-    let profile: Profile
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(profile.displayName)
-                    .font(.title2.bold())
-                    .fixedSize(horizontal: false, vertical: true)
-                if profile.isCoach {
-                    Image(systemName: "checkmark.seal.fill")
-                        .font(.headline)
-                        .foregroundStyle(Theme.accent)
-                        .accessibilityLabel("Тренер")
-                }
-            }
-            if !subtitle.isEmpty {
-                Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 4)
-        .accessibilityElement(children: .combine)
-    }
-
-    private var subtitle: String {
-        var parts: [String] = []
-        if let username = profile.username, !username.isEmpty { parts.append("@" + username) }
-        if let city = profile.city?.name { parts.append(city) }
-        if let club = profile.club?.name { parts.append(club) }
-        return parts.joined(separator: " · ")
-    }
-}
-
 // MARK: - Level hero
 
-private struct HomeLevelHero: View {
+/// The player's ID: who they are and what level they play at, on the lime of
+/// the app icon. Opens the rating history.
+struct HomeLevelHero: View {
     let meId: UUID
     let profile: Profile
     let rating: RatingSummary?
     let matches: Int
-
     var body: some View {
         NavigationLink(value: Route.rating(meId)) {
-            SectionContainer(padding: 20) {
-                VStack(alignment: .leading, spacing: 14) {
-                    HomeCardHeader(title: "Уровень")
-                    ViewThatFits(in: .horizontal) {
-                        HStack(alignment: .center, spacing: 16) {
-                            levelBlock
-                            Spacer(minLength: 12)
-                            reliabilityBlock
-                        }
-                        VStack(alignment: .leading, spacing: 16) {
-                            levelBlock
-                            reliabilityBlock
-                        }
-                    }
-                    if let rating, showsTrend {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 3) {
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
-                            DeltaText(delta: rating.trend30d)
-                            Text("за 30 дней")
+                            Text(profile.displayName)
+                                .font(.headline)
+                                .fixedSize(horizontal: false, vertical: true)
+                            if profile.isCoach {
+                                Image(systemName: "checkmark.seal.fill")
+                                    .font(.subheadline)
+                                    .accessibilityLabel("Тренер")
+                            }
+                        }
+                        if !subtitle.isEmpty {
+                            Text(subtitle)
                                 .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
+                    Spacer(minLength: 8)
+                    Image(systemName: "arrow.up.right")
+                        .font(.footnote.weight(.bold))
+                        .frame(width: 32, height: 32)
+                        .background(Theme.ink.opacity(0.1), in: .circle)
+                        .accessibilityHidden(true)
+                }
+
+                Text("Ваш уровень")
+                    .font(.subheadline.weight(.medium))
+                    .padding(.top, 26)
+                LevelNumeral(level: level, size: 76)
+                if let level {
+                    // One word: shrink it to the card rather than break it.
+                    Text(LevelBand(level: level).title)
+                        .font(.display(.title3, weight: .semibold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
+                }
+
+                if rating != nil {
+                    Rectangle().fill(Theme.ink.opacity(0.12)).frame(height: 1)
+                        .padding(.top, 20).padding(.bottom, 14)
+                    footer
                 }
             }
-            .tappableCard()
+            .padding(22)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .limeCard(cornerRadius: 30)
+            .contentShape(.rect(cornerRadius: 30, style: .continuous))
+            .zoomSource(.rating(meId))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.padelCard)
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
         .accessibilityHint("Открывает историю рейтинга")
         .accessibilityIdentifier("home.level")
@@ -218,50 +205,66 @@ private struct HomeLevelHero: View {
 
     private var level: Double? { rating?.mu ?? profile.level }
 
+    private var subtitle: String {
+        var parts: [String] = []
+        if let username = profile.username, !username.isEmpty { parts.append("@" + username) }
+        if let city = profile.city?.name { parts.append(city) }
+        return parts.joined(separator: ", ")
+    }
+
     private var showsTrend: Bool {
         guard let rating else { return false }
         return abs(rating.trend30d) >= 0.005 || matches > 0
     }
 
-    private var levelBlock: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            LevelNumeral(level: level, size: 64)
-                .padding(.bottom, 6)
-                .overlay(alignment: .bottomLeading) {
-                    Capsule()
-                        .fill(Theme.ball)
-                        .frame(width: 40, height: 4)
+    /// Side by side while both fit on one line; one above the other at
+    /// larger text sizes, so nothing pushes the card wider than the screen.
+    @ViewBuilder
+    private var footer: some View {
+        if let rating {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .center, spacing: 12) {
+                    reliability(rating)
+                    Spacer(minLength: 8)
+                    trend(rating)
                 }
-            if let level {
-                Text(LevelBand(level: level).title)
-                    .font(.headline)
-                    .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 12) { reliability(rating); trend(rating) }
             }
+        }
+    }
+
+    private func reliability(_ rating: RatingSummary) -> some View {
+        HStack(spacing: 10) {
+            PerforationGrid(filled: PerforationGrid.holes(for: rating.reliability), dot: 8, gap: 4, fillsIn: true)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(verbatim: "Надёжность \(rating.reliability)%")
+                    .font(.subheadline.weight(.semibold))
+                if rating.provisional {
+                    Text("Предварительный рейтинг")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.inkSoft)
+                }
+            }
+            .fixedSize(horizontal: false, vertical: true)
         }
     }
 
     @ViewBuilder
-    private var reliabilityBlock: some View {
-        if let rating {
-            HStack(spacing: 12) {
-                ReliabilityRing(reliability: rating.reliability, size: 48)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: "Надёжность \(rating.reliability)%")
-                        .font(.subheadline.weight(.semibold))
-                    if rating.provisional {
-                        Text("Предварительный рейтинг")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .fixedSize(horizontal: false, vertical: true)
+    private func trend(_ rating: RatingSummary) -> some View {
+        if showsTrend {
+            HStack(alignment: .firstTextBaseline, spacing: 5) {
+                Text(Format.delta(rating.trend30d, digits: 2))
+                    .font(.subheadline.weight(.bold)).monospacedDigit()
+                Text("за 30 дней")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.inkSoft)
             }
+            .fixedSize(horizontal: false, vertical: true)
         }
     }
 
     private var accessibilityText: String {
-        var parts = ["Уровень \(Format.level(level))"]
+        var parts = [profile.displayName, "Уровень \(Format.level(level))"]
         if let level { parts.append(LevelBand(level: level).title) }
         if let rating {
             parts.append("Надёжность \(rating.reliability)%")
@@ -274,44 +277,6 @@ private struct HomeLevelHero: View {
 
 // MARK: - Matches awaiting a response
 
-private struct HomeActionsRow: View {
-    let count: Int
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: "bell.badge.fill")
-                    .font(.title3)
-                    .foregroundStyle(Theme.attention)
-                    .accessibilityHidden(true)
-                Text(title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.tertiary)
-                    .accessibilityHidden(true)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-            .background(Theme.attention.opacity(0.14), in: .rect(cornerRadius: Theme.smallCornerRadius, style: .continuous))
-            .contentShape(.rect(cornerRadius: Theme.smallCornerRadius, style: .continuous))
-        }
-        .buttonStyle(.plain)
-        .accessibilityHint("Открывает раздел «Матчи»")
-        .accessibilityIdentifier("home.actions")
-    }
-
-    private var title: String {
-        "\(Format.matches(count)) \(Format.plural(count, "ждёт", "ждут", "ждут")) вашего ответа"
-    }
-}
-
 // MARK: - Card header
 
 private struct HomeCardHeader: View {
@@ -321,7 +286,7 @@ private struct HomeCardHeader: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text(title)
-                .font(.headline)
+                .font(.display(.headline, weight: .semibold))
             if let detail {
                 Text(detail)
                     .font(.subheadline)
@@ -603,7 +568,7 @@ private extension Text {
     func homeStatValueStyle() -> some View {
         self
             .font(.title3.weight(.semibold))
-            .fontDesign(.rounded)
+            .fontWidth(.expanded)
             .monospacedDigit()
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -639,7 +604,7 @@ private struct HomeWelcomeBlock: View {
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.padelProminent)
                 .controlSize(.large)
                 .accessibilityIdentifier("home.firstMatch")
             }

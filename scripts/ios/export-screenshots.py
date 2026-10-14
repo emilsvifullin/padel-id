@@ -3,6 +3,8 @@
 
 Attachments are named "PadelID-NN-screen" by the UI tests; the files are
 written as <output>/<prefix>PadelID-NN-screen.png.
+Failure attachments retain their test name, export order and description so
+multiple screenshots or issue descriptions from one test are never overwritten.
 
 Usage: export-screenshots.py <result.xcresult> <output dir> [prefix]
 """
@@ -38,7 +40,8 @@ def main() -> int:
                     continue
                 if attachment.get("isAssociatedWithFailure"):
                     test_name = re.sub(r"\W+", "_", test.get("testIdentifier", "test")).strip("_")
-                    name = f"failure-{test_name}{exported.suffix}"
+                    description = re.sub(r"\W+", "_", Path(name).stem).strip("_")[:60] or "attachment"
+                    name = f"failure-{test_name}-{count:03d}-{description}{exported.suffix}"
                 shutil.copy(exported, output / f"{prefix}{name}")
                 count += 1
     print(f"Exported {count} screenshots to {output}")

@@ -9,6 +9,8 @@ set -euo pipefail
 
 ipa="$1"
 expected_version="$2"
+expected_api="${3:-https://padel-id-gamma.vercel.app}"
+expected_fallback="${4:-}"
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
@@ -26,6 +28,10 @@ value() { /usr/libexec/PlistBuddy -c "Print :$1" "$plist" 2>/dev/null || true; }
 [ -z "$(value NSAppTransportSecurity)" ] || fail "release build carries App Transport Security exceptions"
 [ -f "$app/PrivacyInfo.xcprivacy" ] || fail "privacy manifest is missing"
 [ -f "$app/Assets.car" ] || fail "compiled asset catalog is missing"
+[ "$(value CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName)" = "AppIcon" ] || fail "default lime icon is not configured"
+for icon in AppIconCharcoal AppIconBall; do
+  [ "$(value CFBundleIcons:CFBundleAlternateIcons:$icon:CFBundleIconName)" = "$icon" ] || fail "alternate icon $icon is missing"
+done
 
 binary="$app/$(value CFBundleExecutable)"
 lipo -info "$binary" | grep -q "arm64" || fail "binary is not arm64"
@@ -44,7 +50,6 @@ fi
 forbidden=(
   "PADELID_UITEST_API_BASE_URL"
   "-padelid-uitest-reset-state"
-  "supabase.co"
   "service_role"
   "sb_secret_"
   "sb_publishable_"
@@ -59,6 +64,37 @@ for pattern in "${forbidden[@]}"; do
     fail "found forbidden string '$pattern'"
   fi
 done
-grep -a -F -q "https://padel-id-gamma.vercel.app" "$binary" || fail "production API endpoint not found in the binary"
+[ "$(value PadelIDAPIBaseURL)" = "$expected_api" ] || fail "production API origin does not match the expected release configuration"
+[ "$(value PadelIDAPIFallbackURL)" = "$expected_fallback" ] || fail "gateway fallback does not match the expected release configuration"
+python3 "$(dirname "$0")/verify-api-url.py" "$(value PadelIDAPIBaseURL)" "$(value PadelIDAPIFallbackURL)" || fail "invalid production gateway configuration"
+push_enabled="$(value PadelIDRemotePushEnabled)"
+case "$push_enabled" in
+  YES|TRUE|true|1)
+    codesign -d --entitlements :- "$app" > "$work/entitlements.plist" 2>/dev/null || fail "push-enabled IPA is not signed"
+    python3 - "$work/entitlements.plist" <<'PY' || fail "push-enabled IPA lacks production APNs entitlements"
+import plistlib,sys
+with open(sys.argv[1], 'rb') as source:
+    entitlements = plistlib.load(source)
+if entitlements.get('aps-environment') != 'production':
+    sys.exit(1)
+PY
+    [ -f "$app/embedded.mobileprovision" ] || fail "push-enabled IPA lacks a provisioning profile"
+    security cms -D -i "$app/embedded.mobileprovision" > "$work/profile.plist" 2>/dev/null || fail "cannot read push provisioning profile"
+    python3 - "$work/profile.plist" <<'PY' || fail "profile does not permit production push"
+import plistlib,sys
+with open(sys.argv[1], 'rb') as source:
+    profile = plistlib.load(source)
+if profile.get('Entitlements', {}).get('aps-environment') != 'production':
+    sys.exit(1)
+PY
+    ;;
+  NO|FALSE|false|0|'') ;;
+  *) fail "invalid remote push build flag" ;;
+esac
+# A Supabase hostname is permitted only as the explicitly reviewed gateway
+# URL above. It must not be hardcoded in the executable or other resources.
+while IFS= read -r found; do
+  [ "$found" = "$plist" ] || fail "hardcoded direct Supabase endpoint in ${found#$work/}"
+done < <(grep -r -a -F -l -- "supabase.co" "$app" || true)
 
 echo "IPA OK: $(value CFBundleDisplayName) $(value CFBundleShortVersionString) ($(value CFBundleVersion)), $(du -h "$ipa" | cut -f1)"

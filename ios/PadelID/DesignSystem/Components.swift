@@ -5,13 +5,19 @@ import SwiftUI
 /// The player's level as the primary numeral of the product.
 struct LevelNumeral: View {
     let level: Double?
-    var size: CGFloat = 56
+    @ScaledMetric private var size: CGFloat
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    init(level: Double?, size: CGFloat = 56) {
+        self.level = level
+        _size = ScaledMetric(wrappedValue: size, relativeTo: .largeTitle)
+    }
 
     var body: some View {
         Text(Format.level(level))
-            .font(.system(size: size, weight: .semibold, design: .rounded))
+            .font(.display(size: size))
             .monospacedDigit()
-            .contentTransition(.numericText(value: level ?? 0))
+            .contentTransition(reduceMotion ? .identity : .numericText(value: level ?? 0))
             .lineLimit(1)
             .minimumScaleFactor(0.6)
             .accessibilityLabel("Уровень \(Format.level(level))")
@@ -27,10 +33,10 @@ struct LevelChip: View {
         Text(Format.level(level))
             .font(.subheadline.weight(.semibold))
             .monospacedDigit()
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(Theme.accent.opacity(isReliable ? 0.16 : 0.08), in: .capsule)
-            .foregroundStyle(isReliable ? Theme.accent : .secondary)
+            .padding(.horizontal, 9)
+            .padding(.vertical, 4)
+            .background(isReliable ? AnyShapeStyle(Theme.lime) : AnyShapeStyle(Theme.inset), in: .capsule)
+            .foregroundStyle(isReliable ? Theme.ink : Color.secondary)
             .accessibilityLabel(accessibility)
     }
 
@@ -53,6 +59,7 @@ struct DeltaText: View {
         Text(Format.delta(delta, digits: digits))
             .font(font)
             .monospacedDigit()
+            .fixedSize()
             .foregroundStyle(Theme.deltaColor(delta))
             .accessibilityLabel(accessibility)
     }
@@ -65,26 +72,25 @@ struct DeltaText: View {
     }
 }
 
-/// Circular reliability indicator.
-struct ReliabilityRing: View {
+/// Rating reliability as the racket holes of the icon: the more of the six
+/// are filled, the more the level can be trusted. The same mark as on the
+/// player card of the Home.
+struct ReliabilityMark: View {
     let reliability: Int
-    var size: CGFloat = 44
+    @ScaledMetric private var size: CGFloat
+
+    init(reliability: Int, size: CGFloat = 44) {
+        self.reliability = reliability
+        _size = ScaledMetric(wrappedValue: size, relativeTo: .body)
+    }
 
     var body: some View {
-        ZStack {
-            Circle().stroke(Color.secondary.opacity(0.2), lineWidth: size * 0.11)
-            Circle()
-                .trim(from: 0, to: CGFloat(reliability) / 100)
-                .stroke(Theme.accent, style: StrokeStyle(lineWidth: size * 0.11, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-            Text("\(reliability)")
-                .font(.system(size: size * 0.32, weight: .semibold, design: .rounded))
-                .monospacedDigit()
-        }
-        .frame(width: size, height: size)
-        .accessibilityElement(children: .ignore)
-        // VoiceOver declines «%» itself (a hard-coded «процентов» did not).
-        .accessibilityLabel("Надёжность рейтинга " + String(reliability) + "%")
+        PerforationGrid(filled: PerforationGrid.holes(for: reliability), dot: size * 0.23, gap: size * 0.12,
+                        color: Theme.accent)
+            .frame(width: size, height: size)
+            .accessibilityElement(children: .ignore)
+            // VoiceOver declines «%» itself (a hard-coded «процентов» did not).
+            .accessibilityLabel("Надёжность рейтинга " + String(reliability) + "%")
     }
 }
 
@@ -94,8 +100,16 @@ struct AvatarView: View {
     let id: UUID
     let name: String
     let path: String?
-    var size: CGFloat = 40
-    var deleted = false
+    @ScaledMetric private var size: CGFloat
+    let deleted: Bool
+
+    init(id: UUID, name: String, path: String?, size: CGFloat = 40, deleted: Bool = false) {
+        self.id = id
+        self.name = name
+        self.path = path
+        self.deleted = deleted
+        _size = ScaledMetric(wrappedValue: size, relativeTo: .body)
+    }
 
     var body: some View {
         ZStack {
@@ -121,8 +135,8 @@ struct AvatarView: View {
                     .foregroundStyle(.secondary)
             } else {
                 Text(initials)
-                    .font(.system(size: size * 0.38, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Theme.monogramTint(for: id))
+                    .font(.display(size: size * 0.34, weight: .bold))
+                    .foregroundStyle(.primary)
             }
         }
     }
@@ -144,26 +158,37 @@ extension AvatarView {
     }
 }
 
-/// Loads immutable images through a dedicated, persistent URL cache.
+/// Avatar access follows live profile visibility; old public-cache entries
+/// are removed before the first protected fetch.
 enum AvatarLoader {
     /// Emptied on sign-out: the next account must not inherit the photos the
     /// previous one browsed.
     static let cache = URLCache(memoryCapacity: 16 * 1024 * 1024, diskCapacity: 128 * 1024 * 1024)
 
-    static let session: URLSession = {
-        let configuration = URLSessionConfiguration.default
-        configuration.urlCache = cache
-        configuration.requestCachePolicy = .returnCacheDataElseLoad
-        configuration.timeoutIntervalForRequest = 20
-        return URLSession(configuration: configuration)
-    }()
+    static let invalidateLegacyCache: Void = cache.removeAllCachedResponses()
 
     static func url(for path: String) -> URL? {
         AppEnvironment.apiBaseURL.appending(path: "v1/avatars/\(path)")
     }
+
+    static func requestPath(for url: URL, baseURL: URL) -> String? {
+        guard url.scheme == baseURL.scheme, url.host() == baseURL.host(), url.port == baseURL.port,
+              url.query() == nil, url.fragment() == nil else { return nil }
+        let prefix = baseURL.path().trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let path = url.path().trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let relative: String
+        if prefix.isEmpty { relative = path }
+        else {
+            guard path.hasPrefix(prefix + "/") else { return nil }
+            relative = String(path.dropFirst(prefix.count + 1))
+        }
+        guard relative.hasPrefix("v1/avatars/") else { return nil }
+        return relative
+    }
 }
 
 struct RemoteImage<Placeholder: View>: View {
+    @Environment(AppModel.self) private var app
     let url: URL
     @ViewBuilder var placeholder: Placeholder
     @State private var image: UIImage?
@@ -178,9 +203,12 @@ struct RemoteImage<Placeholder: View>: View {
                 placeholder
             }
         }
-        .task(id: url) {
-            guard loadedURL != url else { return }
-            if let result = try? await AvatarLoader.session.data(from: url), let loaded = UIImage(data: result.0) {
+        .task(id: "\(url.absoluteString):\(app.dataRevision)") {
+            _ = AvatarLoader.invalidateLegacyCache
+            image = nil
+            loadedURL = nil
+            guard let path = AvatarLoader.requestPath(for: url, baseURL: app.api.baseURL) else { return }
+            if let data = try? await app.api.data(.get(path)), !Task.isCancelled, let loaded = UIImage(data: data) {
                 image = loaded
                 loadedURL = url
             } else if !Task.isCancelled {
@@ -246,18 +274,29 @@ struct PlayerRow<Trailing: View>: View {
                         .accessibilityLabel("Тренер")
                 }
             }
-            if !card.deleted {
-                Text("Надёжность: \(card.reliability.map { String($0) + "%" } ?? "—")")
-                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                Text("Предпочитает: \(card.preferredSide.map { $0 == .both ? "обе стороны" : Narratives.sideShort($0).lowercased() } ?? "не указано")")
-                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            }
             Text(subtitle ?? defaultSubtitle)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .lineLimit(textLineLimit)
                 .fixedSize(horizontal: false, vertical: textLineLimit == nil)
+            if !card.deleted, !facts.isEmpty {
+                Text(facts)
+                    .font(.caption).foregroundStyle(.secondary)
+                    .lineLimit(textLineLimit)
+                    .minimumScaleFactor(0.85)
+                    .fixedSize(horizontal: false, vertical: textLineLimit == nil)
+            }
         }
+    }
+
+    /// What helps choose a partner: how settled the rating is and the side played.
+    private var facts: String {
+        var parts: [String] = []
+        if let reliability = card.reliability { parts.append("надёжность \(reliability)%") }
+        if let side = card.preferredSide {
+            parts.append(side == .both ? "обе стороны" : Narratives.sideShort(side).lowercased())
+        }
+        return parts.joined(separator: ", ").capitalizedFirst
     }
 
     /// One line normally; wrapping at accessibility sizes.
@@ -265,11 +304,10 @@ struct PlayerRow<Trailing: View>: View {
         dynamicTypeSize.isAccessibilitySize ? nil : 1
     }
 
+    /// The user name alone: with the city after it the line did not fit next
+    /// to the level and was cut mid-word.
     private var defaultSubtitle: String {
-        var parts: [String] = []
-        if let username = card.username { parts.append("@\(username)") }
-        if let city = card.city?.name { parts.append(city) }
-        return parts.joined(separator: " · ")
+        card.username.map { "@" + $0 } ?? card.city?.name ?? ""
     }
 }
 
@@ -286,10 +324,10 @@ struct StatusPill: View {
             Text(text)
         }
         .font(.caption.weight(.semibold))
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 5)
         .foregroundStyle(color)
-        .background(color.opacity(0.12), in: .capsule)
+        .background(color.opacity(0.14), in: .capsule)
     }
 }
 
@@ -328,8 +366,7 @@ struct StaleDataBanner: View {
 /// Loading placeholder with consistent spacing.
 struct LoadingView: View {
     var body: some View {
-        ProgressView()
-            .controlSize(.large)
+        PerforationLoader()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.vertical, 80)
     }
@@ -348,7 +385,8 @@ struct ErrorStateView: View {
             Text(error.message)
         } actions: {
             Button("Повторить", action: retry)
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.padelPrimary)
+                .fixedSize()
         }
     }
 }
@@ -375,6 +413,44 @@ struct FormResultDot: View {
 }
 
 // MARK: - Layout
+
+/// Small items in rows that wrap, like words in a line.
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 6
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let rows = arrange(subviews, width: proposal.width ?? .infinity)
+        let width = rows.map(\.width).max() ?? 0
+        let height = rows.map(\.height).reduce(0, +) + spacing * CGFloat(max(0, rows.count - 1))
+        return CGSize(width: proposal.width.map { min($0, width) } ?? width, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var y = bounds.minY
+        for row in arrange(subviews, width: bounds.width) {
+            var x = bounds.minX
+            for index in row.indices {
+                let size = subviews[index].sizeThatFits(ProposedViewSize(width: bounds.width, height: nil))
+                subviews[index].place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
+                x += size.width + spacing
+            }
+            y += row.height + spacing
+        }
+    }
+
+    private func arrange(_ subviews: Subviews, width: CGFloat) -> [(indices: [Int], width: CGFloat, height: CGFloat)] {
+        var rows: [(indices: [Int], width: CGFloat, height: CGFloat)] = []
+        for index in subviews.indices {
+            let size = subviews[index].sizeThatFits(ProposedViewSize(width: width, height: nil))
+            if let last = rows.last, last.width + spacing + size.width <= width {
+                rows[rows.count - 1] = (last.indices + [index], last.width + spacing + size.width, max(last.height, size.height))
+            } else {
+                rows.append(([index], size.width, size.height))
+            }
+        }
+        return rows
+    }
+}
 
 /// Places its subviews side by side in equal widths. Its ideal width is the
 /// widest subview's ideal width times the count, so inside

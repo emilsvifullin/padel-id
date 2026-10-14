@@ -143,7 +143,7 @@ private struct DNADetailHero: View {
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     Text(archetype.title)
-                        .font(.title2.bold())
+                        .font(.display(.title2, weight: .bold))
                         .fixedSize(horizontal: false, vertical: true)
                         .accessibilityAddTraits(.isHeader)
                     Text(archetype.summary)
@@ -158,7 +158,7 @@ private struct DNADetailHero: View {
                         Spacer(minLength: 8)
                         Text(Format.level(mu))
                             .font(.headline)
-                            .fontDesign(.rounded)
+            .fontWidth(.expanded)
                             .monospacedDigit()
                     }
                     .accessibilityElement(children: .combine)
@@ -193,7 +193,7 @@ private struct DNADetailLevelBar: View {
                 Spacer(minLength: 0)
                 Text(Format.level(state.level))
                     .font(.headline)
-                    .fontDesign(.rounded)
+            .fontWidth(.expanded)
                     .monospacedDigit()
                     .fixedSize()
             }
@@ -241,7 +241,7 @@ private struct DNADetailDimensionCard: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 if let verifiedAt = state.coachVerifiedAt {
-                    Label("Подтверждено тренером · \(Format.date(verifiedAt))", systemImage: "checkmark.seal.fill")
+                    Label("Подтверждено тренером \(Format.date(verifiedAt))", systemImage: "checkmark.seal.fill")
                         .font(.footnote.weight(.medium))
                         .foregroundStyle(Theme.accent)
                 }
@@ -265,7 +265,7 @@ private struct DNADetailDimensionCard: View {
             Spacer(minLength: 8)
             Text(Format.level(state.level))
                 .font(.title3.weight(.semibold))
-                .fontDesign(.rounded)
+            .fontWidth(.expanded)
                 .monospacedDigit()
         }
         .accessibilityElement(children: .combine)
@@ -345,7 +345,7 @@ private struct DNADetailSelfAssessmentSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
+        SheetNavigationStack {
             Form {
                 Section {
                     Text("Оцените каждое направление относительно своего общего уровня. Самооценка — лишь один из источников: со временем её уточняют отметки партнёров, оценки тренеров и результаты матчей.")
@@ -361,7 +361,7 @@ private struct DNADetailSelfAssessmentSheet: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-            }
+            }.closeToBar()
             .navigationTitle("Самооценка")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

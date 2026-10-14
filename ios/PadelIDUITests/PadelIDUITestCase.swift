@@ -88,7 +88,8 @@ class PadelIDUITestCase: XCTestCase {
     /// Starts a fresh stub server for the scenario and launches the app with a
     /// clean state pointed at it.
     @discardableResult
-    func launch(_ scenario: StubServer.Scenario, configure: (StubServer) -> Void = { _ in }) throws -> XCUIApplication {
+    func launch(_ scenario: StubServer.Scenario, arguments: [String] = [],
+                configure: (StubServer) -> Void = { _ in }) throws -> XCUIApplication {
         continueAfterFailure = false
         let server = StubServer(scenario: scenario)
         configure(server)
@@ -96,7 +97,7 @@ class PadelIDUITestCase: XCTestCase {
         self.server = server
 
         let app = XCUIApplication()
-        app.launchArguments = ["-padelid-uitest-reset-state"]
+        app.launchArguments = ["-padelid-uitest-reset-state"] + arguments
         app.launchEnvironment = ["PADELID_UITEST_API_BASE_URL": "http://localhost:\(server.port)"]
         self.app = app
 
@@ -107,6 +108,16 @@ class PadelIDUITestCase: XCTestCase {
         }
         app.launch()
         return app
+    }
+
+    /// Leaves system alerts to the test itself from here on. With the monitor
+    /// active, XCTest answers an alert while preparing a tap on that same
+    /// alert, and the tap then fails because the alert is gone.
+    func stopHandlingSystemAlerts() {
+        if let interruptionMonitor {
+            removeUIInterruptionMonitor(interruptionMonitor)
+        }
+        interruptionMonitor = nil
     }
 
     /// Allows the notification permission, declines saving the password and
@@ -181,6 +192,16 @@ class PadelIDUITestCase: XCTestCase {
     @discardableResult
     func waitForHome(timeout: TimeInterval = 20, file: StaticString = #filePath, line: UInt = #line) -> XCUIElement {
         require(app.navigationBars["Главная"], timeout: timeout, "Главная", file: file, line: line)
+    }
+
+    func openAnalysis() {
+        selectTab("Профиль")
+        open(element("account.analysis"), screen: "Анализ")
+    }
+
+    func openFriends() {
+        selectTab("Сообщество")
+        open(element("community.friends"), screen: "Друзья")
     }
 
     /// Taps the form's submit button when it can be reached, otherwise the
@@ -415,10 +436,15 @@ class PadelIDUITestCase: XCTestCase {
                 focused = waitUntil(timeout: 3) { Self.hasKeyboardFocus(field) }
             }
             guard focused else { continue }
+            // A system prompt can take focus in the middle of the password.
+            // Typing on would fail the test outright, so stop and start the
+            // entry again on the next attempt.
+            var typedAll = true
             for character in text {
+                guard Self.hasKeyboardFocus(field) else { typedAll = false; break }
                 field.typeText(String(character))
             }
-            if waitUntil(timeout: 3, accepted) {
+            if typedAll, waitUntil(timeout: 3, accepted) {
                 return
             }
             if attempt == attempts - 1 {
@@ -596,8 +622,17 @@ class PadelIDUITestCase: XCTestCase {
     /// navigation bar, above the tab bar and above the keyboard.
     private func visibleBand() -> CGRect {
         let screen = app.frame
-        let top = screen.minY + screen.height * 0.14
-        var bottom = screen.maxY - screen.height * 0.12
+        // A modal Form has no tab bar. Reserving a fixed fraction of the
+        // display for one rejects fully visible bottom rows at large text sizes.
+        // Underlying bars remain in the hierarchy, so use only active bars.
+        var top = screen.minY + 8
+        var bottom = screen.maxY - 8
+        for bar in app.navigationBars.allElementsBoundByIndex where bar.isHittable && !bar.frame.isEmpty {
+            top = max(top, bar.frame.maxY)
+        }
+        for bar in app.tabBars.allElementsBoundByIndex where bar.isHittable && !bar.frame.isEmpty {
+            bottom = min(bottom, bar.frame.minY)
+        }
         let keyboard = app.keyboards.firstMatch
         if keyboard.exists {
             let keyboardTop = keyboard.frame.minY
@@ -617,10 +652,11 @@ class PadelIDUITestCase: XCTestCase {
         if hittable {
             guard element.isHittable else { return false }
             let identifier = element.identifier
-            guard !identifier.isEmpty,
-                  app.scrollViews.containing(.any, identifier: identifier).firstMatch.exists else {
-                return true
-            }
+            guard !identifier.isEmpty else { return true }
+            let isScrollableTarget = app.scrollViews.containing(.any, identifier: identifier).firstMatch.exists
+                || app.collectionViews.containing(.any, identifier: identifier).firstMatch.exists
+                || app.tables.containing(.any, identifier: identifier).firstMatch.exists
+            guard isScrollableTarget else { return true }
             let frame = element.frame
             return !frame.isEmpty && visibleBand().contains(CGPoint(x: frame.midX, y: frame.midY))
         }

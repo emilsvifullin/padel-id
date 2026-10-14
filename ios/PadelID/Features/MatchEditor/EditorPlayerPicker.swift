@@ -32,7 +32,7 @@ struct EditorPlayerPicker: View {
 
     var body: some View {
         let text = searchText
-        NavigationStack {
+        SheetNavigationStack {
             List {
                 if !app.isOnline {
                     OfflineBanner(message: "Нет подключения. Поиск заработает, когда появится сеть.")
@@ -54,7 +54,7 @@ struct EditorPlayerPicker: View {
                     searchContent(for: text)
                 }
             }
-            .listStyle(.insetGrouped)
+            .listStyle(.insetGrouped).closeToBar()
             .scrollDismissesKeyboard(.immediately)
             .safeAreaBar(edge: .top, spacing: 0) {
                 searchField
@@ -257,12 +257,11 @@ struct EditorPlayerPicker: View {
     }
 
     private func recentSubtitle(_ card: PlayerCard) -> String? {
-        var parts: [String] = []
-        if let username = card.username { parts.append("@\(username)") }
+        // Only what the two of you share, so the line fits next to the level.
         if let together = card.matchesTogether, together > 0 {
-            parts.append("\(Format.matches(together)) вместе")
+            return "\(Format.matches(together)) вместе"
         }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        return card.username.map { "@" + $0 }
     }
 
     // MARK: Actions
