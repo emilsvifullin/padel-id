@@ -49,28 +49,6 @@ enum Theme {
     static let horizontalPadding: CGFloat = 20
     static let sectionSpacing: CGFloat = 28
 
-    static func deltaColor(_ value: Double?) -> Color {
-        guard let value else { return .secondary }
-        if value > 0.0005 { return positive }
-        if value < -0.0005 { return negative }
-        return .secondary
-    }
-
-    static func sentimentColor(_ sentiment: Sentiment) -> Color {
-        switch sentiment {
-        case .positive: positive
-        case .neutral: accent
-        case .attention: attention
-        }
-    }
-
-    /// Deterministic tint for monogram avatars.
-    static func monogramTint(for id: UUID) -> Color {
-        let palette: [Color] = [.green, .mint, .teal, .cyan, .blue, .indigo, .orange, .yellow, .brown, .pink]
-        let hash = id.uuidString.unicodeScalars.reduce(0) { ($0 &* 31 &+ Int($1.value)) & 0x7fffffff }
-        return palette[hash % palette.count]
-    }
-
     /// Expanded SF Pro in large navigation titles. Inline titles keep the
     /// system face: between two bar buttons the wider one truncates. Fonts
     /// only — bar backgrounds stay the system's glass.
@@ -316,5 +294,14 @@ extension View {
     /// A prominent glass button in a floating bar: lime glass, ink label.
     func padelGlassProminent() -> some View {
         buttonStyle(.glassProminent).tint(Theme.lime).foregroundStyle(Theme.ink)
+    }
+}
+
+extension View {
+    /// Russian text set by its own rules breaks words by syllable
+    /// ("сохра-нён"); the system apps break between words. With no language
+    /// to set the text in, a word breaks only when it is wider than its line.
+    func padelTypesetting() -> some View {
+        typesettingLanguage(Locale.Language(identifier: "und"))
     }
 }

@@ -1,11 +1,5 @@
-# Generated locally; sources are generated from ios/project.yml.
-ios/PadelID.xcodeproj/
-ios/build/
-server/node_modules/
-server/dist/
-.vercel/
-server/.vercel/
-supabase/.temp/
 .DS_Store
-__pycache__/
-supabase/functions/gateway/_shared/
+xcuserdata/
+*.xcuserstate
+DerivedData/
+ios/build/

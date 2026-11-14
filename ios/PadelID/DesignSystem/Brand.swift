@@ -2,8 +2,7 @@ import SwiftUI
 
 // Shapes and surfaces taken from the app icon.
 
-/// The app's own glyphs, drawn by `scripts/ios/make-symbols.py`: the system
-/// set only has a tennis racket and a pitch with a centre circle.
+/// The app’s custom padel racket and court glyphs.
 enum PadelSymbol {
     /// A padel racket with the six holes of the app icon: matches and games.
     static let racket = "padel.racket"
@@ -179,47 +178,5 @@ struct Chevron: View {
             .font(.footnote.weight(.semibold))
             .foregroundStyle(.tertiary)
             .accessibilityHidden(true)
-    }
-}
-
-// MARK: - Empty states
-
-// MARK: - Composer
-
-/// The message field that floats above a chat or a thread of comments.
-struct ComposerBar: View {
-    let placeholder: String
-    @Binding var text: String
-    var isLocked = false
-    let canSend: Bool
-    var draftIdentifier = "composer.draft"
-    var sendIdentifier = "composer.send"
-    let send: () -> Void
-
-    var body: some View {
-        GlassEffectContainer {
-            HStack(alignment: .bottom, spacing: 10) {
-                TextField(placeholder, text: $text, axis: .vertical)
-                    .lineLimit(1...5)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 11)
-                    .frame(minHeight: 44)
-                    .glassEffect(.regular, in: .rect(cornerRadius: 22, style: .continuous))
-                    .disabled(isLocked)
-                    .accessibilityIdentifier(draftIdentifier)
-                Button(action: send) {
-                    Image(systemName: "arrow.up")
-                        .font(.headline.weight(.bold))
-                        .frame(width: 28, height: 30)
-                }
-                .padelGlassProminent()
-                .buttonBorderShape(.circle)
-                .disabled(!canSend)
-                .accessibilityLabel("Отправить")
-                .accessibilityIdentifier(sendIdentifier)
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
     }
 }
