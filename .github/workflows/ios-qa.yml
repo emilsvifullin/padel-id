@@ -1,0 +1,55 @@
+name: iOS QA
+
+on:
+  pull_request:
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulator:
+    runs-on: xcode-27
+    timeout-minutes: 25
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
+      TENNIS_QA_DEVICE_TYPE: iPhone-17
+      TENNIS_QA_RUNTIME: '27-2'
+      TENNIS_QA_OUTPUT: ${{ runner.temp }}/tennis-qa
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Verify toolchain
+        run: |
+          xcodebuild -version
+          xcrun simctl list runtimes
+      - name: Build and check core scenarios
+        run: |
+          ios/QA/verify.sh \
+            -only-testing:TennisCabinetCheck/OfflineFlows \
+            -only-testing:TennisCabinetCheck/DeviceFeedbackCheck/testFirstPaymentHelpIsFullScreenAndReturns \
+            -only-testing:TennisCabinetCheck/DeviceFeedbackCheck/testTrainingDetailsReturnAndTextLayout \
+            -only-testing:TennisCabinetCheck/SettingsFlowCheck/testSettingsEditAndNotifications
+      - name: Export test screenshots
+        if: always()
+        run: |
+          if [[ -d "$TENNIS_QA_OUTPUT/TennisID.xcresult" ]]; then
+            xcrun xcresulttool export attachments --path "$TENNIS_QA_OUTPUT/TennisID.xcresult" \
+              --output-path "$TENNIS_QA_OUTPUT/Screenshots" --filter '*.png'
+          fi
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: tennis-ios-qa
+          path: |
+            ${{ env.TENNIS_QA_OUTPUT }}/*.log
+            ${{ env.TENNIS_QA_OUTPUT }}/TennisID.xcresult
+            ${{ env.TENNIS_QA_OUTPUT }}/Screenshots
+          retention-days: 7
