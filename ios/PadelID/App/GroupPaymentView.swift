@@ -276,7 +276,7 @@ struct GroupPaymentView: View {
             .foregroundStyle(.white.opacity(0.78))
             .multilineTextAlignment(.leading)
         }
-        .tint(.white.opacity(0.39))
+        .tint(Color(uiColor: .systemGreen))
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 16))

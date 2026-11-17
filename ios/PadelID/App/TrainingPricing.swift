@@ -256,6 +256,16 @@ struct SubscriptionPricing {
         return TrainingQuote(kind: .season, frequency: frequency, months: charges)
     }
 
+    func isCurrentFirstCheckout(_ checkout: TrainingCheckout) -> Bool {
+        let currentQuote = switch checkout.quote.kind {
+        case .singleVisit, .remainingMonth, .nextMonth: monthQuote
+        case .twoMonths: twoMonthQuote
+        case .season: seasonQuote
+        }
+        guard let currentQuote else { return false }
+        return checkout.amount > 0 && checkout == TrainingCheckout(quote: currentQuote)
+    }
+
     private func monthlyCharge(in interval: DateInterval) -> TrainingQuote.Month? {
         let start = max(now, interval.start)
         let sessions = Set(scheduled).filter { $0 >= start && $0 < interval.end }.sorted()

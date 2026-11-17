@@ -435,7 +435,7 @@ private struct PreviewSubscriptionView: View {
         } message: {
             Text("Проверьте сумму и даты перед оплатой.")
         }
-        .sensoryFeedback(.success, trigger: isConfirmed) { _, confirmed in confirmed }
+        .sensoryFeedback(.success, trigger: isConfirmed && !showsSchedule) { _, confirmed in confirmed }
         .fullScreenCover(isPresented: $showsSupport) {
             NavigationStack {
                 PlayerSupportView(account: account)
@@ -524,19 +524,28 @@ private struct PreviewSubscriptionView: View {
     }
 
     private func dismissCheckout() {
-        withAnimation(reduceMotion ? nil : Motion.quick) { showsCheckout = false }
+        withAnimation(reduceMotion ? nil : Motion.quick) {
+            showsCheckout = false
+            payment = nil
+        }
     }
 
     private func confirmPayment() {
-        guard let payment else { return }
+        guard showsCheckout, !isConfirmed, let payment else { return }
+        let now = example.referenceDate ?? .now
+        let recorded: Bool
         if let renewal {
             let selectedFrequency = renewal.wrappedValue.approvedFrequency ?? frequency
-            let pricing = example.pricing(for: selectedFrequency, at: example.referenceDate ?? .now)
-            guard renewal.wrappedValue.recordPayment(payment, using: pricing) else {
-                dismissCheckout()
-                showsUpdatedQuote = true
-                return
-            }
+            let pricing = example.pricing(for: selectedFrequency, at: now)
+            recorded = renewal.wrappedValue.recordPayment(payment, using: pricing)
+        } else {
+            let pricing = example.pricing(for: payment.quote.frequency, at: now)
+            recorded = pricing.isCurrentFirstCheckout(payment)
+        }
+        guard recorded else {
+            dismissCheckout()
+            showsUpdatedQuote = true
+            return
         }
         withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.42)) {
             isConfirmed = true

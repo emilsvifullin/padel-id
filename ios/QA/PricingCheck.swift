@@ -31,10 +31,25 @@ struct PricingCheck {
         check("One remaining lesson and no duplicate billing", boundary.monthQuote?.kind == .singleVisit && boundary.monthQuote?.price == 3750)
         check("Two-month opening at Moscow midnight", before.twoMonthQuote == nil && boundary.twoMonthQuote?.price == 31500)
 
+        let firstCheckout = TrainingCheckout(quote: boundary.monthQuote!)
+        check("An unchanged first checkout can be confirmed", boundary.isCurrentFirstCheckout(firstCheckout))
+        let afterLesson = SubscriptionPricing(now: date(11, 26, 19), frequency: .twiceWeekly, scheduled: schedule)
+        check("A first checkout becomes stale when its final lesson has started",
+              !afterLesson.isCurrentFirstCheckout(firstCheckout) && afterLesson.monthQuote?.kind == .nextMonth)
+        let twoMonths = TrainingCheckout(quote: boundary.twoMonthQuote!)
+        check("A two-month checkout is accepted only while both months are available",
+              boundary.isCurrentFirstCheckout(twoMonths) && !afterLesson.isCurrentFirstCheckout(twoMonths))
+        let partialFirstCheckout = TrainingCheckout(quote: firstCheckout.quote, alreadyPaid: 1)
+        check("A first checkout cannot reuse a partial payment", !boundary.isCurrentFirstCheckout(partialFirstCheckout))
+
         let september = [date(9, 30, 18), date(10, 2, 18), date(11, 2, 18), date(12, 2, 18)]
         let season = SubscriptionPricing(now: date(9, 1), frequency: .onceWeekly, scheduled: september)
         check("Season offer and ten percent discount", season.seasonQuote?.price == 13500)
         check("Season offer closes after opening month", SubscriptionPricing(now: date(10, 1), frequency: .onceWeekly, scheduled: september).seasonQuote == nil)
+        let seasonCheckout = TrainingCheckout(quote: season.seasonQuote!)
+        let afterSeasonOpening = SubscriptionPricing(now: date(10, 1), frequency: .onceWeekly, scheduled: september)
+        check("An expired season checkout cannot be confirmed",
+              season.isCurrentFirstCheckout(seasonCheckout) && !afterSeasonOpening.isCurrentFirstCheckout(seasonCheckout))
 
         let periodStart = date(12, 1)
         var renewal = RenewalProgress(periodStart: periodStart)

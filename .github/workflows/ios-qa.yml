@@ -22,7 +22,7 @@ jobs:
       DEVELOPER_DIR: /Applications/Xcode_27.2.app/Contents/Developer
       TENNIS_QA_DEVICE_TYPE: iPhone-17
       TENNIS_QA_RUNTIME: '27-2'
-      TENNIS_QA_OUTPUT: ${{ github.workspace }}/.tennis-qa
+      TENNIS_QA_OUTPUT: ${{ github.workspace }}/tennis-qa-artifacts
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - name: Verify toolchain
@@ -52,4 +52,5 @@ jobs:
             ${{ env.TENNIS_QA_OUTPUT }}/*.log
             ${{ env.TENNIS_QA_OUTPUT }}/TennisID.xcresult
             ${{ env.TENNIS_QA_OUTPUT }}/Screenshots
+          if-no-files-found: error
           retention-days: 7

@@ -106,6 +106,11 @@ final class OfflineFlows: XCTestCase {
     func testFirstPaymentRejectedThenConfirmed() {
         app.launchArguments = ["-previewTwoMonthPayment"]
         app.launch()
+        let twoMonths = app.switches.containing(NSPredicate(format: "label BEGINSWITH %@", "Включить следующий месяц")).firstMatch
+        XCTAssertTrue(twoMonths.waitForExistence(timeout: 5))
+        twoMonths.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
+        XCTAssertEqual(twoMonths.value as? String, "1")
+        shot("two-month-offer")
         tap("Оплатить по СБП")
         shot("payment-confirmation-dialog")
         tap("Отклонить")
@@ -119,6 +124,31 @@ final class OfflineFlows: XCTestCase {
         XCTAssertTrue(app.tabBars.buttons["Расписание"].waitForExistence(timeout: 4))
         app.tabBars.buttons["Абонемент"].tap()
         XCTAssertTrue(app.buttons["Вопрос по оплате"].waitForExistence(timeout: 4))
+    }
+
+    func testOverdueRenewalBlocksCheckout() {
+        app.launchArguments = ["-previewOverdueRenewal"]
+        app.launch()
+
+        XCTAssertTrue(app.staticTexts["Срок оплаты прошёл"].waitForExistence(timeout: 5))
+        let checkout = app.buttons["Оплатить по СБП"]
+        XCTAssertTrue(checkout.exists)
+        XCTAssertFalse(checkout.isEnabled)
+        XCTAssertFalse(app.staticTexts["Оплата подтверждена"].exists)
+        shot("renewal-overdue")
+    }
+
+    func testOpenExistingScheduleWithoutPaying() {
+        app.launchArguments = ["-previewRenewal"]
+        app.launch()
+
+        tap("Текущее расписание")
+        XCTAssertTrue(app.tabBars.buttons["Расписание"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["Оплата подтверждена"].exists)
+        shot("renewal-existing-schedule")
+        tap("К продлению")
+        XCTAssertTrue(app.buttons["Оплатить по СБП"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Оплатить по СБП"].isEnabled)
     }
 
     func testRenewalAndReturn() {
