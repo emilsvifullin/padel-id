@@ -23,20 +23,18 @@ nonisolated enum AppAppearance: String, CaseIterable, Identifiable {
 }
 
 nonisolated enum AppIconChoice: String, CaseIterable, Identifiable {
-    case lime, charcoal, ball
+    case lime, charcoal
     var id: String { rawValue }
     var title: String {
         switch self {
         case .lime: "Лайм"
         case .charcoal: "Графит"
-        case .ball: "Мяч"
         }
     }
     var alternateName: String? {
         switch self {
         case .lime: nil
         case .charcoal: "AppIconCharcoal"
-        case .ball: "AppIconBall"
         }
     }
     var previewName: String { "IconPreview-" + rawValue }
@@ -120,9 +118,6 @@ struct AppearanceSettingsView: View {
             } header: {
                 Text("Тема").foregroundStyle(Color.primary)
                     .fixedSize(horizontal: false, vertical: true)
-            } footer: {
-                Text("Автоматический режим следует оформлению iPhone. Тема применяется сразу ко всем экранам.").foregroundStyle(Color.primary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
             Section {
                 ForEach(AppIconChoice.allCases) { icon in
@@ -135,15 +130,10 @@ struct AppearanceSettingsView: View {
                                 .frame(width: 24, height: 24)
                                 .clipShape(.rect(cornerRadius: 6))
                                 .accessibilityHidden(true)
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(icon.title).foregroundStyle(Color.primary)
-                                if icon == .lime {
-                                    Text("По умолчанию").font(.caption).foregroundStyle(Color.primary)
-                                        .accessibilityHidden(true)
-                                }
-                            }
-                            .fixedSize(horizontal: false, vertical: true)
-                            .layoutPriority(1)
+                            Text(icon.title)
+                                .foregroundStyle(Color.primary)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .layoutPriority(1)
                             Spacer()
                             if icons.selected == icon {
                                 Image(systemName: "checkmark.circle.fill")
@@ -156,7 +146,6 @@ struct AppearanceSettingsView: View {
                     }
                     .disabled(icons.isChanging || !icons.isSupported)
                     .accessibilityValue(icons.selected == icon ? "Выбрана" : "Не выбрана")
-                    .accessibilityHint(icon == .lime ? "Иконка по умолчанию" : "Меняет иконку на домашнем экране")
                     .accessibilityIdentifier("appearance.icon." + icon.rawValue)
                 }
                 if icons.isChanging {
@@ -175,14 +164,10 @@ struct AppearanceSettingsView: View {
             } header: {
                 Text("Иконка приложения").foregroundStyle(Color.primary)
                     .fixedSize(horizontal: false, vertical: true)
-            } footer: {
-                Text("Изменяется иконка Padel ID на домашнем экране iPhone. Системное оформление иконок выбирается в настройках домашнего экрана.").foregroundStyle(Color.primary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityIdentifier("appearance.icon.help")
             }
         }.closeToBar()
         .contentMargins(.bottom, 24, for: .scrollContent)
-        .navigationTitle("Оформление")
+        .navigationTitle("Тема и иконка")
         // Every screen changes colour at once: dissolve into the new theme
         // instead of cutting to it.
         .onChange(of: appearance) {
