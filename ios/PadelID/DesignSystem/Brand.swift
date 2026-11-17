@@ -180,3 +180,28 @@ struct Chevron: View {
             .accessibilityHidden(true)
     }
 }
+
+struct PadelBrandCard: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            HStack(alignment: .top) {
+                Image("IconPreview-lime")
+                    .resizable()
+                    .frame(width: 52, height: 52)
+                    .clipShape(.rect(cornerRadius: 13))
+                    .accessibilityHidden(true)
+
+                Spacer()
+                PerforationGrid(dot: 16, gap: 8, color: Theme.ink.opacity(0.9))
+            }
+
+            Text("Padel ID")
+                .font(.display(.largeTitle, weight: .heavy))
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .limeCard()
+    }
+}

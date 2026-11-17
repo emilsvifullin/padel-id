@@ -1,0 +1,44 @@
+{
+    "profile": {
+        "trainingNotifications": true,
+        "familyName": "Смирнов",
+        "phone": "",
+        "givenName": "Алексей",
+        "subscriptionNotifications": true,
+        "name": "Алексей Смирнов",
+        "email": "player@example.com",
+        "supportNotifications": true
+    },
+    "messages": [
+        {
+            "id": "1736b9b7-df11-4a3f-919d-831144f25990",
+            "text": "Добрый день!",
+            "sentAt": 816555862.9231749,
+            "fromPlayer": false
+        },
+        {
+            "id": "ec09371d-c7de-4425-b1cc-a361cd9d6356",
+            "text": "Уточню по тренировке.",
+            "sentAt": 816555863.9231749,
+            "fromPlayer": false
+        },
+        {
+            "id": "3df6ccd4-8272-4d14-b479-de9bf00c4dcd",
+            "text": "Спасибо!",
+            "sentAt": 816555864.9231749,
+            "fromPlayer": true
+        },
+        {
+            "id": "7633dfef-cd35-423e-942d-d85489aef8b3",
+            "text": "Могу прийти в понедельник. Подскажите, пожалуйста, на каком корте будет занятие?",
+            "sentAt": 816555865.9231749,
+            "fromPlayer": true
+        },
+        {
+            "id": "53d27cb7-78ab-497e-8358-6d2423d4f207",
+            "text": "На том же корте, где проходила прошлая тренировка. Детали есть в расписании.",
+            "sentAt": 816555866.9231749,
+            "fromPlayer": false
+        }
+    ]
+}

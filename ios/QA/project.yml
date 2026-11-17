@@ -1,0 +1,21 @@
+name: TennisCabinetCheck
+options:
+  deploymentTarget:
+    iOS: '26.0'
+targets:
+  TennisCabinetCheck:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: Tests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: local.tennis.cabinetcheck
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: 6.0
+schemes:
+  TennisCabinetCheck:
+    build:
+      targets:
+        TennisCabinetCheck: [test]
+    test:
+      targets: [TennisCabinetCheck]

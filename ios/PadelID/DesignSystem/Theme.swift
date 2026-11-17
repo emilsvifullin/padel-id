@@ -39,6 +39,7 @@ enum Theme {
     /// system hues in Dark.
     static let positive = Color("Positive")
     static let negative = Color("Negative")
+    static let warningOnDark = Color(red: 1, green: 0.50, blue: 0.48)
     static let attention = Color("Attention")
     static let supportingText = Color("SupportingText")
 
@@ -123,6 +124,24 @@ private struct PressFeedback: ViewModifier {
             .scaleEffect(isPressed && !reduceMotion ? 0.975 : 1)
             .opacity(isPressed ? 0.86 : 1)
             .animation(reduceMotion ? nil : Motion.quick, value: isPressed)
+    }
+}
+
+struct PlayerRowButtonStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    var cornerRadius: CGFloat = 0
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .contentShape(.rect(cornerRadius: cornerRadius))
+            .overlay {
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(.white.opacity(configuration.isPressed ? 0.10 : 0))
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+                    .animation(configuration.isPressed || reduceMotion ? nil : .easeOut(duration: 0.18),
+                               value: configuration.isPressed)
+            }
     }
 }
 
