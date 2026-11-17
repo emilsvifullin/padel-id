@@ -48,6 +48,7 @@ final class DeviceFeedbackCheck: XCTestCase {
         app.launch()
         let help = app.buttons["Вопрос по оплате"]
         XCTAssertTrue(help.waitForExistence(timeout: 5))
+        if !help.isHittable { app.swipeUp() }
         help.tap()
         let support = app.navigationBars["Поддержка"]
         XCTAssertTrue(support.waitForExistence(timeout: 4))
@@ -55,9 +56,11 @@ final class DeviceFeedbackCheck: XCTestCase {
         XCTAssertTrue(app.buttons["support.removeTopic"].isHittable)
         shot("payment-full-screen-chat")
         support.buttons["Назад"].tap()
-        XCTAssertTrue(help.waitForExistence(timeout: 4))
-        XCTAssertTrue(help.isHittable)
-        app.buttons["Оплатить по СБП"].tap()
+        XCTAssertTrue(support.waitForNonExistence(timeout: 4))
+        let pay = app.buttons["Оплатить по СБП"]
+        XCTAssertTrue(pay.waitForExistence(timeout: 4))
+        XCTAssertTrue(pay.isEnabled)
+        pay.tap()
         app.buttons["Подтвердить оплату"].tap()
         XCTAssertTrue(app.staticTexts["Оплата подтверждена"].waitForExistence(timeout: 4))
         shot("payment-success")
