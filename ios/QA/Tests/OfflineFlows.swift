@@ -131,9 +131,10 @@ final class OfflineFlows: XCTestCase {
         app.launch()
 
         XCTAssertTrue(app.staticTexts["Срок оплаты прошёл"].waitForExistence(timeout: 5))
-        let checkout = app.buttons["Оплатить по СБП"]
-        XCTAssertTrue(checkout.exists)
-        XCTAssertFalse(checkout.isEnabled)
+        XCTAssertTrue(app.staticTexts["Чтобы оплатить оставшиеся занятия, свяжитесь с администратором."].exists)
+        XCTAssertTrue(app.buttons["Вопрос по оплате"].exists)
+        XCTAssertFalse(app.buttons["Оплатить по СБП"].exists)
+        XCTAssertFalse(app.buttons["Доплатить по СБП"].exists)
         XCTAssertFalse(app.staticTexts["Оплата подтверждена"].exists)
         shot("renewal-overdue")
     }
